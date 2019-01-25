@@ -1455,8 +1455,25 @@ static int expr_evaluate_set(struct eval_ctx *ctx, struct expr **expr)
 		}
 	}
 
-	if (ctx->set && (ctx->set->flags & NFT_SET_CONCAT))
-		set->set_flags |= NFT_SET_CONCAT;
+	if (ctx->set) {
+		if (ctx->set->flags & NFT_SET_CONCAT)
+			set->set_flags |= NFT_SET_CONCAT;
+	} else if (set->size == 1) {
+		i = list_first_entry(&set->expressions, struct expr, list);
+		if (i->etype == EXPR_SET_ELEM) {
+			switch (i->key->etype) {
+			case EXPR_PREFIX:
+			case EXPR_RANGE:
+			case EXPR_VALUE:
+				*expr = i->key;
+				i->key = NULL;
+				expr_free(set);
+				return 0;
+			default:
+				break;
+			}
+		}
+	}
 
 	set->set_flags |= NFT_SET_CONSTANT;
 
