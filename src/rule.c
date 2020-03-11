@@ -675,6 +675,7 @@ static const char * const chain_hookname_str_array[] = {
 	"postrouting",
 	"output",
 	"ingress",
+	"egress",
 	NULL,
 };
 
@@ -832,6 +833,8 @@ const char *hooknum2str(unsigned int family, unsigned int hooknum)
 		switch (hooknum) {
 		case NF_NETDEV_INGRESS:
 			return "ingress";
+		case NF_NETDEV_EGRESS:
+			return "egress";
 		}
 		break;
 	default:

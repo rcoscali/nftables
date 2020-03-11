@@ -658,7 +658,7 @@ string
 ip filter forward dup to 10.2.3.4 device "eth0"
 
 # copy raw frame to another interface
-netdetv ingress dup to "eth0"
+netdev ingress dup to "eth0"
 dup to "eth0"
 
 # combine with map dst addr to gateways
@@ -668,8 +668,8 @@ dup to ip daddr map { 192.168.7.1 : "eth0", 192.168.7.2 : "eth1" }
 FWD STATEMENT
 ~~~~~~~~~~~~~
 The fwd statement is used to redirect a raw packet to another interface. It is
-only available in the netdev family ingress hook. It is similar to the dup
-statement except that no copy is made.
+only available in the netdev family ingress and egress hooks. It is similar to
+the dup statement except that no copy is made.
 
 *fwd to* 'device'
 
