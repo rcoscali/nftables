@@ -644,6 +644,7 @@ enum cmd_obj {
 	CMD_OBJ_CT_EXPECT,
 	CMD_OBJ_SYNPROXY,
 	CMD_OBJ_SYNPROXYS,
+	CMD_OBJ_HOOKS,
 };
 
 struct markup {

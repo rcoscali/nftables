@@ -2371,6 +2371,17 @@ static int do_list_set(struct netlink_ctx *ctx, struct cmd *cmd,
 	return 0;
 }
 
+static int do_list_hooks(struct netlink_ctx *ctx, struct cmd *cmd)
+{
+	const char *devname = cmd->handle.obj.name;
+	int hooknum = -1;
+
+	if (cmd->handle.chain.name)
+		hooknum = cmd->handle.chain_id;
+
+	return mnl_nft_dump_nf_hooks(ctx, cmd->handle.family, hooknum, devname);
+}
+
 static int do_command_list(struct netlink_ctx *ctx, struct cmd *cmd)
 {
 	struct table *table = NULL;
@@ -2431,6 +2442,8 @@ static int do_command_list(struct netlink_ctx *ctx, struct cmd *cmd)
 		return do_list_flowtable(ctx, cmd, table);
 	case CMD_OBJ_FLOWTABLES:
 		return do_list_flowtables(ctx, cmd);
+	case CMD_OBJ_HOOKS:
+		return do_list_hooks(ctx, cmd);
 	default:
 		BUG("invalid command object type %u\n", cmd->obj);
 	}

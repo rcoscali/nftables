@@ -354,6 +354,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"limits"		{ return LIMITS; }
 	"secmarks"		{ return SECMARKS; }
 	"synproxys"		{ return SYNPROXYS; }
+	"hooks"			{ return HOOKS; }
 }
 
 "counter"		{ scanner_push_start_cond(yyscanner, SCANSTATE_COUNTER); return COUNTER; }

@@ -22,6 +22,7 @@
 #include <libnftnl/udata.h>
 
 #include <linux/netfilter/nfnetlink.h>
+#include <linux/netfilter/nfnetlink_hook.h>
 #include <linux/netfilter/nf_tables.h>
 
 #include <mnl.h>
@@ -34,6 +35,17 @@
 #include <stdlib.h>
 #include <utils.h>
 #include <nftables.h>
+#include <linux/netfilter.h>
+#include <linux/netfilter_arp.h>
+
+struct basehook {
+	struct list_head list;
+	const char *module_name;
+	const char *hookfn;
+	const char *table;
+	const char *chain;
+	int prio;
+};
 
 struct mnl_socket *nft_mnl_socket_open(void)
 {
@@ -1874,7 +1886,7 @@ int mnl_nft_event_listener(struct mnl_socket *nf_sock, unsigned int debug_mask,
 			   void *cb_data)
 {
 	/* Set netlink socket buffer size to 16 Mbytes to reduce chances of
- 	 * message loss due to ENOBUFS.
+	 * message loss due to ENOBUFS.
 	 */
 	unsigned int bufsiz = NFTABLES_NLEVENT_BUFSIZ;
 	int fd = mnl_socket_get_fd(nf_sock);
@@ -1916,5 +1928,319 @@ int mnl_nft_event_listener(struct mnl_socket *nf_sock, unsigned int debug_mask,
 		if (ret <= 0)
 			break;
 	}
+	return ret;
+}
+
+static struct basehook *basehook_alloc(void)
+{
+	return xzalloc(sizeof(struct basehook));
+}
+
+static void basehook_free(struct basehook *b)
+{
+	list_del(&b->list);
+	xfree(b->module_name);
+	xfree(b->hookfn);
+	xfree(b->chain);
+	xfree(b->table);
+	xfree(b);
+}
+
+static void basehook_list_add_tail(struct basehook *b, struct list_head *head)
+{
+	list_add_tail(&b->list, head);
+}
+
+static int dump_nf_attr_cb(const struct nlattr *attr, void *data)
+{
+	int type = mnl_attr_get_type(attr);
+	const struct nlattr **tb = data;
+
+	if (mnl_attr_type_valid(attr, NFNLA_HOOK_MAX) < 0)
+		return MNL_CB_OK;
+
+	switch(type) {
+	case NFNLA_HOOK_HOOKNUM:
+	case NFNLA_HOOK_PRIORITY:
+                if (mnl_attr_validate(attr, MNL_TYPE_U32) < 0)
+                        return MNL_CB_ERROR;
+		break;
+	case NFNLA_HOOK_DEV:
+                if (mnl_attr_validate(attr, MNL_TYPE_STRING) < 0)
+                        return MNL_CB_ERROR;
+		break;
+	case NFNLA_HOOK_MODULE_NAME:
+	case NFNLA_HOOK_FUNCTION_NAME:
+                if (mnl_attr_validate(attr, MNL_TYPE_NUL_STRING) < 0)
+                        return MNL_CB_ERROR;
+		break;
+	case NFNLA_HOOK_CHAIN_INFO:
+                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0)
+                        return MNL_CB_ERROR;
+		break;
+	default:
+		return MNL_CB_OK;
+	}
+
+	tb[type] = attr;
+	return MNL_CB_OK;
+}
+
+static int dump_nf_chain_info_cb(const struct nlattr *attr, void *data)
+{
+	int type = mnl_attr_get_type(attr);
+	const struct nlattr **tb = data;
+
+	if (mnl_attr_type_valid(attr, NFNLA_HOOK_INFO_MAX) < 0)
+		return MNL_CB_OK;
+
+	switch(type) {
+	case NFNLA_HOOK_INFO_DESC:
+                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0)
+                        return MNL_CB_ERROR;
+		break;
+	case NFNLA_HOOK_INFO_TYPE:
+                if (mnl_attr_validate(attr, MNL_TYPE_U32) < 0)
+                        return MNL_CB_ERROR;
+		break;
+	default:
+		return MNL_CB_OK;
+	}
+
+	tb[type] = attr;
+	return MNL_CB_OK;
+}
+
+static int dump_nf_attr_chain_cb(const struct nlattr *attr, void *data)
+{
+	int type = mnl_attr_get_type(attr);
+	const struct nlattr **tb = data;
+
+	if (mnl_attr_type_valid(attr, NFTA_CHAIN_MAX) < 0)
+		return MNL_CB_OK;
+
+	switch(type) {
+	case NFTA_CHAIN_TABLE:
+	case NFTA_CHAIN_NAME:
+                if (mnl_attr_validate(attr, MNL_TYPE_NUL_STRING) < 0)
+                        return MNL_CB_ERROR;
+		break;
+	default:
+		return MNL_CB_OK;
+	}
+
+	tb[type] = attr;
+	return MNL_CB_OK;
+}
+
+static int dump_nf_hooks(const struct nlmsghdr *nlh, void *data)
+{
+	const struct nfgenmsg *nfg = mnl_nlmsg_get_payload(nlh);
+	struct nlattr *tb[NFNLA_HOOK_MAX + 1] = {};
+	struct list_head *head = data;
+	struct basehook *hook;
+
+	/* NB: Don't check the nft generation ID, this is not
+	 * an nftables subsystem.
+	 */
+	if (mnl_attr_parse(nlh, sizeof(*nfg), dump_nf_attr_cb, tb) < 0)
+		return -1;
+
+	if (!tb[NFNLA_HOOK_PRIORITY])
+		netlink_abi_error();
+
+	hook = basehook_alloc();
+	hook->prio = ntohl(mnl_attr_get_u32(tb[NFNLA_HOOK_PRIORITY]));
+
+	if (tb[NFNLA_HOOK_FUNCTION_NAME])
+		hook->hookfn = xstrdup(mnl_attr_get_str(tb[NFNLA_HOOK_FUNCTION_NAME]));
+
+	if (tb[NFNLA_HOOK_MODULE_NAME])
+		hook->module_name = xstrdup(mnl_attr_get_str(tb[NFNLA_HOOK_MODULE_NAME]));
+
+	if (tb[NFNLA_HOOK_CHAIN_INFO]) {
+		struct nlattr *nested[NFNLA_HOOK_INFO_MAX + 1] = {};
+		uint32_t type;
+
+		if (mnl_attr_parse_nested(tb[NFNLA_HOOK_CHAIN_INFO], dump_nf_chain_info_cb, nested) < 0)
+			return -1;
+
+		type = ntohl(mnl_attr_get_u32(nested[NFNLA_HOOK_INFO_TYPE]));
+		if (type == NFNL_HOOK_TYPE_NFTABLES) {
+			struct nlattr *info[NFTA_CHAIN_MAX + 1] = {};
+			const char *tablename, *chainname;
+
+			if (mnl_attr_parse_nested(nested[NFNLA_HOOK_INFO_DESC], dump_nf_attr_chain_cb, info) < 0)
+				return -1;
+
+			tablename = mnl_attr_get_str(info[NFTA_CHAIN_TABLE]);
+			chainname = mnl_attr_get_str(info[NFTA_CHAIN_NAME]);
+			if (tablename && chainname) {
+				hook->table = xstrdup(tablename);
+				hook->chain = xstrdup(chainname);
+			}
+		}
+	}
+
+	basehook_list_add_tail(hook, head);
+	return MNL_CB_OK;
+}
+
+static struct nlmsghdr *nf_hook_dump_request(char *buf, uint8_t family, uint32_t seq)
+{
+	struct nlmsghdr *nlh = mnl_nlmsg_put_header(buf);
+	struct nfgenmsg *nfg;
+
+	nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
+	nlh->nlmsg_type = NFNL_SUBSYS_HOOK << 8;
+	nlh->nlmsg_seq = seq;
+
+	nfg = mnl_nlmsg_put_extra_header(nlh, sizeof(*nfg));
+	nfg->nfgen_family = family;
+	nfg->version = NFNETLINK_V0;
+
+	return nlh;
+}
+
+static int __mnl_nft_dump_nf_hooks(struct netlink_ctx *ctx, uint8_t family, uint8_t hooknum, const char *devname)
+{
+	char buf[MNL_SOCKET_BUFFER_SIZE];
+	struct basehook *hook, *tmp;
+	struct nlmsghdr *nlh;
+	LIST_HEAD(hook_list);
+	FILE *fp;
+	int ret;
+
+	nlh = nf_hook_dump_request(buf, family, ctx->seqnum);
+	if (devname)
+		mnl_attr_put_strz(nlh, NFNLA_HOOK_DEV, devname);
+
+	mnl_attr_put_u32(nlh, NFNLA_HOOK_HOOKNUM, htonl(hooknum));
+
+	ret = nft_mnl_talk(ctx, nlh, nlh->nlmsg_len, dump_nf_hooks, &hook_list);
+	if (ret)
+		return ret;
+
+	if (list_empty(&hook_list))
+		return 0;
+
+	fp = ctx->nft->output.output_fp;
+	fprintf(fp, "family %s hook %s", family2str(family), hooknum2str(family, hooknum));
+	if (devname)
+		fprintf(fp, " device %s", devname);
+
+	fprintf(fp, " {\n");
+
+	list_for_each_entry_safe(hook, tmp, &hook_list, list) {
+		int prio = hook->prio;
+
+		if (prio < 0)
+			fprintf(fp, "\t%011d", prio); /* outputs a '-' sign */
+		else
+			fprintf(fp, "\t+%010u", prio);
+
+		if (hook->hookfn) {
+			fprintf(fp, " %s", hook->hookfn);
+			if (hook->module_name)
+				fprintf(fp, " [%s]", hook->module_name);
+		}
+
+		if (hook->table && hook->chain)
+			fprintf(fp, "\t# nft table %s %s chain %s", family2str(family), hook->table, hook->chain);
+
+		fprintf(fp, "\n");
+		basehook_free(hook);
+	}
+
+	fprintf(fp, "}\n");
+	return ret;
+}
+
+int mnl_nft_dump_nf_hooks(struct netlink_ctx *ctx, int family, int hook, const char *devname)
+{
+	unsigned int i;
+	int ret, err;
+
+	errno = 0;
+	ret = 0;
+
+	switch (family) {
+	case NFPROTO_UNSPEC:
+		if (devname)
+			return mnl_nft_dump_nf_hooks(ctx, NFPROTO_NETDEV, NF_INET_INGRESS, devname);
+
+		err = mnl_nft_dump_nf_hooks(ctx, NFPROTO_INET, hook, NULL);
+		if (err < 0 && errno != EPROTONOSUPPORT)
+			ret = err;
+		err = mnl_nft_dump_nf_hooks(ctx, NFPROTO_ARP, hook, NULL);
+		if (err < 0 && errno != EPROTONOSUPPORT)
+			ret = err;
+		err = mnl_nft_dump_nf_hooks(ctx, NFPROTO_BRIDGE, hook, NULL);
+		if (err < 0 && errno != EPROTONOSUPPORT)
+			ret = err;
+		err = mnl_nft_dump_nf_hooks(ctx, NFPROTO_DECNET, hook, NULL);
+		if (err < 0 && errno != EPROTONOSUPPORT)
+			ret = err;
+		break;
+	case NFPROTO_INET:
+		if (devname) {
+			err = __mnl_nft_dump_nf_hooks(ctx, family, NF_INET_INGRESS, devname);
+			if (err < 0)
+				ret = err;
+		}
+
+		err = mnl_nft_dump_nf_hooks(ctx, NFPROTO_IPV4, hook, NULL);
+		if (err < 0)
+			ret = err;
+		err = mnl_nft_dump_nf_hooks(ctx, NFPROTO_IPV6, hook, NULL);
+		if (err < 0)
+			ret = err;
+
+		break;
+	case NFPROTO_IPV4:
+	case NFPROTO_IPV6:
+	case NFPROTO_BRIDGE:
+		if (hook >= 0)
+			return __mnl_nft_dump_nf_hooks(ctx, family, hook, devname);
+
+		for (i = 0; i <= NF_INET_POST_ROUTING; i++) {
+			err = __mnl_nft_dump_nf_hooks(ctx, family, i, NULL);
+			if (err < 0)
+				err = ret;
+		}
+		break;
+	case NFPROTO_ARP:
+		if (hook >= 0)
+			return __mnl_nft_dump_nf_hooks(ctx, family, hook, devname);
+
+		err = __mnl_nft_dump_nf_hooks(ctx, family, NF_ARP_IN, devname);
+		if (err < 0)
+			ret = err;
+		err = __mnl_nft_dump_nf_hooks(ctx, family, NF_ARP_OUT, devname);
+		if (err < 0)
+			ret = err;
+		break;
+	case NFPROTO_NETDEV:
+		if (hook >= 0)
+			return __mnl_nft_dump_nf_hooks(ctx, family, hook, devname);
+
+		err = __mnl_nft_dump_nf_hooks(ctx, family, NF_INET_INGRESS, devname);
+		if (err < 0)
+			ret = err;
+		break;
+	case NFPROTO_DECNET:
+		if (hook >= 0)
+			return __mnl_nft_dump_nf_hooks(ctx, family, hook, devname);
+#define NF_DN_NUMHOOKS		7
+		for (i = 0; i < NF_DN_NUMHOOKS; i++) {
+			err = __mnl_nft_dump_nf_hooks(ctx, family, i, devname);
+			if (err < 0) {
+				ret = err;
+				break;
+			}
+		}
+		break;
+	}
+
 	return ret;
 }

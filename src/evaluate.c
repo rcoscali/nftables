@@ -4719,6 +4719,16 @@ static int cmd_evaluate_list(struct eval_ctx *ctx, struct cmd *cmd)
 	case CMD_OBJ_METERS:
 	case CMD_OBJ_MAPS:
 		return 0;
+	case CMD_OBJ_HOOKS:
+		if (cmd->handle.chain.name) {
+			int hooknum = str2hooknum(cmd->handle.family, cmd->handle.chain.name);
+
+			if (hooknum == NF_INET_NUMHOOKS)
+				return chain_not_found(ctx);
+
+			cmd->handle.chain_id = hooknum;
+		}
+		return 0;
 	default:
 		BUG("invalid command object type %u\n", cmd->obj);
 	}

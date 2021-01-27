@@ -238,6 +238,7 @@ int nft_lex(void *, void *, void *);
 %token TYPEOF			"typeof"
 
 %token HOOK			"hook"
+%token HOOKS			"hooks"
 %token DEVICE			"device"
 %token DEVICES			"devices"
 %token TABLE			"table"
@@ -632,11 +633,15 @@ int nft_lex(void *, void *, void *);
 
 %type <handle>			set_identifier flowtableid_spec flowtable_identifier obj_identifier
 %destructor { handle_free(&$$); } set_identifier flowtableid_spec obj_identifier
+
+%type <handle>			basehook_spec
+%destructor { handle_free(&$$); } basehook_spec
+
 %type <val>			family_spec family_spec_explicit
 %type <val32>			int_num	chain_policy
 %type <prio_spec>		extended_prio_spec prio_spec
-%type <string>			extended_prio_name quota_unit
-%destructor { xfree($$); }	extended_prio_name quota_unit
+%type <string>			extended_prio_name quota_unit	basehook_device_name
+%destructor { xfree($$); }	extended_prio_name quota_unit	basehook_device_name
 
 %type <expr>			dev_spec
 %destructor { xfree($$); }	dev_spec
@@ -1455,6 +1460,45 @@ list_cmd		:	TABLE		table_spec
 			|       CT		ct_cmd_type	TABLE   table_spec	close_scope_ct
 			{
 				$$ = cmd_alloc(CMD_LIST, $2, &$4, &@$, NULL);
+			}
+			|	HOOKS	basehook_spec
+			{
+				$$ = cmd_alloc(CMD_LIST, CMD_OBJ_HOOKS, &$2, &@$, NULL);
+			}
+			;
+
+basehook_device_name	:	/* NULL */
+			{
+				$$ = NULL;
+			}
+			|	DEVICE STRING
+			{
+				$$ = $2;
+			}
+			;
+
+basehook_spec		:	ruleset_spec
+			{
+				$$ = $1;
+			}
+			|	ruleset_spec    STRING  basehook_device_name
+			{
+				const char *name = chain_hookname_lookup($2);
+
+				if (name == NULL) {
+					erec_queue(error(&@2, "unknown chain hook"),
+						   state->msgs);
+					xfree($3);
+					YYERROR;
+				}
+
+				$1.chain.name = $2;
+				$1.chain.location = @2;
+				if ($3) {
+					$1.obj.name = $3;
+					$1.obj.location = @3;
+				}
+				$$ = $1;
 			}
 			;
 
