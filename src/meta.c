@@ -220,18 +220,20 @@ static struct error_record *uid_type_parse(struct parse_ctx *ctx,
 					   struct expr **res)
 {
 	struct passwd *pw;
-	uint64_t uid;
+	uid_t uid;
 	char *endptr = NULL;
 
 	pw = getpwnam(sym->identifier);
 	if (pw != NULL)
 		uid = pw->pw_uid;
 	else {
-		uid = strtoull(sym->identifier, &endptr, 10);
-		if (uid > UINT32_MAX)
+		uint64_t _uid = strtoull(sym->identifier, &endptr, 10);
+
+		if (_uid > UINT32_MAX)
 			return error(&sym->location, "Value too large");
 		else if (*endptr)
 			return error(&sym->location, "User does not exist");
+		uid = _uid;
 	}
 
 	*res = constant_expr_alloc(&sym->location, sym->dtype,
@@ -274,18 +276,20 @@ static struct error_record *gid_type_parse(struct parse_ctx *ctx,
 					   struct expr **res)
 {
 	struct group *gr;
-	uint64_t gid;
+	gid_t gid;
 	char *endptr = NULL;
 
 	gr = getgrnam(sym->identifier);
 	if (gr != NULL)
 		gid = gr->gr_gid;
 	else {
-		gid = strtoull(sym->identifier, &endptr, 0);
-		if (gid > UINT32_MAX)
+		uint64_t _gid = strtoull(sym->identifier, &endptr, 0);
+
+		if (_gid > UINT32_MAX)
 			return error(&sym->location, "Value too large");
 		else if (*endptr)
 			return error(&sym->location, "Group does not exist");
+		gid = _gid;
 	}
 
 	*res = constant_expr_alloc(&sym->location, sym->dtype,
