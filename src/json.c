@@ -1,4 +1,5 @@
 #define _GNU_SOURCE
+#include <stdio.h>
 #include <string.h>
 
 #include <expression.h>
@@ -42,7 +43,8 @@ static json_t *expr_print_json(const struct expr *expr, struct output_ctx *octx)
 	if (ops->json)
 		return ops->json(expr, octx);
 
-	printf("warning: expr ops %s have no json callback\n", expr_name(expr));
+	fprintf(stderr, "warning: expr ops %s have no json callback\n",
+		expr_name(expr));
 
 	fp = octx->output_fp;
 	octx->output_fp = fmemopen(buf, 1024, "w");
@@ -180,8 +182,8 @@ static json_t *stmt_print_json(const struct stmt *stmt, struct output_ctx *octx)
 	if (stmt->ops->json)
 		return stmt->ops->json(stmt, octx);
 
-	printf("warning: stmt ops %s have no json callback\n",
-	       stmt->ops->name);
+	fprintf(stderr, "warning: stmt ops %s have no json callback\n",
+		stmt->ops->name);
 
 	fp = octx->output_fp;
 	octx->output_fp = fmemopen(buf, 1024, "w");
