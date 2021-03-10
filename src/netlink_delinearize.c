@@ -2422,56 +2422,33 @@ static struct expr *string_wildcard_expr_alloc(struct location *loc,
 				   expr->len + BITS_PER_BYTE, data);
 }
 
-static void escaped_string_wildcard_expr_alloc(struct expr **exprp,
-					       unsigned int len)
-{
-	struct expr *expr = *exprp, *tmp;
-	char data[len + 3];
-	int pos;
-
-	mpz_export_data(data, expr->value, BYTEORDER_HOST_ENDIAN, len);
-	pos = div_round_up(len, BITS_PER_BYTE);
-	data[pos - 1] = '\\';
-	data[pos] = '*';
-
-	tmp = constant_expr_alloc(&expr->location, expr->dtype,
-				  BYTEORDER_HOST_ENDIAN,
-				  expr->len + BITS_PER_BYTE, data);
-	expr_free(expr);
-	*exprp = tmp;
-}
-
 /* This calculates the string length and checks if it is nul-terminated, this
  * function is quite a hack :)
  */
 static bool __expr_postprocess_string(struct expr **exprp)
 {
 	struct expr *expr = *exprp;
-	unsigned int len = expr->len;
-	bool nulterminated = false;
-	mpz_t tmp;
+	unsigned int len = div_round_up(expr->len, BITS_PER_BYTE);
+	char data[len + 1];
 
-	mpz_init(tmp);
-	while (len >= BITS_PER_BYTE) {
-		mpz_bitmask(tmp, BITS_PER_BYTE);
-		mpz_lshift_ui(tmp, len - BITS_PER_BYTE);
-		mpz_and(tmp, tmp, expr->value);
-		if (mpz_cmp_ui(tmp, 0))
-			break;
-		else
-			nulterminated = true;
-		len -= BITS_PER_BYTE;
+	mpz_export_data(data, expr->value, BYTEORDER_HOST_ENDIAN, len);
+
+	if (data[len - 1] != '\0')
+		return false;
+
+	len = strlen(data);
+	if (len && data[len - 1] == '*') {
+		data[len - 1]	= '\\';
+		data[len]	= '*';
+		data[len + 1]	= '\0';
+		expr = constant_expr_alloc(&expr->location, expr->dtype,
+					   BYTEORDER_HOST_ENDIAN,
+					   (len + 2) * BITS_PER_BYTE, data);
+		expr_free(*exprp);
+		*exprp = expr;
 	}
 
-	mpz_rshift_ui(tmp, len - BITS_PER_BYTE);
-
-	if (nulterminated &&
-	    mpz_cmp_ui(tmp, '*') == 0)
-		escaped_string_wildcard_expr_alloc(exprp, len);
-
-	mpz_clear(tmp);
-
-	return nulterminated;
+	return true;
 }
 
 static struct expr *expr_postprocess_string(struct expr *expr)
