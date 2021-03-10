@@ -176,7 +176,7 @@ static struct error_record *ct_label_type_parse(struct parse_ctx *ctx,
 {
 	const struct symbolic_constant *s;
 	const struct datatype *dtype;
-	uint8_t data[CT_LABEL_BIT_SIZE];
+	uint8_t data[CT_LABEL_BIT_SIZE / BITS_PER_BYTE];
 	uint64_t bit;
 	mpz_t value;
 
@@ -211,8 +211,7 @@ static struct error_record *ct_label_type_parse(struct parse_ctx *ctx,
 	mpz_export_data(data, value, BYTEORDER_HOST_ENDIAN, sizeof(data));
 
 	*res = constant_expr_alloc(&sym->location, dtype,
-				   dtype->byteorder, sizeof(data),
-				   data);
+				   dtype->byteorder, CT_LABEL_BIT_SIZE, data);
 	mpz_clear(value);
 	return NULL;
 }
