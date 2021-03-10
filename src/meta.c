@@ -516,7 +516,8 @@ static struct error_record *hour_type_parse(struct parse_ctx *ctx,
 {
 	struct error_record *er;
 	struct tm tm, *cur_tm;
-	uint64_t result = 0;
+	uint32_t result;
+	uint64_t tmp;
 	char *endptr;
 	time_t ts;
 
@@ -544,8 +545,8 @@ static struct error_record *hour_type_parse(struct parse_ctx *ctx,
 	if (endptr && *endptr)
 		return error(&sym->location, "Can't parse trailing input: \"%s\"\n", endptr);
 
-	if ((er = time_parse(&sym->location, sym->identifier, &result)) == NULL) {
-		result /= 1000;
+	if ((er = time_parse(&sym->location, sym->identifier, &tmp)) == NULL) {
+		result = tmp / 1000;
 		goto convert;
 	}
 
@@ -599,7 +600,7 @@ const struct datatype hour_type = {
 	.name = "hour",
 	.desc = "Hour of day of packet reception",
 	.byteorder = BYTEORDER_HOST_ENDIAN,
-	.size = sizeof(uint64_t) * BITS_PER_BYTE,
+	.size = sizeof(uint32_t) * BITS_PER_BYTE,
 	.basetype = &integer_type,
 	.print = hour_type_print,
 	.parse = hour_type_parse,
