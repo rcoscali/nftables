@@ -46,6 +46,9 @@ static const struct exthdr_desc *exthdr_find_desc(enum exthdr_desc_id desc_id)
 
 static void exthdr_expr_print(const struct expr *expr, struct output_ctx *octx)
 {
+	const char *name = expr->exthdr.desc ?
+		expr->exthdr.desc->name : "unknown-exthdr";
+
 	if (expr->exthdr.op == NFT_EXTHDR_OP_TCPOPT) {
 		/* Offset calculation is a bit hacky at this point.
 		 * There might be a tcp option one day with another
@@ -65,14 +68,14 @@ static void exthdr_expr_print(const struct expr *expr, struct output_ctx *octx)
 			return;
 		}
 
-		nft_print(octx, "tcp option %s", expr->exthdr.desc->name);
+		nft_print(octx, "tcp option %s", name);
 		if (expr->exthdr.flags & NFT_EXTHDR_F_PRESENT)
 			return;
 		if (offset)
 			nft_print(octx, "%d", offset);
 		nft_print(octx, " %s", expr->exthdr.tmpl->token);
 	} else if (expr->exthdr.op == NFT_EXTHDR_OP_IPV4) {
-		nft_print(octx, "ip option %s", expr->exthdr.desc->name);
+		nft_print(octx, "ip option %s", name);
 		if (expr->exthdr.flags & NFT_EXTHDR_F_PRESENT)
 			return;
 		nft_print(octx, " %s", expr->exthdr.tmpl->token);
@@ -83,10 +86,9 @@ static void exthdr_expr_print(const struct expr *expr, struct output_ctx *octx)
 		nft_print(octx, " %s", expr->exthdr.tmpl->token);
 	} else {
 		if (expr->exthdr.flags & NFT_EXTHDR_F_PRESENT)
-			nft_print(octx, "exthdr %s", expr->exthdr.desc->name);
+			nft_print(octx, "exthdr %s", name);
 		else {
-			nft_print(octx, "%s %s",
-				  expr->exthdr.desc ? expr->exthdr.desc->name : "unknown-exthdr",
+			nft_print(octx, "%s %s", name,
 				  expr->exthdr.tmpl->token);
 		}
 	}
