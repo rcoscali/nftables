@@ -134,6 +134,17 @@
         "match": {
             "left": {
                 "meta": {
+                    "key": "l4proto"
+                }
+            },
+            "op": "==",
+            "right": 6
+        }
+    },
+    {
+        "match": {
+            "left": {
+                "meta": {
                     "key": "mark"
                 }
             },
@@ -151,43 +162,30 @@
 # reject
 [
     {
-        "reject": null
+        "reject": {
+            "expr": "port-unreachable",
+            "type": "icmpx"
+        }
     }
 ]
 
 # meta protocol ip reject
 [
     {
-        "match": {
-            "left": {
-                "meta": {
-                    "key": "protocol"
-                }
-            },
-            "op": "==",
-            "right": "ip"
+        "reject": {
+            "expr": "port-unreachable",
+            "type": "icmp"
         }
-    },
-    {
-        "reject": null
     }
 ]
 
 # meta protocol ip6 reject
 [
     {
-        "match": {
-            "left": {
-                "meta": {
-                    "key": "protocol"
-                }
-            },
-            "op": "==",
-            "right": "ip6"
+        "reject": {
+            "expr": "port-unreachable",
+            "type": "icmpv6"
         }
-    },
-    {
-        "reject": null
     }
 ]
 
@@ -234,17 +232,6 @@
 # meta protocol ip reject with icmp type host-unreachable
 [
     {
-        "match": {
-            "left": {
-                "meta": {
-                    "key": "protocol"
-                }
-            },
-            "op": "==",
-            "right": "ip"
-        }
-    },
-    {
         "reject": {
             "expr": "host-unreachable",
             "type": "icmp"
@@ -254,17 +241,6 @@
 
 # meta protocol ip6 reject with icmpv6 type no-route
 [
-    {
-        "match": {
-            "left": {
-                "meta": {
-                    "key": "protocol"
-                }
-            },
-            "op": "==",
-            "right": "ip6"
-        }
-    },
     {
         "reject": {
             "expr": "no-route",
