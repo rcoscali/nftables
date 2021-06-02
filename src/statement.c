@@ -201,7 +201,7 @@ struct stmt *meter_stmt_alloc(const struct location *loc)
 
 static void connlimit_stmt_print(const struct stmt *stmt, struct output_ctx *octx)
 {
-	nft_print(octx, "ct count %s%u ",
+	nft_print(octx, "ct count %s%u",
 		  stmt->connlimit.flags ? "over " : "", stmt->connlimit.count);
 }
 
