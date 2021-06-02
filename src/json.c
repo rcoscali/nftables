@@ -241,7 +241,7 @@ static json_t *chain_print_json(const struct chain *chain)
 		mpz_export_data(&policy, chain->policy->value,
 				BYTEORDER_HOST_ENDIAN, sizeof(int));
 		tmp = json_pack("{s:s, s:s, s:i, s:s}",
-				"type", chain->type,
+				"type", chain->type.str,
 				"hook", hooknum2str(chain->handle.family,
 						    chain->hook.num),
 				"prio", priority,
