@@ -407,7 +407,11 @@ def set_add_elements(set_element, set_name, state, filename, lineno):
         ret = execute_cmd(cmd, filename, lineno)
 
         if (state == "fail" and ret == 0) or (state == "ok" and ret != 0):
-            test_state = "This rule should have failed."
+            if state == "fail":
+                    test_state = "This rule should have failed."
+            else:
+                    test_state = "This rule should not have failed."
+
             reason = cmd + ": " + test_state
             print_error(reason, filename, lineno)
             return -1
