@@ -1135,7 +1135,7 @@ static struct expr *json_parse_binop_expr(struct json_ctx *ctx,
 		json_error(ctx, "Failed to parse LHS of binop expression.");
 		return NULL;
 	}
-	right = json_parse_primary_expr(ctx, jright);
+	right = json_parse_rhs_expr(ctx, jright);
 	if (!right) {
 		json_error(ctx, "Failed to parse RHS of binop expression.");
 		expr_free(left);
