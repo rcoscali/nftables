@@ -1341,6 +1341,7 @@ static const struct expr_ops set_elem_catchall_expr_ops = {
 	.type		= EXPR_SET_ELEM_CATCHALL,
 	.name		= "catch-all set element",
 	.print		= set_elem_catchall_expr_print,
+	.json		= set_elem_catchall_expr_json,
 };
 
 struct expr *set_elem_catchall_expr_alloc(const struct location *loc)

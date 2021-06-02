@@ -889,6 +889,11 @@ static json_t *symbolic_constant_json(const struct symbol_table *tbl,
 		return json_string(s->identifier);
 }
 
+json_t *set_elem_catchall_expr_json(const struct expr *expr, struct output_ctx *octx)
+{
+	return json_string("*");
+}
+
 static json_t *datatype_json(const struct expr *expr, struct output_ctx *octx)
 {
 	const struct datatype *dtype = expr->dtype;

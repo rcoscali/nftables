@@ -37,6 +37,7 @@ json_t *concat_expr_json(const struct expr *expr, struct output_ctx *octx);
 json_t *set_expr_json(const struct expr *expr, struct output_ctx *octx);
 json_t *set_ref_expr_json(const struct expr *expr, struct output_ctx *octx);
 json_t *set_elem_expr_json(const struct expr *expr, struct output_ctx *octx);
+json_t *set_elem_catchall_expr_json(const struct expr *expr, struct output_ctx *octx);
 json_t *prefix_expr_json(const struct expr *expr, struct output_ctx *octx);
 json_t *list_expr_json(const struct expr *expr, struct output_ctx *octx);
 json_t *unary_expr_json(const struct expr *expr, struct output_ctx *octx);

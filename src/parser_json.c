@@ -315,15 +315,6 @@ static struct expr *json_parse_constant(struct json_ctx *ctx, const char *name)
 	return NULL;
 }
 
-static struct expr *wildcard_expr_alloc(void)
-{
-	struct expr *expr;
-
-	expr = constant_expr_alloc(int_loc, &integer_type,
-				   BYTEORDER_HOST_ENDIAN, 0, NULL);
-	return prefix_expr_alloc(int_loc, expr, 0);
-}
-
 /* this is a combination of symbol_expr, integer_expr, boolean_expr ... */
 static struct expr *json_parse_immediate(struct json_ctx *ctx, json_t *root)
 {
@@ -338,7 +329,7 @@ static struct expr *json_parse_immediate(struct json_ctx *ctx, json_t *root)
 			symtype = SYMBOL_SET;
 			str++;
 		} else if (str[0] == '*' && str[1] == '\0') {
-			return wildcard_expr_alloc();
+			return set_elem_catchall_expr_alloc(int_loc);
 		} else if (is_keyword(str)) {
 			return symbol_expr_alloc(int_loc,
 						 SYMBOL_VALUE, NULL, str);
