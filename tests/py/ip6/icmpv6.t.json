@@ -544,46 +544,6 @@
     }
 ]
 
-# icmpv6 code { 3-66}
-[
-    {
-        "match": {
-            "left": {
-                "payload": {
-                    "field": "code",
-                    "protocol": "icmpv6"
-                }
-            },
-	    "op": "==",
-            "right": {
-                "set": [
-                    { "range": [ 3, 66 ] }
-                ]
-            }
-        }
-    }
-]
-
-# icmpv6 code != { 3-66}
-[
-    {
-        "match": {
-            "left": {
-                "payload": {
-                    "field": "code",
-                    "protocol": "icmpv6"
-                }
-            },
-            "op": "!=",
-            "right": {
-                "set": [
-                    { "range": [ 3, 66 ] }
-                ]
-            }
-        }
-    }
-]
-
 # icmpv6 checksum 2222 log
 [
     {
@@ -694,46 +654,6 @@
                 "set": [
                     222,
                     226
-                ]
-            }
-        }
-    }
-]
-
-# icmpv6 checksum { 222-226}
-[
-    {
-        "match": {
-            "left": {
-                "payload": {
-                    "field": "checksum",
-                    "protocol": "icmpv6"
-                }
-            },
-	    "op": "==",
-            "right": {
-                "set": [
-                    { "range": [ 222, 226 ] }
-                ]
-            }
-        }
-    }
-]
-
-# icmpv6 checksum != { 222-226}
-[
-    {
-        "match": {
-            "left": {
-                "payload": {
-                    "field": "checksum",
-                    "protocol": "icmpv6"
-                }
-            },
-            "op": "!=",
-            "right": {
-                "set": [
-                    { "range": [ 222, 226 ] }
                 ]
             }
         }
@@ -854,46 +774,6 @@
     }
 ]
 
-# icmpv6 mtu {33-55}
-[
-    {
-        "match": {
-            "left": {
-                "payload": {
-                    "field": "mtu",
-                    "protocol": "icmpv6"
-                }
-            },
-	    "op": "==",
-            "right": {
-                "set": [
-                    { "range": [ 33, 55 ] }
-                ]
-            }
-        }
-    }
-]
-
-# icmpv6 mtu != {33-55}
-[
-    {
-        "match": {
-            "left": {
-                "payload": {
-                    "field": "mtu",
-                    "protocol": "icmpv6"
-                }
-            },
-            "op": "!=",
-            "right": {
-                "set": [
-                    { "range": [ 33, 55 ] }
-                ]
-            }
-        }
-    }
-]
-
 # icmpv6 id 33-45
 [
     {
@@ -970,46 +850,6 @@
                     55,
                     67,
                     88
-                ]
-            }
-        }
-    }
-]
-
-# icmpv6 id {33-55}
-[
-    {
-        "match": {
-            "left": {
-                "payload": {
-                    "field": "id",
-                    "protocol": "icmpv6"
-                }
-            },
-	    "op": "==",
-            "right": {
-                "set": [
-                    { "range": [ 33, 55 ] }
-                ]
-            }
-        }
-    }
-]
-
-# icmpv6 id != {33-55}
-[
-    {
-        "match": {
-            "left": {
-                "payload": {
-                    "field": "id",
-                    "protocol": "icmpv6"
-                }
-            },
-            "op": "!=",
-            "right": {
-                "set": [
-                    { "range": [ 33, 55 ] }
                 ]
             }
         }
@@ -1137,46 +977,6 @@
     }
 ]
 
-# icmpv6 sequence { 2-4}
-[
-    {
-        "match": {
-            "left": {
-                "payload": {
-                    "field": "sequence",
-                    "protocol": "icmpv6"
-                }
-            },
-	    "op": "==",
-            "right": {
-                "set": [
-                    { "range": [ 2, 4 ] }
-                ]
-            }
-        }
-    }
-]
-
-# icmpv6 sequence != { 2-4}
-[
-    {
-        "match": {
-            "left": {
-                "payload": {
-                    "field": "sequence",
-                    "protocol": "icmpv6"
-                }
-            },
-            "op": "!=",
-            "right": {
-                "set": [
-                    { "range": [ 2, 4 ] }
-                ]
-            }
-        }
-    }
-]
-
 # icmpv6 max-delay 33-45
 [
     {
@@ -1253,46 +1053,6 @@
                     55,
                     67,
                     88
-                ]
-            }
-        }
-    }
-]
-
-# icmpv6 max-delay {33-55}
-[
-    {
-        "match": {
-            "left": {
-                "payload": {
-                    "field": "max-delay",
-                    "protocol": "icmpv6"
-                }
-            },
-	    "op": "==",
-            "right": {
-                "set": [
-                    { "range": [ 33, 55 ] }
-                ]
-            }
-        }
-    }
-]
-
-# icmpv6 max-delay != {33-55}
-[
-    {
-        "match": {
-            "left": {
-                "payload": {
-                    "field": "max-delay",
-                    "protocol": "icmpv6"
-                }
-            },
-            "op": "!=",
-            "right": {
-                "set": [
-                    { "range": [ 33, 55 ] }
                 ]
             }
         }
