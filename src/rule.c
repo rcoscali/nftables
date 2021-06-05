@@ -1286,11 +1286,11 @@ void cmd_add_loc(struct cmd *cmd, uint16_t offset, const struct location *loc)
 void nft_cmd_expand(struct cmd *cmd)
 {
 	struct list_head new_cmds;
-	struct set *set, *newset;
 	struct flowtable *ft;
 	struct table *table;
 	struct chain *chain;
 	struct rule *rule;
+	struct set *set;
 	struct obj *obj;
 	struct cmd *new;
 	struct handle h;
@@ -1356,14 +1356,13 @@ void nft_cmd_expand(struct cmd *cmd)
 	case CMD_OBJ_SET:
 	case CMD_OBJ_MAP:
 		set = cmd->set;
+		if (!set->init)
+			break;
+
 		memset(&h, 0, sizeof(h));
 		handle_merge(&h, &set->handle);
-		newset = set_clone(set);
-		newset->handle.set_id = set->handle.set_id;
-		newset->init = set->init;
-		set->init = NULL;
 		new = cmd_alloc(CMD_ADD, CMD_OBJ_SETELEMS, &h,
-				&set->location, newset);
+				&set->location, set_get(set));
 		list_add(&new->list, &cmd->list);
 		break;
 	default:
@@ -1461,7 +1460,7 @@ void cmd_free(struct cmd *cmd)
 #include <netlink.h>
 #include <mnl.h>
 
-static int __do_add_setelems(struct netlink_ctx *ctx, struct set *set,
+static int __do_add_elements(struct netlink_ctx *ctx, struct set *set,
 			     struct expr *expr, uint32_t flags)
 {
 	expr->set_flags |= set->flags;
@@ -1481,7 +1480,7 @@ static int __do_add_setelems(struct netlink_ctx *ctx, struct set *set,
 	return 0;
 }
 
-static int do_add_setelems(struct netlink_ctx *ctx, struct cmd *cmd,
+static int do_add_elements(struct netlink_ctx *ctx, struct cmd *cmd,
 			   uint32_t flags)
 {
 	struct expr *init = cmd->expr;
@@ -1493,27 +1492,35 @@ static int do_add_setelems(struct netlink_ctx *ctx, struct cmd *cmd,
 			     &ctx->nft->output) < 0)
 		return -1;
 
-	return __do_add_setelems(ctx, set, init, flags);
+	return __do_add_elements(ctx, set, init, flags);
+}
+
+static int do_add_setelems(struct netlink_ctx *ctx, struct cmd *cmd,
+			   uint32_t flags)
+{
+	struct set *set = cmd->set;
+
+	return __do_add_elements(ctx, set, set->init, flags);
 }
 
 static int do_add_set(struct netlink_ctx *ctx, struct cmd *cmd,
-		      uint32_t flags, bool add)
+		      uint32_t flags)
 {
 	struct set *set = cmd->set;
 
 	if (set->init != NULL) {
+		/* Update set->init->size (NFTNL_SET_DESC_SIZE) before adding
+		 * the set to the kernel. Calling this from do_add_setelems()
+		 * comes too late which might result in spurious ENFILE errors.
+		 */
 		if (set_is_non_concat_range(set) &&
 		    set_to_intervals(ctx->msgs, set, set->init, true,
 				     ctx->nft->debug_mask, set->automerge,
 				     &ctx->nft->output) < 0)
 			return -1;
 	}
-	if (add && mnl_nft_set_add(ctx, cmd, flags) < 0)
-		return -1;
-	if (set->init != NULL) {
-		return __do_add_setelems(ctx, set, set->init, flags);
-	}
-	return 0;
+
+	return mnl_nft_set_add(ctx, cmd, flags);
 }
 
 static int do_command_add(struct netlink_ctx *ctx, struct cmd *cmd, bool excl)
@@ -1531,11 +1538,11 @@ static int do_command_add(struct netlink_ctx *ctx, struct cmd *cmd, bool excl)
 	case CMD_OBJ_RULE:
 		return mnl_nft_rule_add(ctx, cmd, flags | NLM_F_APPEND);
 	case CMD_OBJ_SET:
-		return do_add_set(ctx, cmd, flags, true);
+		return do_add_set(ctx, cmd, flags);
 	case CMD_OBJ_SETELEMS:
-		return do_add_set(ctx, cmd, flags, false);
-	case CMD_OBJ_ELEMENTS:
 		return do_add_setelems(ctx, cmd, flags);
+	case CMD_OBJ_ELEMENTS:
+		return do_add_elements(ctx, cmd, flags);
 	case CMD_OBJ_COUNTER:
 	case CMD_OBJ_QUOTA:
 	case CMD_OBJ_CT_HELPER:
