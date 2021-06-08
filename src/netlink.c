@@ -517,6 +517,14 @@ static int chain_parse_udata_cb(const struct nftnl_udata *attr, void *data)
 	return 0;
 }
 
+static int qsort_device_cmp(const void *a, const void *b)
+{
+	const char **x = (const char **)a;
+	const char **y = (const char **)b;
+
+	return strcmp(*x, *y);
+}
+
 struct chain *netlink_delinearize_chain(struct netlink_ctx *ctx,
 					const struct nftnl_chain *nlc)
 {
@@ -580,6 +588,11 @@ struct chain *netlink_delinearize_chain(struct netlink_ctx *ctx,
 			chain->dev_array_len = len;
 		}
 		chain->flags        |= CHAIN_F_BASECHAIN;
+
+		if (chain->dev_array_len) {
+			qsort(chain->dev_array, chain->dev_array_len,
+			      sizeof(char *), qsort_device_cmp);
+		}
 	}
 
 	if (nftnl_chain_is_set(nlc, NFTNL_CHAIN_USERDATA)) {
@@ -1581,6 +1594,11 @@ netlink_delinearize_flowtable(struct netlink_ctx *ctx,
 		flowtable->dev_array[i] = xstrdup(dev_array[i]);
 
 	flowtable->dev_array_len = len;
+
+	if (flowtable->dev_array_len) {
+		qsort(flowtable->dev_array, flowtable->dev_array_len,
+		      sizeof(char *), qsort_device_cmp);
+	}
 
 	priority = nftnl_flowtable_get_u32(nlo, NFTNL_FLOWTABLE_PRIO);
 	flowtable->priority.expr =
