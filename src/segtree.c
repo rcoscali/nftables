@@ -435,10 +435,10 @@ static int set_to_segtree(struct list_head *msgs, struct set *set,
 			  struct expr *init, struct seg_tree *tree,
 			  bool add, bool merge)
 {
-	struct elementary_interval *intervals[init->size];
+	struct elementary_interval **intervals;
 	struct expr *i, *next;
 	unsigned int n;
-	int err;
+	int err = 0;
 
 	/* We are updating an existing set with new elements, check if the new
 	 * interval overlaps with any of the existing ones.
@@ -449,6 +449,7 @@ static int set_to_segtree(struct list_head *msgs, struct set *set,
 			return err;
 	}
 
+	intervals = xmalloc_array(init->size, sizeof(intervals[0]));
 	n = expr_to_intervals(init, tree->keylen, intervals);
 
 	list_for_each_entry_safe(i, next, &init->expressions, list) {
@@ -467,10 +468,11 @@ static int set_to_segtree(struct list_head *msgs, struct set *set,
 	for (n = 0; n < init->size; n++) {
 		err = ei_insert(msgs, tree, intervals[n], merge);
 		if (err < 0)
-			return err;
+			break;
 	}
 
-	return 0;
+	xfree(intervals);
+	return err;
 }
 
 static bool segtree_needs_first_segment(const struct set *set,
