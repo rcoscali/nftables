@@ -599,6 +599,7 @@ struct chain *netlink_delinearize_chain(struct netlink_ctx *ctx,
 		udata = nftnl_chain_get_data(nlc, NFTNL_CHAIN_USERDATA, &ulen);
 		if (nftnl_udata_parse(udata, ulen, chain_parse_udata_cb, ud) < 0) {
 			netlink_io_error(ctx, NULL, "Cannot parse userdata");
+			chain_free(chain);
 			return NULL;
 		}
 		if (ud[NFTNL_UDATA_CHAIN_COMMENT])
