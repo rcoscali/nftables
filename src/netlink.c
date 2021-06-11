@@ -867,7 +867,7 @@ struct set *netlink_delinearize_set(struct netlink_ctx *ctx,
 		if (ud[NFTNL_UDATA_SET_DATA_TYPEOF])
 			typeof_expr_data = set_make_key(ud[NFTNL_UDATA_SET_DATA_TYPEOF]);
 		if (ud[NFTNL_UDATA_SET_COMMENT])
-			comment = xstrdup(nftnl_udata_get(ud[NFTNL_UDATA_SET_COMMENT]));
+			comment = nftnl_udata_get(ud[NFTNL_UDATA_SET_COMMENT]);
 	}
 
 	key = nftnl_set_get_u32(nls, NFTNL_SET_KEY_TYPE);
@@ -905,7 +905,7 @@ struct set *netlink_delinearize_set(struct netlink_ctx *ctx,
 	set->handle.set.name = xstrdup(nftnl_set_get_str(nls, NFTNL_SET_NAME));
 	set->automerge	   = automerge;
 	if (comment)
-		set->comment = comment;
+		set->comment = xstrdup(comment);
 
 	init_list_head(&set_parse_ctx.stmt_list);
 
