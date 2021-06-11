@@ -647,6 +647,7 @@ struct table *netlink_delinearize_table(struct netlink_ctx *ctx,
 		udata = nftnl_table_get_data(nlt, NFTNL_TABLE_USERDATA, &ulen);
 		if (nftnl_udata_parse(udata, ulen, table_parse_udata_cb, ud) < 0) {
 			netlink_io_error(ctx, NULL, "Cannot parse userdata");
+			table_free(table);
 			return NULL;
 		}
 		if (ud[NFTNL_UDATA_TABLE_COMMENT])
