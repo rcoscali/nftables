@@ -1450,6 +1450,7 @@ struct obj *netlink_delinearize_obj(struct netlink_ctx *ctx,
 		udata = nftnl_obj_get_data(nlo, NFTNL_OBJ_USERDATA, &ulen);
 		if (nftnl_udata_parse(udata, ulen, obj_parse_udata_cb, ud) < 0) {
 			netlink_io_error(ctx, NULL, "Cannot parse userdata");
+			obj_free(obj);
 			return NULL;
 		}
 		if (ud[NFTNL_UDATA_OBJ_COMMENT])
