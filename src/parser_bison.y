@@ -10,6 +10,7 @@
 
 %{
 
+#include <ctype.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <inttypes.h>
