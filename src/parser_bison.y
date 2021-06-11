@@ -327,6 +327,7 @@ int nft_lex(void *, void *, void *);
 %token VLAN			"vlan"
 %token ID			"id"
 %token CFI			"cfi"
+%token DEI			"dei"
 %token PCP			"pcp"
 
 %token ARP			"arp"
@@ -5227,6 +5228,7 @@ vlan_hdr_expr		:	VLAN	vlan_hdr_field	close_scope_vlan
 
 vlan_hdr_field		:	ID		{ $$ = VLANHDR_VID; }
 			|	CFI		{ $$ = VLANHDR_CFI; }
+			|	DEI		{ $$ = VLANHDR_DEI; }
 			|	PCP		{ $$ = VLANHDR_PCP; }
 			|	TYPE		{ $$ = VLANHDR_TYPE; }
 			;

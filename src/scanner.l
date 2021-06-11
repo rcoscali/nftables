@@ -429,6 +429,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "id"			{ return ID; }
 <SCANSTATE_VLAN>{
 	"cfi"		{ return CFI; }
+	"dei"		{ return DEI; }
 	"pcp"		{ return PCP; }
 }
 "8021ad"		{ yylval->string = xstrdup(yytext); return STRING; }

@@ -30,7 +30,7 @@
     }
 ]
 
-# vlan id 4094 vlan cfi 0
+# vlan id 4094 vlan dei 0
 [
     {
         "match": {
@@ -48,7 +48,7 @@
         "match": {
             "left": {
                 "payload": {
-                    "field": "cfi",
+                    "field": "dei",
                     "protocol": "vlan"
                 }
             },
@@ -58,7 +58,7 @@
     }
 ]
 
-# vlan id 4094 vlan cfi != 1
+# vlan id 4094 vlan dei != 1
 [
     {
         "match": {
@@ -76,7 +76,7 @@
         "match": {
             "left": {
                 "payload": {
-                    "field": "cfi",
+                    "field": "dei",
                     "protocol": "vlan"
                 }
             },
@@ -86,7 +86,7 @@
     }
 ]
 
-# vlan id 4094 vlan cfi 1
+# vlan id 4094 vlan dei 1
 [
     {
         "match": {
@@ -104,7 +104,7 @@
         "match": {
             "left": {
                 "payload": {
-                    "field": "cfi",
+                    "field": "dei",
                     "protocol": "vlan"
                 }
             },
@@ -114,7 +114,7 @@
     }
 ]
 
-# vlan id 4094 vlan cfi 1 vlan pcp 7
+# vlan id 4094 vlan dei 1 vlan pcp 7
 [
     {
         "match": {
@@ -132,7 +132,7 @@
         "match": {
             "left": {
                 "payload": {
-                    "field": "cfi",
+                    "field": "dei",
                     "protocol": "vlan"
                 }
             },
@@ -154,7 +154,7 @@
     }
 ]
 
-# vlan id 4094 vlan cfi 1 vlan pcp 3
+# vlan id 4094 vlan dei 1 vlan pcp 3
 [
     {
         "match": {
@@ -172,7 +172,7 @@
         "match": {
             "left": {
                 "payload": {
-                    "field": "cfi",
+                    "field": "dei",
                     "protocol": "vlan"
                 }
             },
@@ -226,7 +226,7 @@
     }
 ]
 
-# ether type vlan vlan id 4094 vlan cfi 0
+# ether type vlan vlan id 4094 vlan dei 0
 [
     {
         "match": {
@@ -244,7 +244,7 @@
         "match": {
             "left": {
                 "payload": {
-                    "field": "cfi",
+                    "field": "dei",
                     "protocol": "vlan"
                 }
             },
@@ -254,7 +254,7 @@
     }
 ]
 
-# ether type vlan vlan id 4094 vlan cfi 1
+# ether type vlan vlan id 4094 vlan dei 1
 [
     {
         "match": {
@@ -272,7 +272,7 @@
         "match": {
             "left": {
                 "payload": {
-                    "field": "cfi",
+                    "field": "dei",
                     "protocol": "vlan"
                 }
             },

@@ -21,7 +21,7 @@ ether_type
 VLAN HEADER EXPRESSION
 ~~~~~~~~~~~~~~~~~~~~~~
 [verse]
-*vlan* {*id* | *cfi* | *pcp* | *type*}
+*vlan* {*id* | *dei* | *pcp* | *type*}
 
 .VLAN header expression
 [options="header"]
@@ -30,8 +30,8 @@ VLAN HEADER EXPRESSION
 |id|
 VLAN ID (VID) |
 integer (12 bit)
-|cfi|
-Canonical Format Indicator|
+|dei|
+Drop Eligible Indicator|
 integer (1 bit)
 |pcp|
 Priority code point|
