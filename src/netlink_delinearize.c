@@ -1733,9 +1733,8 @@ void expr_handler_init(void)
 	unsigned int i;
 	uint32_t hash;
 
-	expr_handle_ht = calloc(NFT_EXPR_HSIZE, sizeof(expr_handle_ht));
-	if (!expr_handle_ht)
-		memory_allocation_error();
+	expr_handle_ht = xmalloc_array(NFT_EXPR_HSIZE,
+				       sizeof(expr_handle_ht[0]));
 
 	for (i = 0; i < array_size(netlink_parsers); i++) {
 		hash = djb_hash(netlink_parsers[i].name) % NFT_EXPR_HSIZE;
