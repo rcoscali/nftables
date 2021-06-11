@@ -708,7 +708,6 @@ json_t *exthdr_expr_json(const struct expr *expr, struct output_ctx *octx)
 					 "base", expr->exthdr.raw_type,
 					 "offset", expr->exthdr.offset,
 					 "len", expr->len);
-			is_exists = false;
 		}
 
 		return json_pack("{s:o}", "tcp option", root);
