@@ -3781,15 +3781,16 @@ static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 	struct stmt *stmt;
 	const char *type;
 
-	table = table_cache_find(&ctx->nft->cache.table_cache,
-				 ctx->cmd->handle.table.name,
-				 ctx->cmd->handle.family);
-	if (table == NULL)
-		return table_not_found(ctx);
+	if (!(set->flags & NFT_SET_ANONYMOUS)) {
+		table = table_cache_find(&ctx->nft->cache.table_cache,
+					 set->handle.table.name,
+					 set->handle.family);
+		if (table == NULL)
+			return table_not_found(ctx);
 
-	if (!(set->flags & NFT_SET_ANONYMOUS) &&
-	    !set_cache_find(table, set->handle.set.name))
-		set_cache_add(set_get(set), table);
+		if (!set_cache_find(table, set->handle.set.name))
+			set_cache_add(set_get(set), table);
+	}
 
 	if (!(set->flags & NFT_SET_INTERVAL) && set->automerge)
 		return set_error(ctx, set, "auto-merge only works with interval sets");

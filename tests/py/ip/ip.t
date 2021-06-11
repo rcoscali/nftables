@@ -123,3 +123,5 @@ iif "lo" ip protocol set 1;ok
 
 iif "lo" ip dscp set af23;ok
 iif "lo" ip dscp set cs0;ok
+
+ip saddr . ip daddr { 192.0.2.1 . 10.0.0.1-10.0.0.2 };ok
