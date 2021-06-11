@@ -4146,6 +4146,7 @@ static uint32_t str2hooknum(uint32_t family, const char *hook)
 	case NFPROTO_INET:
 		if (!strcmp(hook, "ingress"))
 			return NF_INET_INGRESS;
+		/* fall through */
 	case NFPROTO_IPV4:
 	case NFPROTO_BRIDGE:
 	case NFPROTO_IPV6:
