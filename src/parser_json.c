@@ -603,11 +603,11 @@ static struct expr *json_parse_tcp_option_expr(struct json_ctx *ctx,
 			"base", &kind, "offset", &offset, "len", &len)) {
 		uint32_t flag = 0;
 
-		expr = tcpopt_expr_alloc(int_loc, kind,
-					 TCPOPT_COMMON_KIND);
-
 		if (kind < 0 || kind > 255)
 			return NULL;
+
+		expr = tcpopt_expr_alloc(int_loc, kind,
+					 TCPOPT_COMMON_KIND);
 
 		if (offset == TCPOPT_COMMON_KIND && len == 8)
 			flag = NFT_EXTHDR_F_PRESENT;
