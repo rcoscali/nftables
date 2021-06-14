@@ -3867,9 +3867,6 @@ static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 	}
 	ctx->set = NULL;
 
-	if (set_cache_find(table, set->handle.set.name) == NULL)
-		set_cache_add(set_get(set), table);
-
 	return 0;
 }
 
