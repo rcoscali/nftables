@@ -1045,7 +1045,7 @@ static void set_key_expression(struct netlink_ctx *ctx,
 	struct nftnl_udata *nest1, *nest2;
 
 	if (expr->flags & EXPR_F_CONSTANT ||
-	    set_flags & NFT_SET_ANONYMOUS ||
+	    set_is_anonymous(set_flags) ||
 	    !expr_ops(expr)->build_udata)
 		return;
 

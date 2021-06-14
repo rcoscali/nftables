@@ -1591,7 +1591,7 @@ static void netlink_parse_dynset(struct netlink_parse_ctx *ctx,
 				 &stmt->map.stmt_list);
 	} else {
 		if (!list_empty(&dynset_parse_ctx.stmt_list) &&
-		    set->flags & NFT_SET_ANONYMOUS) {
+		    set_is_anonymous(set->flags)) {
 			stmt = meter_stmt_alloc(loc);
 			stmt->meter.set  = set_ref_expr_alloc(loc, set);
 			stmt->meter.key  = expr;
