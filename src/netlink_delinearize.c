@@ -1733,7 +1733,7 @@ void expr_handler_init(void)
 	unsigned int i;
 	uint32_t hash;
 
-	expr_handle_ht = xmalloc_array(NFT_EXPR_HSIZE,
+	expr_handle_ht = xzalloc_array(NFT_EXPR_HSIZE,
 				       sizeof(expr_handle_ht[0]));
 
 	for (i = 0; i < array_size(netlink_parsers); i++) {
