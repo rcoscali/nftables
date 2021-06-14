@@ -58,6 +58,34 @@
     }
 ]
 
+# vlan id 4094 vlan dei 1
+[
+    {
+        "match": {
+            "left": {
+                "payload": {
+                    "field": "id",
+                    "protocol": "vlan"
+                }
+            },
+	    "op": "==",
+            "right": 4094
+        }
+    },
+    {
+        "match": {
+            "left": {
+                "payload": {
+                    "field": "dei",
+                    "protocol": "vlan"
+                }
+            },
+	    "op": "==",
+            "right": 1
+        }
+    }
+]
+
 # vlan id 4094 vlan dei != 1
 [
     {
@@ -86,7 +114,7 @@
     }
 ]
 
-# vlan id 4094 vlan dei 1
+# vlan id 4094 vlan cfi 1
 [
     {
         "match": {
