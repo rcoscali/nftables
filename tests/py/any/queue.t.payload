@@ -30,3 +30,19 @@ ip test-ip4 output
 ip test-ip4 output
   [ queue num 4-5 bypass ]
 
+# queue to symhash mod 65536
+ip
+  [ hash reg 1 = symhash() % mod 65536 ]
+  [ queue sreg_qnum 1 ]
+
+# queue to jhash oif . meta mark mod 32
+ip
+  [ meta load oif => reg 2 ]
+  [ meta load mark => reg 13 ]
+  [ hash reg 1 = jhash(reg 2, 8, 0x0) % mod 32 ]
+  [ queue sreg_qnum 1 ]
+
+# queue flags bypass to numgen inc mod 65536
+ip
+  [ numgen reg 1 = inc mod 65536 ]
+  [ queue sreg_qnum 1 bypass ]
