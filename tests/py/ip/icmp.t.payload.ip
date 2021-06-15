@@ -413,6 +413,15 @@ ip
   [ payload load 4b @ transport header + 4 => reg 1 ]
   [ cmp eq reg 1 0x02000100 ]
 
+# icmp type echo-reply icmp id 1
+ip
+  [ meta load l4proto => reg 1 ]
+  [ cmp eq reg 1 0x00000001 ]
+  [ payload load 1b @ transport header + 0 => reg 1 ]
+  [ cmp eq reg 1 0x00000000 ]
+  [ payload load 2b @ transport header + 4 => reg 1 ]
+  [ cmp eq reg 1 0x00000100 ]
+
 # icmp mtu 33
 ip test-ip4 input
   [ meta load l4proto => reg 1 ]

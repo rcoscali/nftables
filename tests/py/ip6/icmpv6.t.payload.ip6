@@ -407,6 +407,27 @@ ip6 test-ip6 input
   [ payload load 2b @ transport header + 4 => reg 1 ]
   [ lookup reg 1 set __set%d 0x1 ]
 
+# icmpv6 id 1
+__set%d test-ip6 3 size 2
+__set%d test-ip6 0
+	element 00000080  : 0 [end]	element 00000081  : 0 [end]
+ip6
+  [ meta load l4proto => reg 1 ]
+  [ cmp eq reg 1 0x0000003a ]
+  [ payload load 1b @ transport header + 0 => reg 1 ]
+  [ lookup reg 1 set __set%d ]
+  [ payload load 2b @ transport header + 4 => reg 1 ]
+  [ cmp eq reg 1 0x00000100 ]
+
+# icmpv6 type echo-reply icmpv6 id 65534
+ip6
+  [ meta load l4proto => reg 1 ]
+  [ cmp eq reg 1 0x0000003a ]
+  [ payload load 1b @ transport header + 0 => reg 1 ]
+  [ cmp eq reg 1 0x00000081 ]
+  [ payload load 2b @ transport header + 4 => reg 1 ]
+  [ cmp eq reg 1 0x0000feff ]
+
 # icmpv6 sequence 2
 __set%d test-ip6 3
 __set%d test-ip6 0
