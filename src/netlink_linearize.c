@@ -1334,21 +1334,39 @@ static void netlink_gen_fwd_stmt(struct netlink_linearize_ctx *ctx,
 static void netlink_gen_queue_stmt(struct netlink_linearize_ctx *ctx,
 				 const struct stmt *stmt)
 {
+	enum nft_registers sreg = 0;
 	struct nftnl_expr *nle;
 	uint16_t total_queues;
+	struct expr *expr;
 	mpz_t low, high;
 
 	mpz_init2(low, 16);
 	mpz_init2(high, 16);
-	if (stmt->queue.queue != NULL) {
-		range_expr_value_low(low, stmt->queue.queue);
-		range_expr_value_high(high, stmt->queue.queue);
+
+	expr = stmt->queue.queue;
+
+	if (expr) {
+		if (expr->etype == EXPR_RANGE || expr->etype == EXPR_VALUE) {
+			range_expr_value_low(low, stmt->queue.queue);
+			range_expr_value_high(high, stmt->queue.queue);
+		} else {
+			sreg = get_register(ctx, expr);
+			netlink_gen_expr(ctx, expr, sreg);
+			release_register(ctx, expr);
+		}
 	}
+
 	total_queues = mpz_get_uint16(high) - mpz_get_uint16(low) + 1;
 
 	nle = alloc_nft_expr("queue");
-	nftnl_expr_set_u16(nle, NFTNL_EXPR_QUEUE_NUM, mpz_get_uint16(low));
-	nftnl_expr_set_u16(nle, NFTNL_EXPR_QUEUE_TOTAL, total_queues);
+
+	if (sreg) {
+		netlink_put_register(nle, NFTNL_EXPR_QUEUE_SREG_QNUM, sreg);
+	} else {
+		nftnl_expr_set_u16(nle, NFTNL_EXPR_QUEUE_NUM, mpz_get_uint16(low));
+		nftnl_expr_set_u16(nle, NFTNL_EXPR_QUEUE_TOTAL, total_queues);
+	}
+
 	if (stmt->queue.flags)
 		nftnl_expr_set_u16(nle, NFTNL_EXPR_QUEUE_FLAGS,
 				   stmt->queue.flags);

@@ -1019,7 +1019,6 @@ static int expr_evaluate_range(struct eval_ctx *ctx, struct expr **expr)
 	if (mpz_cmp(left->value, right->value) >= 0)
 		return expr_error(ctx->msgs, range,
 				  "Range has zero or negative size");
-
 	datatype_set(range, left->dtype);
 	range->flags |= EXPR_F_CONSTANT;
 	return 0;
@@ -3446,14 +3445,16 @@ static int stmt_evaluate_queue(struct eval_ctx *ctx, struct stmt *stmt)
 				      BYTEORDER_HOST_ENDIAN,
 				      &stmt->queue.queue) < 0)
 			return -1;
-		if (!expr_is_constant(stmt->queue.queue))
-			return expr_error(ctx->msgs, stmt->queue.queue,
-					  "queue number is not constant");
-		if (stmt->queue.queue->etype != EXPR_RANGE &&
-		    (stmt->queue.flags & NFT_QUEUE_FLAG_CPU_FANOUT))
+
+		if ((stmt->queue.flags & NFT_QUEUE_FLAG_CPU_FANOUT) &&
+		    stmt->queue.queue->etype != EXPR_RANGE)
 			return expr_error(ctx->msgs, stmt->queue.queue,
 					  "fanout requires a range to be "
 					  "specified");
+
+		if (ctx->ectx.maxval > USHRT_MAX)
+			return expr_error(ctx->msgs, stmt->queue.queue,
+					  "queue expression max value exceeds %u", USHRT_MAX);
 	}
 	stmt->flags |= STMT_F_TERMINAL;
 	return 0;

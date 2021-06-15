@@ -1467,19 +1467,32 @@ static void netlink_parse_queue(struct netlink_parse_ctx *ctx,
 			      const struct location *loc,
 			      const struct nftnl_expr *nle)
 {
-	uint16_t num, total, flags;
-	struct expr *expr, *high;
+	struct expr *expr;
+	uint16_t flags;
 
-	num   = nftnl_expr_get_u16(nle, NFTNL_EXPR_QUEUE_NUM);
-	total = nftnl_expr_get_u16(nle, NFTNL_EXPR_QUEUE_TOTAL);
+	if (nftnl_expr_is_set(nle, NFTNL_EXPR_QUEUE_SREG_QNUM)) {
+		enum nft_registers reg = netlink_parse_register(nle, NFTNL_EXPR_QUEUE_SREG_QNUM);
 
-	expr = constant_expr_alloc(loc, &integer_type,
-				   BYTEORDER_HOST_ENDIAN, 16, &num);
-	if (total > 1) {
-		total += num - 1;
-		high = constant_expr_alloc(loc, &integer_type,
+		expr = netlink_get_register(ctx, loc, reg);
+		if (!expr) {
+			netlink_error(ctx, loc, "queue statement has no sreg expression");
+			return;
+		}
+	} else {
+		uint16_t total = nftnl_expr_get_u16(nle, NFTNL_EXPR_QUEUE_TOTAL);
+		uint16_t num = nftnl_expr_get_u16(nle, NFTNL_EXPR_QUEUE_NUM);
+
+		expr = constant_expr_alloc(loc, &integer_type,
+					   BYTEORDER_HOST_ENDIAN, 16, &num);
+
+		if (total > 1) {
+			struct expr *high;
+
+			total += num - 1;
+			high = constant_expr_alloc(loc, &integer_type,
 					   BYTEORDER_HOST_ENDIAN, 16, &total);
-		expr = range_expr_alloc(loc, expr, high);
+			expr = range_expr_alloc(loc, expr, high);
+		}
 	}
 
 	flags = nftnl_expr_get_u16(nle, NFTNL_EXPR_QUEUE_FLAGS);
@@ -2852,6 +2865,18 @@ static void stmt_payload_postprocess(struct rule_pp_ctx *ctx)
 	expr_postprocess(ctx, &stmt->payload.val);
 }
 
+static void stmt_queue_postprocess(struct rule_pp_ctx *ctx)
+{
+	struct stmt *stmt = ctx->stmt;
+	struct expr *e = stmt->queue.queue;
+
+	if (e == NULL || e->etype == EXPR_VALUE ||
+	    e->etype == EXPR_RANGE)
+		return;
+
+	expr_postprocess(ctx, &stmt->queue.queue);
+}
+
 /*
  * We can only remove payload dependencies if they occur without
  * a statement with side effects in between.
@@ -2955,6 +2980,9 @@ static void rule_parse_postprocess(struct netlink_parse_ctx *ctx, struct rule *r
 			break;
 		case STMT_OBJREF:
 			expr_postprocess(&rctx, &stmt->objref.expr);
+			break;
+		case STMT_QUEUE:
+			stmt_queue_postprocess(&rctx);
 			break;
 		default:
 			break;

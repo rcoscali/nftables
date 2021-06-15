@@ -591,11 +591,15 @@ for details.
 ____
 *queue* [*flags* 'QUEUE_FLAGS'] [*num* 'queue_number']
 *queue* [*flags* 'QUEUE_FLAGS'] [*num* 'queue_number_from' - 'queue_number_to']
+*queue* [*flags* 'QUEUE_FLAGS'] [*to* 'QUEUE_EXPRESSION' ]
 
 'QUEUE_FLAGS' := 'QUEUE_FLAG' [*,* 'QUEUE_FLAGS']
 'QUEUE_FLAG'  := *bypass* | *fanout*
+'QUEUE_EXPRESSION' := *numgen* | *hash* | *symhash*
 ____
 
+QUEUE_EXPRESSION can be used to compute a queue number
+at run-time with the hash or numgen expressions.
 
 .queue statement values
 [options="header"]

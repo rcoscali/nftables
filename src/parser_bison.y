@@ -705,8 +705,8 @@ int nft_lex(void *, void *, void *);
 
 %type <stmt>			queue_stmt queue_stmt_alloc	queue_stmt_compat
 %destructor { stmt_free($$); }	queue_stmt queue_stmt_alloc	queue_stmt_compat
-%type <expr>			queue_stmt_expr_simple
-%destructor { expr_free($$); }	queue_stmt_expr_simple
+%type <expr>			queue_stmt_expr_simple queue_stmt_expr
+%destructor { expr_free($$); }	queue_stmt_expr_simple queue_stmt_expr
 %type <val>			queue_stmt_flags queue_stmt_flag
 %type <stmt>			dup_stmt
 %destructor { stmt_free($$); }	dup_stmt
@@ -3739,6 +3739,14 @@ nf_nat_flag		:	RANDOM		{ $$ = NF_NAT_RANGE_PROTO_RANDOM; }
 			;
 
 queue_stmt		:	queue_stmt_compat	close_scope_queue
+			|	QUEUE TO queue_stmt_expr	close_scope_queue
+			{
+				$$ = queue_stmt_alloc(&@$, $3, 0);
+			}
+			|	QUEUE FLAGS	queue_stmt_flags TO queue_stmt_expr close_scope_queue
+			{
+				$$ = queue_stmt_alloc(&@$, $5, $3);
+			}
 			|	QUEUE	FLAGS	queue_stmt_flags QUEUENUM queue_stmt_expr_simple close_scope_queue
 			{
 				$$ = queue_stmt_alloc(&@$, $5, $3);
@@ -3775,6 +3783,10 @@ queue_stmt_arg		:	QUEUENUM	queue_stmt_expr_simple
 
 queue_stmt_expr_simple	:	integer_expr
 			|	range_rhs_expr
+			;
+
+queue_stmt_expr		:	numgen_expr
+			|	hash_expr
 			;
 
 queue_stmt_flags	:	queue_stmt_flag
