@@ -522,9 +522,15 @@ static const struct stmt_ops queue_stmt_ops = {
 	.destroy	= queue_stmt_destroy,
 };
 
-struct stmt *queue_stmt_alloc(const struct location *loc)
+struct stmt *queue_stmt_alloc(const struct location *loc, struct expr *e, uint16_t flags)
 {
-	return stmt_alloc(loc, &queue_stmt_ops);
+	struct stmt *stmt;
+
+	stmt = stmt_alloc(loc, &queue_stmt_ops);
+	stmt->queue.queue = e;
+	stmt->queue.flags = flags;
+
+	return stmt;
 }
 
 static void quota_stmt_print(const struct stmt *stmt, struct output_ctx *octx)

@@ -2559,14 +2559,14 @@ static int queue_flag_parse(const char *name, uint16_t *flags)
 static struct stmt *json_parse_queue_stmt(struct json_ctx *ctx,
 					  const char *key, json_t *value)
 {
-	struct stmt *stmt = queue_stmt_alloc(int_loc);
+	struct expr *qexpr = NULL;
+	uint16_t flags = 0;
 	json_t *tmp;
 
 	if (!json_unpack(value, "{s:o}", "num", &tmp)) {
-		stmt->queue.queue = json_parse_stmt_expr(ctx, tmp);
-		if (!stmt->queue.queue) {
+		qexpr = json_parse_stmt_expr(ctx, tmp);
+		if (!qexpr) {
 			json_error(ctx, "Invalid queue num.");
-			stmt_free(stmt);
 			return NULL;
 		}
 	}
@@ -2578,15 +2578,15 @@ static struct stmt *json_parse_queue_stmt(struct json_ctx *ctx,
 		if (json_is_string(tmp)) {
 			flag = json_string_value(tmp);
 
-			if (queue_flag_parse(flag, &stmt->queue.flags)) {
+			if (queue_flag_parse(flag, &flags)) {
 				json_error(ctx, "Invalid queue flag '%s'.",
 					   flag);
-				stmt_free(stmt);
+				expr_free(qexpr);
 				return NULL;
 			}
 		} else if (!json_is_array(tmp)) {
 			json_error(ctx, "Unexpected object type in queue flags.");
-			stmt_free(stmt);
+			expr_free(qexpr);
 			return NULL;
 		}
 
@@ -2594,20 +2594,20 @@ static struct stmt *json_parse_queue_stmt(struct json_ctx *ctx,
 			if (!json_is_string(val)) {
 				json_error(ctx, "Invalid object in queue flag array at index %zu.",
 					   index);
-				stmt_free(stmt);
+				expr_free(qexpr);
 				return NULL;
 			}
 			flag = json_string_value(val);
 
-			if (queue_flag_parse(flag, &stmt->queue.flags)) {
+			if (queue_flag_parse(flag, &flags)) {
 				json_error(ctx, "Invalid queue flag '%s'.",
 					   flag);
-				stmt_free(stmt);
+				expr_free(qexpr);
 				return NULL;
 			}
 		}
 	}
-	return stmt;
+	return queue_stmt_alloc(int_loc, qexpr, flags);
 }
 
 static struct stmt *json_parse_connlimit_stmt(struct json_ctx *ctx,

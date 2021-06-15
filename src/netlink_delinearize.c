@@ -1467,9 +1467,8 @@ static void netlink_parse_queue(struct netlink_parse_ctx *ctx,
 			      const struct location *loc,
 			      const struct nftnl_expr *nle)
 {
+	uint16_t num, total, flags;
 	struct expr *expr, *high;
-	struct stmt *stmt;
-	uint16_t num, total;
 
 	num   = nftnl_expr_get_u16(nle, NFTNL_EXPR_QUEUE_NUM);
 	total = nftnl_expr_get_u16(nle, NFTNL_EXPR_QUEUE_TOTAL);
@@ -1483,11 +1482,8 @@ static void netlink_parse_queue(struct netlink_parse_ctx *ctx,
 		expr = range_expr_alloc(loc, expr, high);
 	}
 
-	stmt = queue_stmt_alloc(loc);
-	stmt->queue.queue = expr;
-	stmt->queue.flags = nftnl_expr_get_u16(nle, NFTNL_EXPR_QUEUE_FLAGS);
-
-	ctx->stmt = stmt;
+	flags = nftnl_expr_get_u16(nle, NFTNL_EXPR_QUEUE_FLAGS);
+	ctx->stmt = queue_stmt_alloc(loc, expr, flags);
 }
 
 struct dynset_parse_ctx {

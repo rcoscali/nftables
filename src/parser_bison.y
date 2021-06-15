@@ -3744,7 +3744,7 @@ queue_stmt		:	queue_stmt_alloc	close_scope_queue
 
 queue_stmt_alloc	:	QUEUE
 			{
-				$$ = queue_stmt_alloc(&@$);
+				$$ = queue_stmt_alloc(&@$, NULL, 0);
 			}
 			;
 
