@@ -1819,9 +1819,6 @@ static void payload_match_expand(struct rule_pp_ctx *ctx,
 	enum proto_bases base = left->payload.base;
 	bool stacked;
 
-	if (ctx->pdctx.icmp_type)
-		ctx->pctx.th_dep.icmp.type = ctx->pdctx.icmp_type;
-
 	payload_expr_expand(&list, left, &ctx->pctx);
 
 	list_for_each_entry(left, &list, list) {
@@ -1868,6 +1865,58 @@ static void payload_match_expand(struct rule_pp_ctx *ctx,
 	ctx->stmt = NULL;
 }
 
+static void payload_icmp_check(struct rule_pp_ctx *rctx, struct expr *expr, const struct expr *value)
+{
+	const struct proto_hdr_template *tmpl;
+	const struct proto_desc *desc;
+	uint8_t icmp_type;
+	unsigned int i;
+
+	assert(expr->etype == EXPR_PAYLOAD);
+	assert(value->etype == EXPR_VALUE);
+
+	if (expr->payload.base != PROTO_BASE_TRANSPORT_HDR)
+		return;
+
+	/* icmp(v6) type is 8 bit, if value is smaller or larger, this is not
+	 * a protocol dependency.
+	 */
+	if (expr->len != 8 || value->len != 8 || rctx->pctx.th_dep.icmp.type)
+		return;
+
+	desc = rctx->pctx.protocol[expr->payload.base].desc;
+	if (desc == NULL)
+		return;
+
+	/* not icmp? ignore. */
+	if (desc != &proto_icmp && desc != &proto_icmp6)
+		return;
+
+	assert(desc->base == expr->payload.base);
+
+	icmp_type = mpz_get_uint8(value->value);
+
+	for (i = 1; i < array_size(desc->templates); i++) {
+		tmpl = &desc->templates[i];
+
+		if (tmpl->len == 0)
+			return;
+
+		if (tmpl->offset != expr->payload.offset ||
+		    tmpl->len != expr->len)
+			continue;
+
+		/* Matches but doesn't load a protocol key -> ignore. */
+		if (desc->protocol_key != i)
+			return;
+
+		expr->payload.desc = desc;
+		expr->payload.tmpl = tmpl;
+		rctx->pctx.th_dep.icmp.type = icmp_type;
+		return;
+	}
+}
+
 static void payload_match_postprocess(struct rule_pp_ctx *ctx,
 				      struct expr *expr,
 				      struct expr *payload)
@@ -1883,6 +1932,19 @@ static void payload_match_postprocess(struct rule_pp_ctx *ctx,
 		if (expr->right->etype == EXPR_VALUE) {
 			payload_match_expand(ctx, expr, payload);
 			break;
+		} else if (expr->right->etype == EXPR_SET_REF) {
+			struct set *set = expr->right->set;
+
+			if (set_is_anonymous(set->flags) &&
+			    !list_empty(&set->init->expressions)) {
+				struct expr *elem;
+
+				elem = list_first_entry(&set->init->expressions, struct expr, list);
+
+				if (elem->etype == EXPR_SET_ELEM &&
+				    elem->key->etype == EXPR_VALUE)
+					payload_icmp_check(ctx, payload, elem->key);
+			}
 		}
 		/* Fall through */
 	default:
