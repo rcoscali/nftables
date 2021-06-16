@@ -3787,6 +3787,7 @@ queue_stmt_expr_simple	:	integer_expr
 
 queue_stmt_expr		:	numgen_expr
 			|	hash_expr
+			|	map_expr
 			;
 
 queue_stmt_flags	:	queue_stmt_flag

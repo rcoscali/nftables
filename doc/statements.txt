@@ -595,11 +595,13 @@ ____
 
 'QUEUE_FLAGS' := 'QUEUE_FLAG' [*,* 'QUEUE_FLAGS']
 'QUEUE_FLAG'  := *bypass* | *fanout*
-'QUEUE_EXPRESSION' := *numgen* | *hash* | *symhash*
+'QUEUE_EXPRESSION' := *numgen* | *hash* | *symhash* | *MAP STATEMENT*
 ____
 
 QUEUE_EXPRESSION can be used to compute a queue number
-at run-time with the hash or numgen expressions.
+at run-time with the hash or numgen expressions. It also
+allows to use the map statement to assign fixed queue numbers
+based on external inputs such as the source ip address or interface names.
 
 .queue statement values
 [options="header"]

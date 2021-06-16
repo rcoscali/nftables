@@ -25,3 +25,4 @@ queue flags bypass to numgen inc mod 65536;ok
 queue to jhash oif . meta mark mod 32;ok
 queue to oif;fail
 queue num oif;fail
+queue flags bypass to oifname map { "eth0" : 0, "ppp0" : 2, "eth1" : 2 };ok
