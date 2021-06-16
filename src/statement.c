@@ -493,20 +493,25 @@ struct stmt *limit_stmt_alloc(const struct location *loc)
 
 static void queue_stmt_print(const struct stmt *stmt, struct output_ctx *octx)
 {
-	const char *delim = " ";
+	struct expr *e = stmt->queue.queue;
+	const char *delim = " flags ";
 
 	nft_print(octx, "queue");
-	if (stmt->queue.queue != NULL) {
-		nft_print(octx, " num ");
-		expr_print(stmt->queue.queue, octx);
-	}
+
 	if (stmt->queue.flags & NFT_QUEUE_FLAG_BYPASS) {
 		nft_print(octx, "%sbypass", delim);
 		delim = ",";
 	}
+
 	if (stmt->queue.flags & NFT_QUEUE_FLAG_CPU_FANOUT)
 		nft_print(octx, "%sfanout", delim);
 
+	if (e) {
+		nft_print(octx, " num ");
+		expr_print(stmt->queue.queue, octx);
+	} else {
+		nft_print(octx, " num 0");
+	}
 }
 
 static void queue_stmt_destroy(struct stmt *stmt)

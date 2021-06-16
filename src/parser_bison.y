@@ -3739,6 +3739,10 @@ nf_nat_flag		:	RANDOM		{ $$ = NF_NAT_RANGE_PROTO_RANDOM; }
 			;
 
 queue_stmt		:	queue_stmt_compat	close_scope_queue
+			|	QUEUE	FLAGS	queue_stmt_flags QUEUENUM queue_stmt_expr_simple close_scope_queue
+			{
+				$$ = queue_stmt_alloc(&@$, $5, $3);
+			}
 			;
 
 queue_stmt_compat	:	queue_stmt_alloc

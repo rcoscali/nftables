@@ -12,7 +12,6 @@ queue num 65535;ok
 queue num 65536;fail
 queue num 2-3;ok
 queue num 1-65535;ok
-- queue num {3, 4, 6};ok
-queue num 4-5 fanout bypass;ok;queue num 4-5 bypass,fanout
-queue num 4-5 fanout;ok
-queue num 4-5 bypass;ok
+queue num 4-5 fanout bypass;ok;queue flags bypass,fanout num 4-5
+queue num 4-5 fanout;ok;queue flags fanout num 4-5
+queue num 4-5 bypass;ok;queue flags bypass num 4-5
