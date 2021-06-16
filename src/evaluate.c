@@ -1414,27 +1414,39 @@ static int expr_evaluate_set_elem(struct eval_ctx *ctx, struct expr **expr)
 	return 0;
 }
 
+static const struct expr *expr_set_elem(const struct expr *expr)
+{
+	if (expr->etype == EXPR_MAPPING)
+		return expr->left;
+
+	return expr;
+}
+
 static int expr_evaluate_set(struct eval_ctx *ctx, struct expr **expr)
 {
 	struct expr *set = *expr, *i, *next;
+	const struct expr *elem;
 
 	list_for_each_entry_safe(i, next, &set->expressions, list) {
 		if (list_member_evaluate(ctx, &i) < 0)
 			return -1;
 
-		if (i->etype == EXPR_SET_ELEM &&
-		    i->key->etype == EXPR_SET_REF)
+		elem = expr_set_elem(i);
+
+		if (elem->etype == EXPR_SET_ELEM &&
+		    elem->key->etype == EXPR_SET_REF)
 			return expr_error(ctx->msgs, i,
 					  "Set reference cannot be part of another set");
 
-		if (i->etype == EXPR_SET_ELEM &&
-		    i->key->etype == EXPR_SET) {
-			struct expr *new = expr_clone(i->key);
+		if (elem->etype == EXPR_SET_ELEM &&
+		    elem->key->etype == EXPR_SET) {
+			struct expr *new = expr_clone(elem->key);
 
-			set->set_flags |= i->key->set_flags;
+			set->set_flags |= elem->key->set_flags;
 			list_replace(&i->list, &new->list);
 			expr_free(i);
 			i = new;
+			elem = expr_set_elem(i);
 		}
 
 		if (!expr_is_constant(i))
@@ -1450,7 +1462,7 @@ static int expr_evaluate_set(struct eval_ctx *ctx, struct expr **expr)
 			expr_free(i);
 		} else if (!expr_is_singleton(i)) {
 			set->set_flags |= NFT_SET_INTERVAL;
-			if (i->key->etype == EXPR_CONCAT)
+			if (elem->key->etype == EXPR_CONCAT)
 				set->set_flags |= NFT_SET_CONCAT;
 		}
 	}
