@@ -1770,8 +1770,6 @@ static int binop_transfer_one(struct eval_ctx *ctx,
 		return 0;
 	}
 
-	expr_get(*right);
-
 	switch (left->op) {
 	case OP_LSHIFT:
 		(*right) = binop_expr_alloc(&(*right)->location, OP_RSHIFT,
