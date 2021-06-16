@@ -125,3 +125,4 @@ iif "lo" ip dscp set af23;ok
 iif "lo" ip dscp set cs0;ok
 
 ip saddr . ip daddr { 192.0.2.1 . 10.0.0.1-10.0.0.2 };ok
+ip saddr . ip daddr vmap { 192.168.5.1-192.168.5.128 . 192.168.6.1-192.168.6.128 : accept };ok

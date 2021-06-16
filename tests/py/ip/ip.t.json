@@ -1635,3 +1635,53 @@
         }
     }
 ]
+
+# ip saddr . ip daddr vmap { 192.168.5.1-192.168.5.128 . 192.168.6.1-192.168.6.128 : accept }
+[
+    {
+        "vmap": {
+            "data": {
+                "set": [
+                    [
+                        {
+                            "concat": [
+                                {
+                                    "range": [
+                                        "192.168.5.1",
+                                        "192.168.5.128"
+                                    ]
+                                },
+                                {
+                                    "range": [
+                                        "192.168.6.1",
+                                        "192.168.6.128"
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "accept": null
+                        }
+                    ]
+                ]
+            },
+            "key": {
+                "concat": [
+                    {
+                        "payload": {
+                            "field": "saddr",
+                            "protocol": "ip"
+                        }
+                    },
+                    {
+                        "payload": {
+                            "field": "daddr",
+                            "protocol": "ip"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+]
+

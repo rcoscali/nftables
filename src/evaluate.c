@@ -1564,6 +1564,14 @@ static int expr_evaluate_map(struct eval_ctx *ctx, struct expr **expr)
 		ctx->set = NULL;
 		map = *expr;
 		map->mappings->set->flags |= map->mappings->set->init->set_flags;
+
+		if (map->mappings->set->flags & NFT_SET_INTERVAL &&
+		    map->map->etype == EXPR_CONCAT) {
+			memcpy(&map->mappings->set->desc.field_len, &map->map->field_len,
+			       sizeof(map->mappings->set->desc.field_len));
+			map->mappings->set->desc.field_count = map->map->field_count;
+			map->mappings->flags |= NFT_SET_CONCAT;
+		}
 		break;
 	case EXPR_SYMBOL:
 		if (expr_evaluate(ctx, &map->mappings) < 0)

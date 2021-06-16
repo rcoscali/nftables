@@ -673,3 +673,14 @@ netdev
   [ payload load 4b @ network header + 16 => reg 9 ]
   [ lookup reg 1 set __set%d ]
 
+# ip saddr . ip daddr vmap { 192.168.5.1-192.168.5.128 . 192.168.6.1-192.168.6.128 : accept }
+__map%d test-netdev 8f size 1
+__map%d test-netdev 0
+        element 0105a8c0 0106a8c0  - 8005a8c0 8006a8c0  : accept 0 [end]
+netdev
+  [ meta load protocol => reg 1 ]
+  [ cmp eq reg 1 0x00000008 ]
+  [ payload load 4b @ network header + 12 => reg 1 ]
+  [ payload load 4b @ network header + 16 => reg 9 ]
+  [ lookup reg 1 set __map%d dreg 0 ]
+
