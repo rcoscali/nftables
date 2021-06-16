@@ -703,10 +703,10 @@ int nft_lex(void *, void *, void *);
 %destructor { stmt_free($$); }	chain_stmt
 %type <val>			chain_stmt_type
 
-%type <stmt>			queue_stmt queue_stmt_alloc
-%destructor { stmt_free($$); }	queue_stmt queue_stmt_alloc
-%type <expr>			queue_stmt_expr
-%destructor { expr_free($$); }	queue_stmt_expr
+%type <stmt>			queue_stmt queue_stmt_alloc	queue_stmt_compat
+%destructor { stmt_free($$); }	queue_stmt queue_stmt_alloc	queue_stmt_compat
+%type <expr>			queue_stmt_expr_simple
+%destructor { expr_free($$); }	queue_stmt_expr_simple
 %type <val>			queue_stmt_flags queue_stmt_flag
 %type <stmt>			dup_stmt
 %destructor { stmt_free($$); }	dup_stmt
@@ -3738,8 +3738,11 @@ nf_nat_flag		:	RANDOM		{ $$ = NF_NAT_RANGE_PROTO_RANDOM; }
 			|	PERSISTENT 	{ $$ = NF_NAT_RANGE_PERSISTENT; }
 			;
 
-queue_stmt		:	queue_stmt_alloc	close_scope_queue
-			|	queue_stmt_alloc	queue_stmt_args	close_scope_queue
+queue_stmt		:	queue_stmt_compat	close_scope_queue
+			;
+
+queue_stmt_compat	:	queue_stmt_alloc
+			|	queue_stmt_alloc	queue_stmt_args
 			;
 
 queue_stmt_alloc	:	QUEUE
@@ -3755,7 +3758,7 @@ queue_stmt_args		:	queue_stmt_arg
 			|	queue_stmt_args	queue_stmt_arg
 			;
 
-queue_stmt_arg		:	QUEUENUM	queue_stmt_expr
+queue_stmt_arg		:	QUEUENUM	queue_stmt_expr_simple
 			{
 				$<stmt>0->queue.queue = $2;
 				$<stmt>0->queue.queue->location = @$;
@@ -3766,7 +3769,7 @@ queue_stmt_arg		:	QUEUENUM	queue_stmt_expr
 			}
 			;
 
-queue_stmt_expr		:	integer_expr
+queue_stmt_expr_simple	:	integer_expr
 			|	range_rhs_expr
 			;
 
