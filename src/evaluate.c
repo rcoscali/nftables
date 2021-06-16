@@ -1677,17 +1677,20 @@ static void expr_dtype_integer_compatible(struct eval_ctx *ctx,
 static int expr_evaluate_numgen(struct eval_ctx *ctx, struct expr **exprp)
 {
 	struct expr *expr = *exprp;
+	unsigned int maxval;
 
 	expr_dtype_integer_compatible(ctx, expr);
 
+	maxval = expr->numgen.mod + expr->numgen.offset - 1;
 	__expr_set_context(&ctx->ectx, expr->dtype, expr->byteorder, expr->len,
-			   expr->numgen.mod - 1);
+			   maxval);
 	return 0;
 }
 
 static int expr_evaluate_hash(struct eval_ctx *ctx, struct expr **exprp)
 {
 	struct expr *expr = *exprp;
+	unsigned int maxval;
 
 	expr_dtype_integer_compatible(ctx, expr);
 
@@ -1700,8 +1703,9 @@ static int expr_evaluate_hash(struct eval_ctx *ctx, struct expr **exprp)
          * expression to be hashed. Since this input is transformed to a 4 bytes
 	 * integer, restore context to the datatype that results from hashing.
 	 */
+	maxval = expr->hash.mod + expr->hash.offset - 1;
 	__expr_set_context(&ctx->ectx, expr->dtype, expr->byteorder, expr->len,
-			   expr->hash.mod - 1);
+			   maxval);
 
 	return 0;
 }
