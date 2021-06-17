@@ -2394,8 +2394,10 @@ static struct expr *expr_postprocess_string(struct expr *expr)
 	mask = constant_expr_alloc(&expr->location, &integer_type,
 				   BYTEORDER_HOST_ENDIAN,
 				   expr->len + BITS_PER_BYTE, NULL);
+	mpz_clear(mask->value);
 	mpz_init_bitmask(mask->value, expr->len);
 	out = string_wildcard_expr_alloc(&expr->location, mask, expr);
+	expr_free(expr);
 	expr_free(mask);
 	return out;
 }
