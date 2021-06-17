@@ -288,6 +288,7 @@ out:
 
 	return 0;
 err:
+	mpz_clear(p);
 	errno = EEXIST;
 	if (new->expr->etype == EXPR_MAPPING) {
 		new_expr = new->expr->left;
@@ -437,7 +438,7 @@ static int set_to_segtree(struct list_head *msgs, struct set *set,
 {
 	struct elementary_interval **intervals;
 	struct expr *i, *next;
-	unsigned int n;
+	unsigned int n, m;
 	int err = 0;
 
 	/* We are updating an existing set with new elements, check if the new
@@ -467,8 +468,19 @@ static int set_to_segtree(struct list_head *msgs, struct set *set,
 	 */
 	for (n = 0; n < init->size; n++) {
 		err = ei_insert(msgs, tree, intervals[n], merge);
-		if (err < 0)
+		if (err < 0) {
+			struct elementary_interval *ei;
+			struct rb_node *node, *next;
+
+			for (m = n; m < init->size; m++)
+				ei_destroy(intervals[m]);
+
+			rb_for_each_entry_safe(ei, node, next, &tree->root, rb_node) {
+				ei_remove(tree, ei);
+				ei_destroy(ei);
+			}
 			break;
+		}
 	}
 
 	xfree(intervals);
