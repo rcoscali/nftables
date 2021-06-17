@@ -4032,8 +4032,10 @@ osf_ttl			:	/* empty */
 				else {
 					erec_queue(error(&@2, "invalid ttl option"),
 						   state->msgs);
+					xfree($2);
 					YYERROR;
 				}
+				xfree($2);
 			}
 			;
 
