@@ -1484,6 +1484,7 @@ struct obj *netlink_delinearize_obj(struct netlink_ctx *ctx,
 		obj->ct_helper.l4proto = nftnl_obj_get_u8(nlo, NFTNL_OBJ_CT_HELPER_L4PROTO);
 		break;
 	case NFT_OBJECT_CT_TIMEOUT:
+		init_list_head(&obj->ct_timeout.timeout_list);
 		obj->ct_timeout.l3proto = nftnl_obj_get_u16(nlo, NFTNL_OBJ_CT_TIMEOUT_L3PROTO);
 		obj->ct_timeout.l4proto = nftnl_obj_get_u8(nlo, NFTNL_OBJ_CT_TIMEOUT_L4PROTO);
 		memcpy(obj->ct_timeout.timeout,

@@ -1709,6 +1709,14 @@ void obj_free(struct obj *obj)
 		return;
 	xfree(obj->comment);
 	handle_free(&obj->handle);
+	if (obj->type == NFT_OBJECT_CT_TIMEOUT) {
+		struct timeout_state *ts, *next;
+
+		list_for_each_entry_safe(ts, next, &obj->ct_timeout.timeout_list, head) {
+			list_del(&ts->head);
+			xfree(ts);
+		}
+	}
 	xfree(obj);
 }
 
