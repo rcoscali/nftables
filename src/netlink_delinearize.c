@@ -2879,8 +2879,9 @@ rule_maybe_reset_payload_deps(struct payload_dep_ctx *pdctx, enum stmt_types t)
 
 static void rule_parse_postprocess(struct netlink_parse_ctx *ctx, struct rule *rule)
 {
-	struct rule_pp_ctx rctx;
 	struct stmt *stmt, *next;
+	struct rule_pp_ctx rctx;
+	struct expr *expr;
 
 	memset(&rctx, 0, sizeof(rctx));
 	proto_ctx_init(&rctx.pctx, rule->handle.family, ctx->debug_mask);
@@ -2909,9 +2910,11 @@ static void rule_parse_postprocess(struct netlink_parse_ctx *ctx, struct rule *r
 				expr_postprocess(&rctx, &stmt->ct.expr);
 
 				if (stmt->ct.expr->etype == EXPR_BINOP &&
-				    stmt->ct.key == NFT_CT_EVENTMASK)
-					stmt->ct.expr = binop_tree_to_list(NULL,
-									   stmt->ct.expr);
+				    stmt->ct.key == NFT_CT_EVENTMASK) {
+					expr = binop_tree_to_list(NULL, stmt->ct.expr);
+					expr_free(stmt->ct.expr);
+					stmt->ct.expr = expr;
+				}
 			}
 			break;
 		case STMT_NAT:
