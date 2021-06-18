@@ -89,6 +89,12 @@ static int nft_netlink(struct nft_ctx *nft,
 			last_seqnum = UINT32_MAX;
 		}
 	}
+	/* nfnetlink uses the first netlink message header in the batch whose
+	 * sequence number is zero to report for EOPNOTSUPP and EPERM errors in
+	 * some scenarios. Now it is safe to release pending errors here.
+	 */
+	list_for_each_entry_safe(err, tmp, &err_list, head)
+		mnl_err_list_free(err);
 out:
 	mnl_batch_reset(ctx.batch);
 	return ret;
