@@ -1240,8 +1240,7 @@ static int list_member_evaluate(struct eval_ctx *ctx, struct expr **expr)
 	return err;
 }
 
-static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr,
-				bool eval)
+static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 {
 	const struct datatype *dtype = ctx->ectx.dtype, *tmp;
 	uint32_t type = dtype ? dtype->type : 0, ntype = 0;
@@ -1270,7 +1269,7 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr,
 			tmp = concat_subtype_lookup(type, --off);
 		expr_set_context(&ctx->ectx, tmp, tmp->size);
 
-		if (eval && list_member_evaluate(ctx, &i) < 0)
+		if (list_member_evaluate(ctx, &i) < 0)
 			return -1;
 		flags &= i->flags;
 
@@ -2240,7 +2239,7 @@ static int expr_evaluate(struct eval_ctx *ctx, struct expr **expr)
 	case EXPR_BINOP:
 		return expr_evaluate_binop(ctx, expr);
 	case EXPR_CONCAT:
-		return expr_evaluate_concat(ctx, expr, true);
+		return expr_evaluate_concat(ctx, expr);
 	case EXPR_LIST:
 		return expr_evaluate_list(ctx, expr);
 	case EXPR_SET:
@@ -3797,6 +3796,45 @@ static int set_key_data_error(struct eval_ctx *ctx, const struct set *set,
 			 dtype->name, name, hint);
 }
 
+static int set_expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
+{
+	unsigned int flags = EXPR_F_CONSTANT | EXPR_F_SINGLETON;
+	struct expr *i, *next;
+	uint32_t ntype = 0;
+
+	list_for_each_entry_safe(i, next, &(*expr)->expressions, list) {
+		unsigned dsize_bytes;
+
+		if (i->etype == EXPR_CT &&
+		    (i->ct.key == NFT_CT_SRC ||
+		     i->ct.key == NFT_CT_DST))
+			return expr_error(ctx->msgs, i,
+					  "specify either ip or ip6 for address matching");
+
+		if (i->dtype->size == 0)
+			return expr_binary_error(ctx->msgs, i, *expr,
+						 "can not use variable sized "
+						 "data types (%s) in concat "
+						 "expressions",
+						 i->dtype->name);
+
+		flags &= i->flags;
+
+		ntype = concat_subtype_add(ntype, i->dtype->type);
+
+		dsize_bytes = div_round_up(i->dtype->size, BITS_PER_BYTE);
+		(*expr)->field_len[(*expr)->field_count++] = dsize_bytes;
+	}
+
+	(*expr)->flags |= flags;
+	datatype_set(*expr, concat_type_alloc(ntype));
+	(*expr)->len   = (*expr)->dtype->size;
+
+	expr_set_context(&ctx->ectx, (*expr)->dtype, (*expr)->len);
+
+	return 0;
+}
+
 static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 {
 	unsigned int num_stmts = 0;
@@ -3826,7 +3864,7 @@ static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 
 	if (set->key->len == 0) {
 		if (set->key->etype == EXPR_CONCAT &&
-		    expr_evaluate_concat(ctx, &set->key, false) < 0)
+		    set_expr_evaluate_concat(ctx, &set->key) < 0)
 			return -1;
 
 		if (set->key->len == 0)
@@ -3850,7 +3888,7 @@ static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 			set->data->len *= 2;
 
 		if (set->data->etype == EXPR_CONCAT &&
-		    expr_evaluate_concat(ctx, &set->data, false) < 0)
+		    set_expr_evaluate_concat(ctx, &set->data) < 0)
 			return -1;
 
 		if (set->data->len == 0 && set->data->dtype->type != TYPE_VERDICT)
