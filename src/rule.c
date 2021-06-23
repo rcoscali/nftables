@@ -1714,6 +1714,7 @@ void obj_free(struct obj *obj)
 
 		list_for_each_entry_safe(ts, next, &obj->ct_timeout.timeout_list, head) {
 			list_del(&ts->head);
+			xfree(ts->timeout_str);
 			xfree(ts);
 		}
 	}
