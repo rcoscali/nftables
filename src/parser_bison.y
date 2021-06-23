@@ -4553,6 +4553,7 @@ limit_config		:	RATE	limit_mode	NUM	SLASH	time_unit	limit_burst_pkts
 				uint64_t rate, unit;
 
 				erec = rate_parse(&@$, $4, &rate, &unit);
+				xfree($4);
 				if (erec != NULL) {
 					erec_queue(erec, state->msgs);
 					YYERROR;
