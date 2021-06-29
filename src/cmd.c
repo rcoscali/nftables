@@ -30,6 +30,10 @@ static int nft_cmd_enoent_table(struct netlink_ctx *ctx, const struct cmd *cmd,
 static int table_fuzzy_check(struct netlink_ctx *ctx, const struct cmd *cmd,
 			     const struct table *table)
 {
+	if (table_cache_find(&ctx->nft->cache.table_cache,
+			     cmd->handle.table.name, cmd->handle.family))
+		return 0;
+
 	if (strcmp(cmd->handle.table.name, table->handle.table.name) ||
 	    cmd->handle.family != table->handle.family) {
 		netlink_io_error(ctx, &cmd->handle.table.location,
