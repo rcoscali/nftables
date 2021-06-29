@@ -28,12 +28,12 @@ static int nft_cmd_enoent_table(struct netlink_ctx *ctx, const struct cmd *cmd,
 }
 
 static int table_fuzzy_check(struct netlink_ctx *ctx, const struct cmd *cmd,
-			     const struct table *table,
-			     const struct location *loc)
+			     const struct table *table)
 {
 	if (strcmp(cmd->handle.table.name, table->handle.table.name) ||
 	    cmd->handle.family != table->handle.family) {
-		netlink_io_error(ctx, loc, "%s; did you mean table ‘%s’ in family %s?",
+		netlink_io_error(ctx, &cmd->handle.table.location,
+				 "%s; did you mean table ‘%s’ in family %s?",
 				 strerror(ENOENT), table->handle.table.name,
 				 family2str(table->handle.family));
 		return 1;
@@ -56,7 +56,7 @@ static int nft_cmd_enoent_chain(struct netlink_ctx *ctx, const struct cmd *cmd,
 	if (!table)
 		return 0;
 
-	if (table_fuzzy_check(ctx, cmd, table, loc))
+	if (table_fuzzy_check(ctx, cmd, table))
 		return 1;
 
 	if (!chain)
@@ -85,7 +85,7 @@ static int nft_cmd_enoent_rule(struct netlink_ctx *ctx, const struct cmd *cmd,
 	if (!table)
 		return 0;
 
-	if (table_fuzzy_check(ctx, cmd, table, loc))
+	if (table_fuzzy_check(ctx, cmd, table))
 		return 1;
 
 	if (!chain)
@@ -117,7 +117,7 @@ static int nft_cmd_enoent_set(struct netlink_ctx *ctx, const struct cmd *cmd,
 	if (!table)
 		return 0;
 
-	if (table_fuzzy_check(ctx, cmd, table, loc))
+	if (table_fuzzy_check(ctx, cmd, table))
 		return 1;
 
 	if (!set)
@@ -146,7 +146,7 @@ static int nft_cmd_enoent_obj(struct netlink_ctx *ctx, const struct cmd *cmd,
 	if (!table)
 		return 0;
 
-	if (table_fuzzy_check(ctx, cmd, table, loc))
+	if (table_fuzzy_check(ctx, cmd, table))
 		return 1;
 
 	if (!obj)
@@ -175,7 +175,7 @@ static int nft_cmd_enoent_flowtable(struct netlink_ctx *ctx,
 	if (!table)
 		return 0;
 
-	if (table_fuzzy_check(ctx, cmd, table, loc))
+	if (table_fuzzy_check(ctx, cmd, table))
 		return 1;
 
 	if (!ft)
