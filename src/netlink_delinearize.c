@@ -1945,6 +1945,7 @@ static void payload_match_postprocess(struct rule_pp_ctx *ctx,
 			struct set *set = expr->right->set;
 
 			if (set_is_anonymous(set->flags) &&
+			    set->init &&
 			    !list_empty(&set->init->expressions)) {
 				struct expr *elem;
 
