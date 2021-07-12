@@ -637,7 +637,7 @@ static void netlink_parse_exthdr(struct netlink_parse_ctx *ctx,
 		sreg = netlink_parse_register(nle, NFTNL_EXPR_EXTHDR_SREG);
 		val = netlink_get_register(ctx, loc, sreg);
 		if (val == NULL) {
-			xfree(expr);
+			expr_free(expr);
 			return netlink_error(ctx, loc,
 					     "exthdr statement has no expression");
 		}
@@ -679,7 +679,7 @@ static void netlink_parse_hash(struct netlink_parse_ctx *ctx,
 		len = nftnl_expr_get_u32(nle,
 					 NFTNL_EXPR_HASH_LEN) * BITS_PER_BYTE;
 		if (hexpr->len < len) {
-			xfree(hexpr);
+			expr_free(hexpr);
 			hexpr = netlink_parse_concat_expr(ctx, loc, sreg, len);
 			if (hexpr == NULL)
 				goto out_err;
@@ -691,7 +691,7 @@ static void netlink_parse_hash(struct netlink_parse_ctx *ctx,
 	netlink_set_register(ctx, dreg, expr);
 	return;
 out_err:
-	xfree(expr);
+	expr_free(expr);
 }
 
 static void netlink_parse_fib(struct netlink_parse_ctx *ctx,
@@ -1183,7 +1183,7 @@ static void netlink_parse_nat(struct netlink_parse_ctx *ctx,
 	ctx->stmt = stmt;
 	return;
 out_err:
-	xfree(stmt);
+	stmt_free(stmt);
 }
 
 static void netlink_parse_synproxy(struct netlink_parse_ctx *ctx,
@@ -1247,7 +1247,7 @@ static void netlink_parse_tproxy(struct netlink_parse_ctx *ctx,
 	ctx->stmt = stmt;
 	return;
 err:
-	xfree(stmt);
+	stmt_free(stmt);
 }
 
 static void netlink_parse_masq(struct netlink_parse_ctx *ctx,
@@ -1294,7 +1294,7 @@ static void netlink_parse_masq(struct netlink_parse_ctx *ctx,
 	ctx->stmt = stmt;
 	return;
 out_err:
-	xfree(stmt);
+	stmt_free(stmt);
 }
 
 static void netlink_parse_redir(struct netlink_parse_ctx *ctx,
@@ -1345,7 +1345,7 @@ static void netlink_parse_redir(struct netlink_parse_ctx *ctx,
 	ctx->stmt = stmt;
 	return;
 out_err:
-	xfree(stmt);
+	stmt_free(stmt);
 }
 
 static void netlink_parse_dup(struct netlink_parse_ctx *ctx,
@@ -1398,7 +1398,7 @@ static void netlink_parse_dup(struct netlink_parse_ctx *ctx,
 	ctx->stmt = stmt;
 	return;
 out_err:
-	xfree(stmt);
+	stmt_free(stmt);
 }
 
 static void netlink_parse_fwd(struct netlink_parse_ctx *ctx,
@@ -1460,7 +1460,7 @@ static void netlink_parse_fwd(struct netlink_parse_ctx *ctx,
 	ctx->stmt = stmt;
 	return;
 out_err:
-	xfree(stmt);
+	stmt_free(stmt);
 }
 
 static void netlink_parse_queue(struct netlink_parse_ctx *ctx,
@@ -1623,7 +1623,7 @@ out_err:
 	list_for_each_entry_safe(dstmt, next, &dynset_parse_ctx.stmt_list, list)
 		stmt_free(dstmt);
 
-	xfree(expr);
+	expr_free(expr);
 }
 
 static void netlink_parse_objref(struct netlink_parse_ctx *ctx,
