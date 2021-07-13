@@ -11,4 +11,5 @@ iifname "eth0" tcp dport != 23-34 snat to 192.168.3.2;ok
 
 snat ip to ip saddr map { 10.141.11.4 : 192.168.2.3 . 80 };ok
 snat ip to ip saddr map { 10.141.11.4 : 192.168.2.2-192.168.2.4 };ok
+snat ip to ip saddr map { 10.141.12.14 : 192.168.2.0/24 };ok
 snat ip prefix to ip saddr map { 10.141.11.0/24 : 192.168.2.0/24 };ok

@@ -1015,7 +1015,8 @@ static void netlink_parse_reject(struct netlink_parse_ctx *ctx,
 	ctx->stmt = stmt;
 }
 
-static bool is_nat_addr_map(const struct expr *addr, uint8_t family)
+static bool is_nat_addr_map(const struct expr *addr, uint8_t family,
+			    struct stmt *stmt)
 {
 	const struct expr *mappings, *data;
 	const struct set *set;
@@ -1034,14 +1035,31 @@ static bool is_nat_addr_map(const struct expr *addr, uint8_t family)
 	if (!(data->flags & EXPR_F_INTERVAL))
 		return false;
 
+	stmt->nat.family = family;
+
 	/* if we're dealing with an address:address map,
 	 * the length will be bit_sizeof(addr) + 32 (one register).
 	 */
 	switch (family) {
 	case NFPROTO_IPV4:
-		return data->len == 32 + 32;
+		if (data->len == 32 + 32) {
+			stmt->nat.type_flags |= STMT_NAT_F_INTERVAL;
+			return true;
+		} else if (data->len == 32 + 32 + 32 + 32) {
+			stmt->nat.type_flags |= STMT_NAT_F_INTERVAL |
+						STMT_NAT_F_CONCAT;
+			return true;
+		}
+		break;
 	case NFPROTO_IPV6:
-		return data->len == 128 + 128;
+		if (data->len == 128 + 128) {
+			stmt->nat.type_flags |= STMT_NAT_F_INTERVAL;
+			return true;
+		} else if (data->len == 128 + 32 + 128 + 32) {
+			stmt->nat.type_flags |= STMT_NAT_F_INTERVAL |
+						STMT_NAT_F_CONCAT;
+			return true;
+		}
 	}
 
 	return false;
@@ -1117,7 +1135,7 @@ static void netlink_parse_nat(struct netlink_parse_ctx *ctx,
 		stmt->nat.addr = addr;
 	}
 
-	if (is_nat_addr_map(addr, family)) {
+	if (is_nat_addr_map(addr, family, stmt)) {
 		stmt->nat.family = family;
 		ctx->stmt = stmt;
 		return;

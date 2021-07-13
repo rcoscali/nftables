@@ -1165,11 +1165,14 @@ static void netlink_gen_nat_stmt(struct netlink_linearize_ctx *ctx,
 					     amin_reg);
 			if (stmt->nat.addr->etype == EXPR_MAP &&
 			    stmt->nat.addr->mappings->set->data->flags & EXPR_F_INTERVAL) {
-				amax_reg = get_register(ctx, NULL);
-				registers++;
 				amin_reg += netlink_register_space(nat_addrlen(family));
-				netlink_put_register(nle, NFTNL_EXPR_NAT_REG_ADDR_MAX,
-						     amin_reg);
+				if (stmt->nat.type_flags & STMT_NAT_F_CONCAT) {
+					netlink_put_register(nle, nftnl_reg_pmin,
+							     amin_reg);
+				} else {
+					netlink_put_register(nle, NFTNL_EXPR_NAT_REG_ADDR_MAX,
+							     amin_reg);
+				}
 			}
 		}
 
@@ -1181,6 +1184,12 @@ static void netlink_gen_nat_stmt(struct netlink_linearize_ctx *ctx,
 
 			pmin_reg = amin_reg;
 
+			if (stmt->nat.type_flags & STMT_NAT_F_INTERVAL) {
+				pmin_reg += netlink_register_space(nat_addrlen(family));
+				netlink_put_register(nle, NFTNL_EXPR_NAT_REG_ADDR_MAX,
+						     pmin_reg);
+			}
+
 			/* if STMT_NAT_F_CONCAT is set, the mapped type is a
 			 * concatenation of 'addr . inet_service'.
 			 * The map lookup will then return the
@@ -1189,7 +1198,10 @@ static void netlink_gen_nat_stmt(struct netlink_linearize_ctx *ctx,
 			 * will hold the inet_service part.
 			 */
 			pmin_reg += netlink_register_space(nat_addrlen(family));
-			netlink_put_register(nle, nftnl_reg_pmin, pmin_reg);
+			if (stmt->nat.type_flags & STMT_NAT_F_INTERVAL)
+				netlink_put_register(nle, nftnl_reg_pmax, pmin_reg);
+			else
+				netlink_put_register(nle, nftnl_reg_pmin, pmin_reg);
 		}
 	}
 

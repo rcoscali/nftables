@@ -97,6 +97,9 @@ struct nftnl_expr *alloc_nft_expr(const char *name)
 	return nle;
 }
 
+void __netlink_gen_data(const struct expr *expr,
+			struct nft_data_linearize *data, bool expand);
+
 static struct nftnl_set_elem *alloc_nftnl_setelem(const struct expr *set,
 						  const struct expr *expr)
 {
@@ -130,11 +133,11 @@ static struct nftnl_set_elem *alloc_nftnl_setelem(const struct expr *set,
 	case EXPR_SET_ELEM_CATCHALL:
 		break;
 	default:
-		netlink_gen_data(key, &nld);
+		__netlink_gen_data(key, &nld, false);
 		nftnl_set_elem_set(nlse, NFTNL_SET_ELEM_KEY, &nld.value, nld.len);
 		if (set->set_flags & NFT_SET_INTERVAL && key->field_count > 1) {
 			key->flags |= EXPR_F_INTERVAL_END;
-			netlink_gen_data(key, &nld);
+			__netlink_gen_data(key, &nld, false);
 			key->flags &= ~EXPR_F_INTERVAL_END;
 
 			nftnl_set_elem_set(nlse, NFTNL_SET_ELEM_KEY_END,
@@ -185,7 +188,7 @@ static struct nftnl_set_elem *alloc_nftnl_setelem(const struct expr *set,
 		nftnl_udata_buf_free(udbuf);
 	}
 	if (set_is_datamap(set->set_flags) && data != NULL) {
-		netlink_gen_data(data, &nld);
+		__netlink_gen_data(data, &nld, !(data->flags & EXPR_F_SINGLETON));
 		switch (data->etype) {
 		case EXPR_VERDICT:
 			nftnl_set_elem_set_u32(nlse, NFTNL_SET_ELEM_VERDICT,
@@ -270,8 +273,8 @@ static int netlink_gen_concat_data_expr(int end, const struct expr *i,
 	return netlink_export_pad(data, i->value, i);
 }
 
-static void netlink_gen_concat_data(const struct expr *expr,
-				    struct nft_data_linearize *nld)
+static void __netlink_gen_concat(const struct expr *expr,
+				 struct nft_data_linearize *nld)
 {
 	unsigned int len = expr->len / BITS_PER_BYTE, offset = 0;
 	int end = expr->flags & EXPR_F_INTERVAL_END;
@@ -285,6 +288,35 @@ static void netlink_gen_concat_data(const struct expr *expr,
 
 	memcpy(nld->value, data, len);
 	nld->len = len;
+}
+
+static void __netlink_gen_concat_expand(const struct expr *expr,
+				        struct nft_data_linearize *nld)
+{
+	unsigned int len = div_round_up(expr->len, BITS_PER_BYTE) * 2, offset = 0;
+	unsigned char data[len];
+	const struct expr *i;
+
+	memset(data, 0, len);
+
+	list_for_each_entry(i, &expr->expressions, list)
+		offset += netlink_gen_concat_data_expr(false, i, data + offset);
+
+	list_for_each_entry(i, &expr->expressions, list)
+		offset += netlink_gen_concat_data_expr(true, i, data + offset);
+
+	memcpy(nld->value, data, len);
+	nld->len = len;
+}
+
+static void netlink_gen_concat_data(const struct expr *expr,
+				    struct nft_data_linearize *nld,
+				    bool expand)
+{
+	if (expand)
+		__netlink_gen_concat_expand(expr, nld);
+	else
+		__netlink_gen_concat(expr, nld);
 }
 
 static void netlink_gen_constant_data(const struct expr *expr,
@@ -366,13 +398,14 @@ static void netlink_gen_prefix(const struct expr *expr,
 	nld->len = len;
 }
 
-void netlink_gen_data(const struct expr *expr, struct nft_data_linearize *data)
+void __netlink_gen_data(const struct expr *expr,
+			struct nft_data_linearize *data, bool expand)
 {
 	switch (expr->etype) {
 	case EXPR_VALUE:
 		return netlink_gen_constant_data(expr, data);
 	case EXPR_CONCAT:
-		return netlink_gen_concat_data(expr, data);
+		return netlink_gen_concat_data(expr, data, expand);
 	case EXPR_VERDICT:
 		return netlink_gen_verdict(expr, data);
 	case EXPR_RANGE:
@@ -382,6 +415,11 @@ void netlink_gen_data(const struct expr *expr, struct nft_data_linearize *data)
 	default:
 		BUG("invalid data expression type %s\n", expr_name(expr));
 	}
+}
+
+void netlink_gen_data(const struct expr *expr, struct nft_data_linearize *data)
+{
+	__netlink_gen_data(expr, data, false);
 }
 
 struct expr *netlink_alloc_value(const struct location *loc,
@@ -1053,10 +1091,28 @@ struct expr *range_expr_to_prefix(struct expr *range)
 	return range;
 }
 
-static struct expr *netlink_parse_interval_elem(const struct datatype *dtype,
+static struct expr *range_expr_reduce(struct expr *range)
+{
+	struct expr *expr;
+
+	if (!mpz_cmp(range->left->value, range->right->value)) {
+		expr = expr_get(range->left);
+		expr_free(range);
+		return expr;
+	}
+
+	if (range->left->dtype->type != TYPE_IPADDR &&
+	    range->left->dtype->type != TYPE_IP6ADDR)
+		return range;
+
+	return range_expr_to_prefix(range);
+}
+
+static struct expr *netlink_parse_interval_elem(const struct set *set,
 						struct expr *expr)
 {
 	unsigned int len = div_round_up(expr->len, BITS_PER_BYTE);
+	const struct datatype *dtype = set->data->dtype;
 	struct expr *range, *left, *right;
 	char data[len];
 
@@ -1073,31 +1129,84 @@ static struct expr *netlink_parse_interval_elem(const struct datatype *dtype,
 	return range_expr_to_prefix(range);
 }
 
-static struct expr *netlink_parse_concat_elem(const struct datatype *dtype,
-					      struct expr *data)
+static struct expr *concat_elem_expr(struct expr *expr,
+				     const struct datatype *dtype,
+				     struct expr *data, int *off)
 {
 	const struct datatype *subtype;
+
+	subtype = concat_subtype_lookup(dtype->type, --(*off));
+
+	expr = constant_expr_splice(data, subtype->size);
+	expr->dtype = subtype;
+	expr->byteorder = subtype->byteorder;
+
+	if (expr->byteorder == BYTEORDER_HOST_ENDIAN)
+		mpz_switch_byteorder(expr->value, expr->len / BITS_PER_BYTE);
+
+	if (expr->dtype->basetype != NULL &&
+	    expr->dtype->basetype->type == TYPE_BITMASK)
+		expr = bitmask_expr_to_binops(expr);
+
+	data->len -= netlink_padding_len(expr->len);
+
+	return expr;
+}
+
+static struct expr *netlink_parse_concat_elem_key(const struct set *set,
+						  struct expr *data)
+{
+	const struct datatype *dtype = set->key->dtype;
 	struct expr *concat, *expr;
 	int off = dtype->subtypes;
 
 	concat = concat_expr_alloc(&data->location);
 	while (off > 0) {
-		subtype = concat_subtype_lookup(dtype->type, --off);
-
-		expr		= constant_expr_splice(data, subtype->size);
-		expr->dtype     = subtype;
-		expr->byteorder = subtype->byteorder;
-
-		if (expr->byteorder == BYTEORDER_HOST_ENDIAN)
-			mpz_switch_byteorder(expr->value, expr->len / BITS_PER_BYTE);
-
-		if (expr->dtype->basetype != NULL &&
-		    expr->dtype->basetype->type == TYPE_BITMASK)
-			expr = bitmask_expr_to_binops(expr);
-
+		expr = concat_elem_expr(expr, dtype, data, &off);
 		compound_expr_add(concat, expr);
-		data->len -= netlink_padding_len(expr->len);
 	}
+
+	expr_free(data);
+
+	return concat;
+}
+
+static struct expr *netlink_parse_concat_elem(const struct set *set,
+					      struct expr *data)
+{
+	const struct datatype *dtype = set->data->dtype;
+	struct expr *concat, *expr, *left, *range;
+	struct list_head expressions;
+	int off = dtype->subtypes;
+
+	init_list_head(&expressions);
+
+	concat = concat_expr_alloc(&data->location);
+	while (off > 0) {
+		expr = concat_elem_expr(expr, dtype, data, &off);
+		list_add_tail(&expr->list, &expressions);
+	}
+
+	if (set->data->flags & EXPR_F_INTERVAL) {
+		assert(!list_empty(&expressions));
+
+		off = dtype->subtypes;
+
+		while (off > 0) {
+			left = list_first_entry(&expressions, struct expr, list);
+
+			expr = concat_elem_expr(expr, dtype, data, &off);
+			list_del(&left->list);
+
+			range = range_expr_alloc(&data->location, left, expr);
+			range = range_expr_reduce(range);
+			compound_expr_add(concat, range);
+		}
+		assert(list_empty(&expressions));
+	} else {
+		list_splice_tail(&expressions, &concat->expressions);
+	}
+
 	expr_free(data);
 
 	return concat;
@@ -1169,7 +1278,7 @@ key_end:
 		datatype_set(key, set->key->dtype);
 		key->byteorder	= set->key->byteorder;
 		if (set->key->dtype->subtypes)
-			key = netlink_parse_concat_elem(set->key->dtype, key);
+			key = netlink_parse_concat_elem_key(set, key);
 
 		if (!(set->flags & NFT_SET_INTERVAL) &&
 		    key->byteorder == BYTEORDER_HOST_ENDIAN)
@@ -1232,10 +1341,10 @@ key_end:
 		datatype_set(data, set->data->dtype);
 		data->byteorder = set->data->byteorder;
 
-		if (set->data->flags & EXPR_F_INTERVAL)
-			data = netlink_parse_interval_elem(set->data->dtype, data);
-		else if (set->data->dtype->subtypes)
-			data = netlink_parse_concat_elem(set->data->dtype, data);
+		if (set->data->dtype->subtypes) {
+			data = netlink_parse_concat_elem(set, data);
+		} else if (set->data->flags & EXPR_F_INTERVAL)
+			data = netlink_parse_interval_elem(set, data);
 
 		if (data->byteorder == BYTEORDER_HOST_ENDIAN)
 			mpz_switch_byteorder(data->value, data->len / BITS_PER_BYTE);

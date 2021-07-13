@@ -1605,6 +1605,26 @@ static int expr_evaluate_map(struct eval_ctx *ctx, struct expr **expr)
 	return 0;
 }
 
+static bool data_mapping_has_interval(struct expr *data)
+{
+	struct expr *i;
+
+	if (data->etype == EXPR_RANGE ||
+	    data->etype == EXPR_PREFIX)
+		return true;
+
+	if (data->etype != EXPR_CONCAT)
+		return false;
+
+	list_for_each_entry(i, &data->expressions, list) {
+		if (i->etype == EXPR_RANGE ||
+		    i->etype == EXPR_PREFIX)
+			return true;
+	}
+
+	return false;
+}
+
 static int expr_evaluate_mapping(struct eval_ctx *ctx, struct expr **expr)
 {
 	struct expr *mapping = *expr;
@@ -1644,8 +1664,7 @@ static int expr_evaluate_mapping(struct eval_ctx *ctx, struct expr **expr)
 				  "Value must be a constant");
 
 	if (set_is_anonymous(set->flags) &&
-	    (mapping->right->etype == EXPR_RANGE ||
-	     mapping->right->etype == EXPR_PREFIX))
+	    data_mapping_has_interval(mapping->right))
 		set->data->flags |= EXPR_F_INTERVAL;
 
 	if (!(set->data->flags & EXPR_F_INTERVAL) &&
@@ -3140,6 +3159,9 @@ static int stmt_evaluate_nat_map(struct eval_ctx *ctx, struct stmt *stmt)
 		return 0;
 
 	data = stmt->nat.addr->mappings->set->data;
+	if (data->flags & EXPR_F_INTERVAL)
+		stmt->nat.type_flags |= STMT_NAT_F_INTERVAL;
+
 	datatype_set(data, dtype);
 
 	if (expr_ops(data)->type != EXPR_CONCAT)
@@ -3903,12 +3925,12 @@ static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 			return set_error(ctx, set, "map definition does not "
 					 "specify mapping data type");
 
-		if (set->data->flags & EXPR_F_INTERVAL)
-			set->data->len *= 2;
-
 		if (set->data->etype == EXPR_CONCAT &&
 		    set_expr_evaluate_concat(ctx, &set->data) < 0)
 			return -1;
+
+		if (set->data->flags & EXPR_F_INTERVAL)
+			set->data->len *= 2;
 
 		if (set->data->len == 0 && set->data->dtype->type != TYPE_VERDICT)
 			return set_key_data_error(ctx, set,

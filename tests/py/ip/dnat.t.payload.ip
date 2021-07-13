@@ -91,3 +91,39 @@ ip test-ip4 output
   [ lookup reg 1 set __map%d dreg 1 ]
   [ nat dnat ip addr_min reg 1 ]
 
+# dnat ip to ip saddr . tcp dport map { 192.168.1.2 . 80 : 10.141.10.0/24  . 8888 - 8999 }
+__map%d test-ip4 b size 1
+__map%d test-ip4 0
+        element 0201a8c0 00005000  : 000a8d0a 0000b822 ff0a8d0a 00002723 0 [end]
+ip
+  [ meta load l4proto => reg 1 ]
+  [ cmp eq reg 1 0x00000006 ]
+  [ payload load 4b @ network header + 12 => reg 1 ]
+  [ payload load 2b @ transport header + 2 => reg 9 ]
+  [ lookup reg 1 set __map%d dreg 1 ]
+  [ nat dnat ip addr_min reg 1 addr_max reg 10 proto_min reg 9 proto_max reg 11 ]
+
+# dnat ip to ip saddr . tcp dport map { 192.168.1.2 . 80 : 10.141.10.0/24  . 80 }
+__map%d test-ip4 b size 1
+__map%d test-ip4 0
+        element 0201a8c0 00005000  : 000a8d0a 00005000 ff0a8d0a 00005000 0 [end]
+ip
+  [ meta load l4proto => reg 1 ]
+  [ cmp eq reg 1 0x00000006 ]
+  [ payload load 4b @ network header + 12 => reg 1 ]
+  [ payload load 2b @ transport header + 2 => reg 9 ]
+  [ lookup reg 1 set __map%d dreg 1 ]
+  [ nat dnat ip addr_min reg 1 addr_max reg 10 proto_min reg 9 proto_max reg 11 ]
+
+# dnat ip to ip saddr . tcp dport map { 192.168.1.2 . 80 : 10.141.10.2 . 8888 - 8999 }
+__map%d test-ip4 b size 1
+__map%d test-ip4 0
+        element 0201a8c0 00005000  : 020a8d0a 0000b822 020a8d0a 00002723 0 [end]
+ip
+  [ meta load l4proto => reg 1 ]
+  [ cmp eq reg 1 0x00000006 ]
+  [ payload load 4b @ network header + 12 => reg 1 ]
+  [ payload load 2b @ transport header + 2 => reg 9 ]
+  [ lookup reg 1 set __map%d dreg 1 ]
+  [ nat dnat ip addr_min reg 1 addr_max reg 10 proto_min reg 9 proto_max reg 11 ]
+
