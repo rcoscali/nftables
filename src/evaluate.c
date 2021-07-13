@@ -1579,6 +1579,9 @@ static int expr_evaluate_map(struct eval_ctx *ctx, struct expr **expr)
 			return expr_error(ctx->msgs, map->mappings,
 					  "Expression is not a map");
 		break;
+	case EXPR_SET_REF:
+		/* symbol has been already evaluated to set reference */
+		break;
 	default:
 		BUG("invalid mapping expression %s\n",
 		    expr_name(map->mappings));
@@ -3172,6 +3175,40 @@ static int stmt_evaluate_nat_map(struct eval_ctx *ctx, struct stmt *stmt)
 	return err;
 }
 
+static bool nat_concat_map(struct eval_ctx *ctx, struct stmt *stmt)
+{
+	struct expr *i;
+
+	if (stmt->nat.addr->etype != EXPR_MAP)
+		return false;
+
+	switch (stmt->nat.addr->mappings->etype) {
+	case EXPR_SET:
+		list_for_each_entry(i, &stmt->nat.addr->mappings->expressions, list) {
+			if (i->etype == EXPR_MAPPING &&
+			    i->right->etype == EXPR_CONCAT) {
+				stmt->nat.type_flags |= STMT_NAT_F_CONCAT;
+				return true;
+			}
+		}
+		break;
+	case EXPR_SYMBOL:
+		/* expr_evaluate_map() see EXPR_SET_REF after this evaluation. */
+		if (expr_evaluate(ctx, &stmt->nat.addr->mappings))
+			return false;
+
+		if (stmt->nat.addr->mappings->set->data->etype == EXPR_CONCAT) {
+			stmt->nat.type_flags |= STMT_NAT_F_CONCAT;
+			return true;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return false;
+}
+
 static int stmt_evaluate_nat(struct eval_ctx *ctx, struct stmt *stmt)
 {
 	int err;
@@ -3185,7 +3222,9 @@ static int stmt_evaluate_nat(struct eval_ctx *ctx, struct stmt *stmt)
 		if (err < 0)
 			return err;
 
-		if (stmt->nat.type_flags & STMT_NAT_F_CONCAT) {
+		if (nat_concat_map(ctx, stmt) ||
+		    stmt->nat.type_flags & STMT_NAT_F_CONCAT) {
+
 			err = stmt_evaluate_nat_map(ctx, stmt);
 			if (err < 0)
 				return err;

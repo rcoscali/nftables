@@ -60,7 +60,7 @@ ip test-ip4 postrouting
   [ immediate reg 1 0x0203a8c0 ]
   [ nat snat ip addr_min reg 1 ]
 
-# snat ip addr . port to ip saddr map { 10.141.11.4 : 192.168.2.3 . 80 }
+# snat ip to ip saddr map { 10.141.11.4 : 192.168.2.3 . 80 }
 __map%d test-ip4 b size 1
 __map%d test-ip4 0
 	element 040b8d0a  : 0302a8c0 00005000 0 [end]
