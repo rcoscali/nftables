@@ -1329,8 +1329,6 @@ static json_t *nat_type_flags_json(uint32_t type_flags)
 {
 	json_t *array = json_array();
 
-	if (type_flags & STMT_NAT_F_INTERVAL)
-		json_array_append_new(array, json_string("interval"));
 	if (type_flags & STMT_NAT_F_PREFIX)
 		json_array_append_new(array, json_string("prefix"));
 	if (type_flags & STMT_NAT_F_CONCAT)

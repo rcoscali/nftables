@@ -3200,26 +3200,6 @@ static int stmt_evaluate_nat(struct eval_ctx *ctx, struct stmt *stmt)
 			return err;
 	}
 
-	if (stmt->nat.type_flags & STMT_NAT_F_INTERVAL) {
-		switch (stmt->nat.addr->etype) {
-		case EXPR_MAP:
-			if (!(stmt->nat.addr->mappings->set->data->flags & EXPR_F_INTERVAL))
-				return expr_error(ctx->msgs, stmt->nat.addr,
-						  "map is not defined as interval");
-			break;
-		case EXPR_RANGE:
-		case EXPR_PREFIX:
-			break;
-		default:
-			return expr_error(ctx->msgs, stmt->nat.addr,
-					  "neither prefix, range nor map expression");
-		}
-
-		stmt->flags |= STMT_F_TERMINAL;
-
-		return 0;
-	}
-
 	if (stmt->nat.proto != NULL) {
 		err = nat_evaluate_transport(ctx, stmt, &stmt->nat.proto);
 		if (err < 0)

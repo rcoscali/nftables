@@ -3623,28 +3623,24 @@ nat_stmt_args		:	stmt_expr
 			{
 				$<stmt>0->nat.family = $1;
 				$<stmt>0->nat.addr = $4;
-				$<stmt>0->nat.type_flags = STMT_NAT_F_INTERVAL;
 			}
 			|	INTERVAL TO	stmt_expr
 			{
 				$<stmt>0->nat.addr = $3;
-				$<stmt>0->nat.type_flags = STMT_NAT_F_INTERVAL;
 			}
 			|	nf_key_proto PREFIX TO	stmt_expr
 			{
 				$<stmt>0->nat.family = $1;
 				$<stmt>0->nat.addr = $4;
 				$<stmt>0->nat.type_flags =
-						STMT_NAT_F_PREFIX |
-						STMT_NAT_F_INTERVAL;
+						STMT_NAT_F_PREFIX;
 				$<stmt>0->nat.flags |= NF_NAT_RANGE_NETMAP;
 			}
 			|	PREFIX TO	stmt_expr
 			{
 				$<stmt>0->nat.addr = $3;
 				$<stmt>0->nat.type_flags =
-						STMT_NAT_F_PREFIX |
-						STMT_NAT_F_INTERVAL;
+						STMT_NAT_F_PREFIX;
 				$<stmt>0->nat.flags |= NF_NAT_RANGE_NETMAP;
 			}
 			;

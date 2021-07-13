@@ -1119,7 +1119,6 @@ static void netlink_parse_nat(struct netlink_parse_ctx *ctx,
 
 	if (is_nat_addr_map(addr, family)) {
 		stmt->nat.family = family;
-		stmt->nat.type_flags |= STMT_NAT_F_INTERVAL;
 		ctx->stmt = stmt;
 		return;
 	}
