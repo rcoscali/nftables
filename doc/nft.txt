@@ -44,6 +44,10 @@ understanding of their meaning. You can get information about options by running
 *--file 'filename'*::
 	Read input from 'filename'. If 'filename' is -, read from stdin.
 
+*-D*::
+*--define 'name=value'*::
+	Define a variable. You can only combine this option with '-f'.
+
 *-i*::
 *--interactive*::
 	Read input from an interactive readline CLI. You can use quit to exit, or use the EOF marker,

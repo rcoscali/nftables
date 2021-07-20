@@ -78,6 +78,8 @@ const char *nft_ctx_get_error_buffer(struct nft_ctx *ctx);
 int nft_ctx_add_include_path(struct nft_ctx *ctx, const char *path);
 void nft_ctx_clear_include_paths(struct nft_ctx *ctx);
 
+int nft_ctx_add_var(struct nft_ctx *ctx, const char *var);
+
 int nft_run_cmd_from_buffer(struct nft_ctx *nft, const char *buf);
 int nft_run_cmd_from_filename(struct nft_ctx *nft, const char *filename);
 
