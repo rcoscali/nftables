@@ -2997,9 +2997,10 @@ static int nat_evaluate_family(struct eval_ctx *ctx, struct stmt *stmt)
 			stmt->nat.family = ctx->pctx.family;
 		return 0;
 	case NFPROTO_INET:
-		if (!stmt->nat.addr)
+		if (!stmt->nat.addr) {
+			stmt->nat.family = NFPROTO_INET;
 			return 0;
-
+		}
 		if (stmt->nat.family != NFPROTO_UNSPEC)
 			return 0;
 
