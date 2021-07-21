@@ -23,3 +23,7 @@ global:
 
 local: *;
 };
+
+LIBNFTABLES_2 {
+  nft_ctx_add_var;
+} LIBNFTABLES_1;
