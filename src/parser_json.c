@@ -3204,7 +3204,6 @@ static int json_parse_ct_timeout_policy(struct json_ctx *ctx,
 		return 1;
 	}
 
-	init_list_head(&obj->ct_timeout.timeout_list);
 	json_object_foreach(tmp, key, val) {
 		struct timeout_state *ts;
 
@@ -3351,6 +3350,7 @@ static struct cmd *json_parse_cmd_add_object(struct json_ctx *ctx,
 		}
 		obj->ct_helper.l3proto = l3proto;
 
+		init_list_head(&obj->ct_timeout.timeout_list);
 		if (json_parse_ct_timeout_policy(ctx, root, obj)) {
 			obj_free(obj);
 			return NULL;
