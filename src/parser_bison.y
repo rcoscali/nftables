@@ -1313,6 +1313,8 @@ delete_cmd		:	TABLE		table_or_id_spec
 			|	CT	ct_obj_type	obj_spec	ct_obj_alloc	close_scope_ct
 			{
 				$$ = cmd_alloc_obj_ct(CMD_DELETE, $2, &$3, &@$, $4);
+				if ($2 == NFT_OBJECT_CT_TIMEOUT)
+					init_list_head(&$4->ct_timeout.timeout_list);
 			}
 			|	LIMIT		obj_or_id_spec	close_scope_limit
 			{
