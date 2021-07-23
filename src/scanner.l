@@ -590,7 +590,6 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "rt0"			{ return RT0; }
 "rt2"			{ return RT2; }
 "srh"			{ return RT4; }
-"seg-left"		{ return SEG_LEFT; }
 "addr"			{ return ADDR; }
 "last-entry"		{ return LAST_ENT; }
 "tag"			{ return TAG; }
@@ -631,6 +630,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 <SCANSTATE_EXPR_RT>{
 	"classid"		{ return CLASSID; }
 	"nexthop"		{ return NEXTHOP; }
+	"seg-left"		{ return SEG_LEFT; }
 }
 
 "ct"			{ scanner_push_start_cond(yyscanner, SCANSTATE_CT); return CT; }
