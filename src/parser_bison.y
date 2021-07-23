@@ -954,6 +954,7 @@ close_scope_socket	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_SOCKE
 close_scope_tcp		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_TCP); };
 
 close_scope_log		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_STMT_LOG); }
+close_scope_synproxy	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_STMT_SYNPROXY); }
 
 common_block		:	INCLUDE		QUOTED_STRING	stmt_separator
 			{
@@ -1154,11 +1155,11 @@ add_cmd			:	TABLE		table_spec
 			{
 				$$ = cmd_alloc(CMD_ADD, CMD_OBJ_SECMARK, &$2, &@$, $3);
 			}
-			|	SYNPROXY	obj_spec	synproxy_obj	synproxy_config
+			|	SYNPROXY	obj_spec	synproxy_obj	synproxy_config	close_scope_synproxy
 			{
 				$$ = cmd_alloc(CMD_ADD, CMD_OBJ_SYNPROXY, &$2, &@$, $3);
 			}
-			|	SYNPROXY	obj_spec	synproxy_obj	'{' synproxy_block '}'
+			|	SYNPROXY	obj_spec	synproxy_obj	'{' synproxy_block '}'	close_scope_synproxy
 			{
 				$$ = cmd_alloc(CMD_ADD, CMD_OBJ_SYNPROXY, &$2, &@$, $3);
 			}
@@ -1255,7 +1256,7 @@ create_cmd		:	TABLE		table_spec
 			{
 				$$ = cmd_alloc(CMD_CREATE, CMD_OBJ_SECMARK, &$2, &@$, $3);
 			}
-			|	SYNPROXY	obj_spec	synproxy_obj	synproxy_config
+			|	SYNPROXY	obj_spec	synproxy_obj	synproxy_config	close_scope_synproxy
 			{
 				$$ = cmd_alloc(CMD_CREATE, CMD_OBJ_SYNPROXY, &$2, &@$, $3);
 			}
@@ -1344,7 +1345,7 @@ delete_cmd		:	TABLE		table_or_id_spec
 			{
 				$$ = cmd_alloc(CMD_DELETE, CMD_OBJ_SECMARK, &$2, &@$, NULL);
 			}
-			|	SYNPROXY	obj_or_id_spec
+			|	SYNPROXY	obj_or_id_spec	close_scope_synproxy
 			{
 				$$ = cmd_alloc(CMD_DELETE, CMD_OBJ_SYNPROXY, &$2, &@$, NULL);
 			}
@@ -1440,7 +1441,7 @@ list_cmd		:	TABLE		table_spec
 			{
 				$$ = cmd_alloc(CMD_LIST, CMD_OBJ_SYNPROXYS, &$3, &@$, NULL);
 			}
-			|	SYNPROXY	obj_spec
+			|	SYNPROXY	obj_spec	close_scope_synproxy
 			{
 				$$ = cmd_alloc(CMD_LIST, CMD_OBJ_SYNPROXY, &$2, &@$, NULL);
 			}
@@ -1796,7 +1797,7 @@ table_block		:	/* empty */	{ $$ = $<table>-1; }
 			}
 			|	table_block	SYNPROXY	obj_identifier
 					obj_block_alloc '{'	synproxy_block	'}'
-					stmt_separator
+					stmt_separator	close_scope_synproxy
 			{
 				$4->location = @3;
 				$4->type = NFT_OBJECT_SYNPROXY;
@@ -2831,7 +2832,7 @@ stmt			:	verdict_stmt
 			|	fwd_stmt
 			|	set_stmt
 			|	map_stmt
-			|	synproxy_stmt
+			|	synproxy_stmt	close_scope_synproxy
 			|	chain_stmt
 			|	optstrip_stmt
 			;

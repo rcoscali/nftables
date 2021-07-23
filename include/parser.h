@@ -55,6 +55,7 @@ enum startcond_type {
 	PARSER_SC_EXPR_SOCKET,
 
 	PARSER_SC_STMT_LOG,
+	PARSER_SC_STMT_SYNPROXY,
 };
 
 struct mnl_socket;

@@ -221,6 +221,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_EXPR_SOCKET
 
 %s SCANSTATE_STMT_LOG
+%s SCANSTATE_STMT_SYNPROXY
 
 %%
 
@@ -492,6 +493,9 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"sack1"			{ return SACK1; }
 	"sack2"			{ return SACK2; }
 	"sack3"			{ return SACK3; }
+	"sack-permitted"	{ return SACK_PERM; }
+	"sack-perm"		{ return SACK_PERM; }
+	"timestamp"		{ return TIMESTAMP; }
 	"fastopen"		{ return FASTOPEN; }
 	"mptcp"			{ return MPTCP; }
 	"md5sig"		{ return MD5SIG; }
@@ -508,11 +512,6 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"option"		{ return OPTION; }
 }
 "time"			{ return TIME; }
-"maxseg"		{ return MSS; }
-"mss"			{ return MSS; }
-"sack-permitted"	{ return SACK_PERM; }
-"sack-perm"		{ return SACK_PERM; }
-"timestamp"		{ return TIMESTAMP; }
 
 "icmp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_ICMP); return ICMP; }
 "icmpv6"		{ scanner_push_start_cond(yyscanner, SCANSTATE_ICMP); return ICMP6; }
@@ -694,8 +693,15 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 
 "osf"			{ return OSF; }
 
-"synproxy"		{ return SYNPROXY; }
-"wscale"		{ return WSCALE; }
+"synproxy"		{ scanner_push_start_cond(yyscanner, SCANSTATE_STMT_SYNPROXY); return SYNPROXY; }
+<SCANSTATE_STMT_SYNPROXY>{
+	"wscale"		{ return WSCALE; }
+	"maxseg"		{ return MSS; }
+	"mss"			{ return MSS; }
+	"timestamp"		{ return TIMESTAMP; }
+	"sack-permitted"	{ return SACK_PERM; }
+	"sack-perm"		{ return SACK_PERM; }
+}
 
 "notrack"		{ return NOTRACK; }
 
