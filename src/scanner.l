@@ -200,6 +200,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_CT
 %s SCANSTATE_COUNTER
 %s SCANSTATE_ETH
+%s SCANSTATE_ICMP
 %s SCANSTATE_IP
 %s SCANSTATE_IP6
 %s SCANSTATE_LIMIT
@@ -496,11 +497,16 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "sack-perm"		{ return SACK_PERM; }
 "timestamp"		{ return TIMESTAMP; }
 
-"icmp"			{ return ICMP; }
-"code"			{ return CODE; }
+"icmp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_ICMP); return ICMP; }
+"icmpv6"		{ scanner_push_start_cond(yyscanner, SCANSTATE_ICMP); return ICMP6; }
+<SCANSTATE_ICMP>{
+	"gateway"		{ return GATEWAY; }
+	"code"			{ return CODE; }
+	"param-problem"		{ return PPTR; }
+	"max-delay"		{ return MAXDELAY; }
+	"mtu"			{ return MTU; }
+}
 "sequence"		{ return SEQUENCE; }
-"gateway"		{ return GATEWAY; }
-"mtu"			{ return MTU; }
 
 "igmp"			{ return IGMP; }
 "mrt"			{ return MRT; }
@@ -512,10 +518,6 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"hoplimit"		{ return HOPLIMIT; }
 }
 "nexthdr"		{ return NEXTHDR; }
-
-"icmpv6"		{ return ICMP6; }
-"param-problem"		{ return PPTR; }
-"max-delay"		{ return MAXDELAY; }
 
 "ah"			{ return AH; }
 "reserved"		{ return RESERVED; }
@@ -631,6 +633,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"classid"		{ return CLASSID; }
 	"nexthop"		{ return NEXTHOP; }
 	"seg-left"		{ return SEG_LEFT; }
+	"mtu"			{ return MTU; }
 }
 
 "ct"			{ scanner_push_start_cond(yyscanner, SCANSTATE_CT); return CT; }

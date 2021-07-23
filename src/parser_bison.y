@@ -938,6 +938,7 @@ close_scope_hash	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_HASH); 
 close_scope_ip		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_IP); };
 close_scope_ip6		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_IP6); };
 close_scope_vlan	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_VLAN); };
+close_scope_icmp	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_ICMP); };
 close_scope_ipsec	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_IPSEC); };
 close_scope_list	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CMD_LIST); };
 close_scope_limit	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_LIMIT); };
@@ -3344,7 +3345,7 @@ reject_opts		:       /* empty */
 				$<stmt>0->reject.type = -1;
 				$<stmt>0->reject.icmp_code = -1;
 			}
-			|	WITH	ICMP	TYPE	reject_with_expr
+			|	WITH	ICMP	TYPE	reject_with_expr close_scope_icmp
 			{
 				$<stmt>0->reject.family = NFPROTO_IPV4;
 				$<stmt>0->reject.type = NFT_REJECT_ICMP_UNREACH;
@@ -3358,7 +3359,7 @@ reject_opts		:       /* empty */
 				$<stmt>0->reject.expr = $3;
 				datatype_set($<stmt>0->reject.expr, &icmp_code_type);
 			}
-			|	WITH	ICMP6	TYPE	reject_with_expr
+			|	WITH	ICMP6	TYPE	reject_with_expr close_scope_icmp
 			{
 				$<stmt>0->reject.family = NFPROTO_IPV6;
 				$<stmt>0->reject.type = NFT_REJECT_ICMP_UNREACH;
@@ -4793,7 +4794,7 @@ primary_rhs_expr	:	symbol_expr		{ $$ = $1; }
 							 BYTEORDER_HOST_ENDIAN,
 							 sizeof(data) * BITS_PER_BYTE, &data);
 			}
-			|	ICMP
+			|	ICMP	close_scope_icmp
 			{
 				uint8_t data = IPPROTO_ICMP;
 				$$ = constant_expr_alloc(&@$, &inet_protocol_type,
@@ -4807,7 +4808,7 @@ primary_rhs_expr	:	symbol_expr		{ $$ = $1; }
 							 BYTEORDER_HOST_ENDIAN,
 							 sizeof(data) * BITS_PER_BYTE, &data);
 			}
-			|	ICMP6
+			|	ICMP6	close_scope_icmp
 			{
 				uint8_t data = IPPROTO_ICMPV6;
 				$$ = constant_expr_alloc(&@$, &inet_protocol_type,
@@ -5383,7 +5384,7 @@ ip_option_field		:	TYPE		{ $$ = IPOPT_FIELD_TYPE; }
 			|	ADDR		{ $$ = IPOPT_FIELD_ADDR_0; }
 			;
 
-icmp_hdr_expr		:	ICMP	icmp_hdr_field
+icmp_hdr_expr		:	ICMP	icmp_hdr_field	close_scope_icmp
 			{
 				$$ = payload_expr_alloc(&@$, &proto_icmp, $2);
 			}
@@ -5426,7 +5427,7 @@ ip6_hdr_field		:	HDRVERSION	{ $$ = IP6HDR_VERSION; }
 			|	SADDR		{ $$ = IP6HDR_SADDR; }
 			|	DADDR		{ $$ = IP6HDR_DADDR; }
 			;
-icmp6_hdr_expr		:	ICMP6	icmp6_hdr_field
+icmp6_hdr_expr		:	ICMP6	icmp6_hdr_field	close_scope_icmp
 			{
 				$$ = payload_expr_alloc(&@$, &proto_icmp6, $2);
 			}
