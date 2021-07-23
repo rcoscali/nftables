@@ -468,30 +468,46 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 
 	"ptr"			{ return PTR; }
 	"value"			{ return VALUE; }
+
+	"option"		{ return OPTION; }
+	"options"		{ return OPTIONS; }
 }
 
 <SCANSTATE_TCP>{
-"echo"			{ return ECHO; }
-"eol"			{ return EOL; }
-"fastopen"		{ return FASTOPEN; }
-"mptcp"			{ return MPTCP; }
-"md5sig"		{ return MD5SIG; }
-"subtype"		{ return SUBTYPE; }
-"nop"			{ return NOP; }
-"noop"			{ return NOP; }
-"sack"			{ return SACK; }
-"sack0"			{ return SACK0; }
-"sack1"			{ return SACK1; }
-"sack2"			{ return SACK2; }
-"sack3"			{ return SACK3; }
-"time"			{ return TIME; }
+	/* tcp header fields */
+	"ackseq"		{ return ACKSEQ; }
+	"doff"			{ return DOFF; }
+	"window"		{ return WINDOW; }
+	"urgptr"		{ return URGPTR; }
 
-"count"			{ return COUNT; }
-"left"			{ return LEFT; }
-"right"			{ return RIGHT; }
-"tsval"			{ return TSVAL; }
-"tsecr"			{ return TSECR; }
+	/* tcp option types */
+	"echo"			{ return ECHO; }
+	"eol"			{ return EOL; }
+	"maxseg"		{ return MSS; }
+	"mss"			{ return MSS; }
+	"nop"			{ return NOP; }
+	"noop"			{ return NOP; }
+	"sack"			{ return SACK; }
+	"sack0"			{ return SACK0; }
+	"sack1"			{ return SACK1; }
+	"sack2"			{ return SACK2; }
+	"sack3"			{ return SACK3; }
+	"fastopen"		{ return FASTOPEN; }
+	"mptcp"			{ return MPTCP; }
+	"md5sig"		{ return MD5SIG; }
+
+	/* tcp option fields */
+	"left"			{ return LEFT; }
+	"right"			{ return RIGHT; }
+	"count"			{ return COUNT; }
+	"tsval"			{ return TSVAL; }
+	"tsecr"			{ return TSECR; }
+	"subtype"		{ return SUBTYPE; }
+
+	"options"		{ return OPTIONS; }
+	"option"		{ return OPTION; }
 }
+"time"			{ return TIME; }
 "maxseg"		{ return MSS; }
 "mss"			{ return MSS; }
 "sack-permitted"	{ return SACK_PERM; }
@@ -540,11 +556,6 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "port"			{ return PORT; }
 
 "tcp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_TCP); return TCP; }
-"ackseq"		{ return ACKSEQ; }
-"doff"			{ return DOFF; }
-"window"		{ return WINDOW; }
-"urgptr"		{ return URGPTR; }
-"option"		{ return OPTION; }
 
 "dccp"			{ return DCCP; }
 
@@ -688,7 +699,6 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 
 "notrack"		{ return NOTRACK; }
 
-"options"		{ return OPTIONS; }
 "all"			{ return ALL; }
 
 "xml"			{ return XML; }
