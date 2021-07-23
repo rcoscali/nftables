@@ -935,10 +935,13 @@ close_scope_comp	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_COMP); 
 close_scope_ct		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CT); };
 close_scope_counter	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_COUNTER); };
 close_scope_dccp	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_DCCP); };
+close_scope_dst		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_DST); };
 close_scope_esp		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_ESP); };
 close_scope_eth		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_ETH); };
 close_scope_fib		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_FIB); };
+close_scope_frag	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_FRAG); };
 close_scope_hash	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_HASH); };
+close_scope_hbh		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_HBH); };
 close_scope_ip		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_IP); };
 close_scope_ip6		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_IP6); };
 close_scope_vlan	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_VLAN); };
@@ -947,6 +950,7 @@ close_scope_igmp	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_IGMP); };
 close_scope_ipsec	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_IPSEC); };
 close_scope_list	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CMD_LIST); };
 close_scope_limit	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_LIMIT); };
+close_scope_mh		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_MH); };
 close_scope_numgen	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_NUMGEN); };
 close_scope_osf		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_OSF); };
 close_scope_quota	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_QUOTA); };
@@ -5776,7 +5780,7 @@ exthdr_expr		:	hbh_hdr_expr
 			|	mh_hdr_expr
 			;
 
-hbh_hdr_expr		:	HBH	hbh_hdr_field
+hbh_hdr_expr		:	HBH	hbh_hdr_field	close_scope_hbh
 			{
 				$$ = exthdr_expr_alloc(&@$, &exthdr_hbh, $2);
 			}
@@ -5834,7 +5838,7 @@ rt4_hdr_field		:	LAST_ENT	{ $$ = RT4HDR_LASTENT; }
 			}
 			;
 
-frag_hdr_expr		:	FRAG	frag_hdr_field
+frag_hdr_expr		:	FRAG	frag_hdr_field	close_scope_frag
 			{
 				$$ = exthdr_expr_alloc(&@$, &exthdr_frag, $2);
 			}
@@ -5848,7 +5852,7 @@ frag_hdr_field		:	NEXTHDR		{ $$ = FRAGHDR_NEXTHDR; }
 			|	ID		{ $$ = FRAGHDR_ID; }
 			;
 
-dst_hdr_expr		:	DST	dst_hdr_field
+dst_hdr_expr		:	DST	dst_hdr_field	close_scope_dst
 			{
 				$$ = exthdr_expr_alloc(&@$, &exthdr_dst, $2);
 			}
@@ -5858,7 +5862,7 @@ dst_hdr_field		:	NEXTHDR		{ $$ = DSTHDR_NEXTHDR; }
 			|	HDRLENGTH	{ $$ = DSTHDR_HDRLENGTH; }
 			;
 
-mh_hdr_expr		:	MH	mh_hdr_field
+mh_hdr_expr		:	MH	mh_hdr_field	close_scope_mh
 			{
 				$$ = exthdr_expr_alloc(&@$, &exthdr_mh, $2);
 			}
@@ -5885,11 +5889,11 @@ exthdr_exists_expr	:	EXTHDR	exthdr_key
 			}
 			;
 
-exthdr_key		:	HBH	{ $$ = IPPROTO_HOPOPTS; }
+exthdr_key		:	HBH	close_scope_hbh	{ $$ = IPPROTO_HOPOPTS; }
 			|	RT	close_scope_rt	{ $$ = IPPROTO_ROUTING; }
-			|	FRAG	{ $$ = IPPROTO_FRAGMENT; }
-			|	DST	{ $$ = IPPROTO_DSTOPTS; }
-			|	MH	{ $$ = IPPROTO_MH; }
+			|	FRAG	close_scope_frag	{ $$ = IPPROTO_FRAGMENT; }
+			|	DST	close_scope_dst	{ $$ = IPPROTO_DSTOPTS; }
+			|	MH	close_scope_mh	{ $$ = IPPROTO_MH; }
 			;
 
 %%

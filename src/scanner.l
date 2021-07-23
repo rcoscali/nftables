@@ -214,10 +214,14 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_EXPR_AH
 %s SCANSTATE_EXPR_COMP
 %s SCANSTATE_EXPR_DCCP
+%s SCANSTATE_EXPR_DST
 %s SCANSTATE_EXPR_ESP
 %s SCANSTATE_EXPR_FIB
+%s SCANSTATE_EXPR_FRAG
 %s SCANSTATE_EXPR_HASH
+%s SCANSTATE_EXPR_HBH
 %s SCANSTATE_EXPR_IPSEC
+%s SCANSTATE_EXPR_MH
 %s SCANSTATE_EXPR_NUMGEN
 %s SCANSTATE_EXPR_OSF
 %s SCANSTATE_EXPR_QUEUE
@@ -440,7 +444,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "typeof"		{ return TYPEOF; }
 
 "vlan"			{ scanner_push_start_cond(yyscanner, SCANSTATE_VLAN); return VLAN; }
-"id"			{ return ID; }
+<SCANSTATE_CT,SCANSTATE_EXPR_FRAG,SCANSTATE_VLAN,SCANSTATE_IP,SCANSTATE_ICMP>"id"			{ return ID; }
 <SCANSTATE_VLAN>{
 	"cfi"		{ return CFI; }
 	"dei"		{ return DEI; }
@@ -462,16 +466,22 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 <SCANSTATE_IP,SCANSTATE_IP6,SCANSTATE_EXPR_OSF>{
 	"version"		{ return HDRVERSION; }
 }
-"hdrlength"		{ return HDRLENGTH; }
+<SCANSTATE_EXPR_AH,SCANSTATE_EXPR_DST,SCANSTATE_EXPR_HBH,SCANSTATE_EXPR_MH,SCANSTATE_EXPR_RT,SCANSTATE_IP>{
+	"hdrlength"		{ return HDRLENGTH; }
+}
 "dscp"			{ return DSCP; }
 "ecn"			{ return ECN; }
 "length"		{ return LENGTH; }
-"frag-off"		{ return FRAG_OFF; }
+<SCANSTATE_EXPR_FRAG,SCANSTATE_IP>{
+	"frag-off"		{ return FRAG_OFF; }
+}
 <SCANSTATE_EXPR_OSF,SCANSTATE_IP>{
 	"ttl"			{ return TTL; }
 }
 "protocol"		{ return PROTOCOL; }
-"checksum"		{ return CHECKSUM; }
+<SCANSTATE_EXPR_MH,SCANSTATE_EXPR_UDP,SCANSTATE_EXPR_UDPLITE,SCANSTATE_ICMP,SCANSTATE_IGMP,SCANSTATE_IP,SCANSTATE_SCTP,SCANSTATE_TCP>{
+	"checksum"		{ return CHECKSUM; }
+}
 
 <SCANSTATE_IP>{
 	"lsrr"			{ return LSRR; }
@@ -553,7 +563,9 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "nexthdr"		{ return NEXTHDR; }
 
 "ah"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_AH); return AH; }
-"reserved"		{ return RESERVED; }
+<SCANSTATE_EXPR_AH,SCANSTATE_EXPR_FRAG,SCANSTATE_EXPR_MH,SCANSTATE_TCP>{
+	"reserved"		{ return RESERVED; }
+}
 <SCANSTATE_EXPR_AH,SCANSTATE_EXPR_ESP,SCANSTATE_EXPR_IPSEC>"spi"			{ return SPI; }
 
 "esp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_ESP); return ESP; }
@@ -634,15 +646,17 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "tag"			{ return TAG; }
 "sid"			{ return SID; }
 
-"hbh"			{ return HBH; }
+"hbh"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_HBH); return HBH; }
 
-"frag"			{ return FRAG; }
-"reserved2"		{ return RESERVED2; }
-"more-fragments"	{ return MORE_FRAGMENTS; }
+"frag"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_FRAG); return FRAG; }
+<SCANSTATE_EXPR_FRAG>{
+	"reserved2"		{ return RESERVED2; }
+	"more-fragments"	{ return MORE_FRAGMENTS; }
+}
 
-"dst"			{ return DST; }
+"dst"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_DST); return DST; }
 
-"mh"			{ return MH; }
+"mh"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_MH); return MH; }
 
 "meta"			{ return META; }
 "mark"			{ return MARK; }
