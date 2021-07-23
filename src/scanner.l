@@ -212,6 +212,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_VLAN
 %s SCANSTATE_CMD_LIST
 %s SCANSTATE_EXPR_COMP
+%s SCANSTATE_EXPR_DCCP
 %s SCANSTATE_EXPR_FIB
 %s SCANSTATE_EXPR_HASH
 %s SCANSTATE_EXPR_IPSEC
@@ -220,6 +221,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_EXPR_RT
 %s SCANSTATE_EXPR_SCTP_CHUNK
 %s SCANSTATE_EXPR_SOCKET
+%s SCANSTATE_EXPR_TH
 %s SCANSTATE_EXPR_UDP
 %s SCANSTATE_EXPR_UDPLITE
 
@@ -422,7 +424,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 
 "ll"			{ return LL_HDR; }
 "nh"			{ return NETWORK_HDR; }
-"th"			{ return TRANSPORT_HDR; }
+"th"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_TH); return TRANSPORT_HDR; }
 
 "bridge"		{ return BRIDGE; }
 
@@ -558,13 +560,17 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 <SCANSTATE_EXPR_UDPLITE>{
 	"csumcov"	{ return CSUMCOV; }
 }
-"sport"			{ return SPORT; }
-"dport"			{ return DPORT; }
+<SCANSTATE_EXPR_DCCP,SCANSTATE_SCTP,SCANSTATE_TCP,SCANSTATE_EXPR_TH,SCANSTATE_EXPR_UDP,SCANSTATE_EXPR_UDPLITE>{
+	"sport"			{ return SPORT; }
+}
+<SCANSTATE_CT,SCANSTATE_EXPR_DCCP,SCANSTATE_SCTP,SCANSTATE_TCP,SCANSTATE_EXPR_TH,SCANSTATE_EXPR_UDP,SCANSTATE_EXPR_UDPLITE>{
+	"dport"			{ return DPORT; }
+}
 "port"			{ return PORT; }
 
 "tcp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_TCP); return TCP; }
 
-"dccp"			{ return DCCP; }
+"dccp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_DCCP); return DCCP; }
 
 "sctp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_SCTP); return SCTP; }
 

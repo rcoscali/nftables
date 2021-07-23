@@ -933,6 +933,7 @@ close_scope_arp		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_ARP); };
 close_scope_comp	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_COMP); };
 close_scope_ct		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CT); };
 close_scope_counter	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_COUNTER); };
+close_scope_dccp	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_DCCP); };
 close_scope_eth		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_ETH); };
 close_scope_fib		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_FIB); };
 close_scope_hash	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_HASH); };
@@ -953,6 +954,7 @@ close_scope_sctp_chunk	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_S
 close_scope_secmark	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_SECMARK); };
 close_scope_socket	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_SOCKET); }
 close_scope_tcp		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_TCP); };
+close_scope_th		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_TH); };
 close_scope_udp		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_UDP); };
 close_scope_udplite	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_UDPLITE); };
 
@@ -4827,7 +4829,7 @@ primary_rhs_expr	:	symbol_expr		{ $$ = $1; }
 							 BYTEORDER_HOST_ENDIAN,
 							 sizeof(data) * BITS_PER_BYTE, &data);
 			}
-			|	DCCP
+			|	DCCP	close_scope_dccp
 			{
 				uint8_t data = IPPROTO_DCCP;
 				$$ = constant_expr_alloc(&@$, &inet_protocol_type,
@@ -5288,7 +5290,7 @@ payload_raw_expr	:	AT	payload_base_spec	COMMA	NUM	COMMA	NUM
 
 payload_base_spec	:	LL_HDR		{ $$ = PROTO_BASE_LL_HDR; }
 			|	NETWORK_HDR	{ $$ = PROTO_BASE_NETWORK_HDR; }
-			|	TRANSPORT_HDR	{ $$ = PROTO_BASE_TRANSPORT_HDR; }
+			|	TRANSPORT_HDR	close_scope_th	{ $$ = PROTO_BASE_TRANSPORT_HDR; }
 			|	STRING
 			{
 				if (!strcmp($1, "ih")) {
@@ -5621,7 +5623,7 @@ tcpopt_field_maxseg	:	SIZE		{ $$ = TCPOPT_MAXSEG_SIZE; }
 tcpopt_field_mptcp	:	SUBTYPE		{ $$ = TCPOPT_MPTCP_SUBTYPE; }
 			;
 
-dccp_hdr_expr		:	DCCP	dccp_hdr_field
+dccp_hdr_expr		:	DCCP	dccp_hdr_field	close_scope_dccp
 			{
 				$$ = payload_expr_alloc(&@$, &proto_dccp, $2);
 			}
@@ -5749,7 +5751,7 @@ sctp_hdr_field		:	SPORT		{ $$ = SCTPHDR_SPORT; }
 			|	CHECKSUM	{ $$ = SCTPHDR_CHECKSUM; }
 			;
 
-th_hdr_expr		:	TRANSPORT_HDR 	th_hdr_field
+th_hdr_expr		:	TRANSPORT_HDR	th_hdr_field	close_scope_th
 			{
 				$$ = payload_expr_alloc(&@$, &proto_th, $2);
 				if ($$)
