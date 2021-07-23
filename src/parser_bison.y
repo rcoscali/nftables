@@ -953,6 +953,8 @@ close_scope_sctp_chunk	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_S
 close_scope_secmark	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_SECMARK); };
 close_scope_socket	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_SOCKET); }
 close_scope_tcp		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_TCP); };
+close_scope_udp		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_UDP); };
+close_scope_udplite	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_UDPLITE); };
 
 close_scope_log		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_STMT_LOG); }
 close_scope_synproxy	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_STMT_SYNPROXY); }
@@ -4489,7 +4491,7 @@ ct_cmd_type		:	HELPERS		{ $$ = CMD_OBJ_CT_HELPERS; }
 			;
 
 ct_l4protoname		:	TCP	close_scope_tcp	{ $$ = IPPROTO_TCP; }
-			|	UDP	{ $$ = IPPROTO_UDP; }
+			|	UDP	close_scope_udp	{ $$ = IPPROTO_UDP; }
 			;
 
 ct_helper_config		:	TYPE	QUOTED_STRING	PROTOCOL	ct_l4protoname	stmt_separator
@@ -4769,14 +4771,14 @@ primary_rhs_expr	:	symbol_expr		{ $$ = $1; }
 							 BYTEORDER_HOST_ENDIAN,
 							 sizeof(data) * BITS_PER_BYTE, &data);
 			}
-			|	UDP
+			|	UDP	close_scope_udp
 			{
 				uint8_t data = IPPROTO_UDP;
 				$$ = constant_expr_alloc(&@$, &inet_protocol_type,
 							 BYTEORDER_HOST_ENDIAN,
 							 sizeof(data) * BITS_PER_BYTE, &data);
 			}
-			|	UDPLITE
+			|	UDPLITE	close_scope_udplite
 			{
 				uint8_t data = IPPROTO_UDPLITE;
 				$$ = constant_expr_alloc(&@$, &inet_protocol_type,
@@ -5480,7 +5482,7 @@ comp_hdr_field		:	NEXTHDR		{ $$ = COMPHDR_NEXTHDR; }
 			|	CPI		{ $$ = COMPHDR_CPI; }
 			;
 
-udp_hdr_expr		:	UDP	udp_hdr_field
+udp_hdr_expr		:	UDP	udp_hdr_field	close_scope_udp
 			{
 				$$ = payload_expr_alloc(&@$, &proto_udp, $2);
 			}
@@ -5492,7 +5494,7 @@ udp_hdr_field		:	SPORT		{ $$ = UDPHDR_SPORT; }
 			|	CHECKSUM	{ $$ = UDPHDR_CHECKSUM; }
 			;
 
-udplite_hdr_expr	:	UDPLITE	udplite_hdr_field
+udplite_hdr_expr	:	UDPLITE	udplite_hdr_field	close_scope_udplite
 			{
 				$$ = payload_expr_alloc(&@$, &proto_udplite, $2);
 			}

@@ -220,6 +220,8 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_EXPR_RT
 %s SCANSTATE_EXPR_SCTP_CHUNK
 %s SCANSTATE_EXPR_SOCKET
+%s SCANSTATE_EXPR_UDP
+%s SCANSTATE_EXPR_UDPLITE
 
 %s SCANSTATE_STMT_LOG
 %s SCANSTATE_STMT_SYNPROXY
@@ -551,8 +553,11 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 }
 "flags"			{ return FLAGS; }
 
-"udp"			{ return UDP; }
-"udplite"		{ return UDPLITE; }
+"udp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_UDP); return UDP; }
+"udplite"		{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_UDPLITE); return UDPLITE; }
+<SCANSTATE_EXPR_UDPLITE>{
+	"csumcov"	{ return CSUMCOV; }
+}
 "sport"			{ return SPORT; }
 "dport"			{ return DPORT; }
 "port"			{ return PORT; }
