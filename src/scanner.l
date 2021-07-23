@@ -211,8 +211,10 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_TCP
 %s SCANSTATE_VLAN
 %s SCANSTATE_CMD_LIST
+%s SCANSTATE_EXPR_AH
 %s SCANSTATE_EXPR_COMP
 %s SCANSTATE_EXPR_DCCP
+%s SCANSTATE_EXPR_ESP
 %s SCANSTATE_EXPR_FIB
 %s SCANSTATE_EXPR_HASH
 %s SCANSTATE_EXPR_IPSEC
@@ -532,7 +534,9 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"max-delay"		{ return MAXDELAY; }
 	"mtu"			{ return MTU; }
 }
-"sequence"		{ return SEQUENCE; }
+<SCANSTATE_EXPR_AH,SCANSTATE_EXPR_ESP,SCANSTATE_ICMP,SCANSTATE_TCP>{
+	"sequence"		{ return SEQUENCE; }
+}
 
 "igmp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_IGMP); return IGMP; }
 <SCANSTATE_IGMP>{
@@ -548,11 +552,11 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 }
 "nexthdr"		{ return NEXTHDR; }
 
-"ah"			{ return AH; }
+"ah"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_AH); return AH; }
 "reserved"		{ return RESERVED; }
-"spi"			{ return SPI; }
+<SCANSTATE_EXPR_AH,SCANSTATE_EXPR_ESP,SCANSTATE_EXPR_IPSEC>"spi"			{ return SPI; }
 
-"esp"			{ return ESP; }
+"esp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_ESP); return ESP; }
 
 "comp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_COMP); return COMP; }
 <SCANSTATE_EXPR_COMP>{

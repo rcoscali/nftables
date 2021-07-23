@@ -929,11 +929,13 @@ opt_newline		:	NEWLINE
 		 	|	/* empty */
 			;
 
+close_scope_ah		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_AH); };
 close_scope_arp		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_ARP); };
 close_scope_comp	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_COMP); };
 close_scope_ct		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CT); };
 close_scope_counter	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_COUNTER); };
 close_scope_dccp	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_DCCP); };
+close_scope_esp		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_ESP); };
 close_scope_eth		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_ETH); };
 close_scope_fib		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_FIB); };
 close_scope_hash	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_HASH); };
@@ -4788,14 +4790,14 @@ primary_rhs_expr	:	symbol_expr		{ $$ = $1; }
 							 BYTEORDER_HOST_ENDIAN,
 							 sizeof(data) * BITS_PER_BYTE, &data);
 			}
-			|	ESP
+			|	ESP	close_scope_esp
 			{
 				uint8_t data = IPPROTO_ESP;
 				$$ = constant_expr_alloc(&@$, &inet_protocol_type,
 							 BYTEORDER_HOST_ENDIAN,
 							 sizeof(data) * BITS_PER_BYTE, &data);
 			}
-			|	AH
+			|	AH	close_scope_ah
 			{
 				uint8_t data = IPPROTO_AH;
 				$$ = constant_expr_alloc(&@$, &inet_protocol_type,
@@ -5451,7 +5453,7 @@ icmp6_hdr_field		:	TYPE		{ $$ = ICMP6HDR_TYPE; }
 			|	MAXDELAY	{ $$ = ICMP6HDR_MAXDELAY; }
 			;
 
-auth_hdr_expr		:	AH	auth_hdr_field
+auth_hdr_expr		:	AH	auth_hdr_field	close_scope_ah
 			{
 				$$ = payload_expr_alloc(&@$, &proto_ah, $2);
 			}
@@ -5464,7 +5466,7 @@ auth_hdr_field		:	NEXTHDR		{ $$ = AHHDR_NEXTHDR; }
 			|	SEQUENCE	{ $$ = AHHDR_SEQUENCE; }
 			;
 
-esp_hdr_expr		:	ESP	esp_hdr_field
+esp_hdr_expr		:	ESP	esp_hdr_field	close_scope_esp
 			{
 				$$ = payload_expr_alloc(&@$, &proto_esp, $2);
 			}
