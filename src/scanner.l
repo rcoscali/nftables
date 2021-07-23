@@ -212,6 +212,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_TYPE
 %s SCANSTATE_VLAN
 %s SCANSTATE_CMD_LIST
+%s SCANSTATE_CMD_MONITOR
 %s SCANSTATE_EXPR_AH
 %s SCANSTATE_EXPR_COMP
 %s SCANSTATE_EXPR_DCCP
@@ -289,23 +290,27 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 
 "describe"		{ return DESCRIBE; }
 
+<SCANSTATE_CMD_LIST,SCANSTATE_CMD_MONITOR>{
+	"chains"		{ return CHAINS; }
+	"sets"			{ return SETS; }
+	"tables"		{ return TABLES; }
+}
+<SCANSTATE_CMD_MONITOR>{
+	"rules"			{ return RULES; }
+	"trace"			{ return TRACE; }
+}
 "hook"			{ return HOOK; }
 "device"		{ return DEVICE; }
 "devices"		{ return DEVICES; }
 "table"			{ return TABLE; }
-"tables"		{ return TABLES; }
 "chain"			{ return CHAIN; }
-"chains"		{ return CHAINS; }
 "rule"			{ return RULE; }
-"rules"			{ return RULES; }
-"sets"			{ return SETS; }
 "set"			{ return SET; }
 "element"		{ return ELEMENT; }
 "map"			{ return MAP; }
 "flowtable"		{ return FLOWTABLE; }
 "handle"		{ return HANDLE; }
 "ruleset"		{ return RULESET; }
-"trace"			{ return TRACE; }
 
 "socket"		{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_SOCKET); return SOCKET; }
 <SCANSTATE_EXPR_SOCKET>{
@@ -340,7 +345,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "rename"		{ return RENAME; }
 "import"                { return IMPORT; }
 "export"		{ return EXPORT; }
-"monitor"		{ return MONITOR; }
+"monitor"		{ scanner_push_start_cond(yyscanner, SCANSTATE_CMD_MONITOR); return MONITOR; }
 
 "position"		{ return POSITION; }
 "index"			{ return INDEX; }
