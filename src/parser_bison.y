@@ -946,6 +946,7 @@ close_scope_ipsec	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_IPSEC)
 close_scope_list	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CMD_LIST); };
 close_scope_limit	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_LIMIT); };
 close_scope_numgen	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_NUMGEN); };
+close_scope_osf		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_OSF); };
 close_scope_quota	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_QUOTA); };
 close_scope_queue	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_QUEUE); };
 close_scope_rt		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_RT); };
@@ -4108,11 +4109,11 @@ fib_tuple		:  	fib_flag	DOT	fib_tuple
 			|	fib_flag
 			;
 
-osf_expr		:	OSF	osf_ttl		HDRVERSION
+osf_expr		:	OSF	osf_ttl		HDRVERSION	close_scope_osf
 			{
 				$$ = osf_expr_alloc(&@$, $2, NFT_OSF_F_VERSION);
 			}
-			|	OSF	osf_ttl		NAME
+			|	OSF	osf_ttl		NAME	close_scope_osf
 			{
 				$$ = osf_expr_alloc(&@$, $2, 0);
 			}

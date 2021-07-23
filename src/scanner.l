@@ -217,6 +217,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_EXPR_HASH
 %s SCANSTATE_EXPR_IPSEC
 %s SCANSTATE_EXPR_NUMGEN
+%s SCANSTATE_EXPR_OSF
 %s SCANSTATE_EXPR_QUEUE
 %s SCANSTATE_EXPR_RT
 %s SCANSTATE_EXPR_SCTP_CHUNK
@@ -367,7 +368,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 }
 
 "counter"		{ scanner_push_start_cond(yyscanner, SCANSTATE_COUNTER); return COUNTER; }
-"name"			{ return NAME; }
+<SCANSTATE_COUNTER,SCANSTATE_LIMIT,SCANSTATE_QUOTA,SCANSTATE_STMT_SYNPROXY,SCANSTATE_EXPR_OSF>"name"			{ return NAME; }
 <SCANSTATE_COUNTER,SCANSTATE_CT,SCANSTATE_LIMIT>"packets"		{ return PACKETS; }
 <SCANSTATE_COUNTER,SCANSTATE_CT,SCANSTATE_LIMIT,SCANSTATE_QUOTA>"bytes"	{ return BYTES; }
 
@@ -456,13 +457,17 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 }
 
 "ip"			{ scanner_push_start_cond(yyscanner, SCANSTATE_IP); return IP; }
-"version"		{ return HDRVERSION; }
+<SCANSTATE_IP,SCANSTATE_IP6,SCANSTATE_EXPR_OSF>{
+	"version"		{ return HDRVERSION; }
+}
 "hdrlength"		{ return HDRLENGTH; }
 "dscp"			{ return DSCP; }
 "ecn"			{ return ECN; }
 "length"		{ return LENGTH; }
 "frag-off"		{ return FRAG_OFF; }
-"ttl"			{ return TTL; }
+<SCANSTATE_EXPR_OSF,SCANSTATE_IP>{
+	"ttl"			{ return TTL; }
+}
 "protocol"		{ return PROTOCOL; }
 "checksum"		{ return CHECKSUM; }
 
@@ -705,7 +710,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 
 "fib"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_FIB); return FIB; }
 
-"osf"			{ return OSF; }
+"osf"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_OSF); return OSF; }
 
 "synproxy"		{ scanner_push_start_cond(yyscanner, SCANSTATE_STMT_SYNPROXY); return SYNPROXY; }
 <SCANSTATE_STMT_SYNPROXY>{
