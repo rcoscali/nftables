@@ -211,6 +211,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_TCP
 %s SCANSTATE_VLAN
 %s SCANSTATE_CMD_LIST
+%s SCANSTATE_EXPR_COMP
 %s SCANSTATE_EXPR_FIB
 %s SCANSTATE_EXPR_HASH
 %s SCANSTATE_EXPR_IPSEC
@@ -544,9 +545,11 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 
 "esp"			{ return ESP; }
 
-"comp"			{ return COMP; }
+"comp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_COMP); return COMP; }
+<SCANSTATE_EXPR_COMP>{
+	"cpi"			{ return CPI; }
+}
 "flags"			{ return FLAGS; }
-"cpi"			{ return CPI; }
 
 "udp"			{ return UDP; }
 "udplite"		{ return UDPLITE; }

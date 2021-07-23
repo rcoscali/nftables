@@ -930,6 +930,7 @@ opt_newline		:	NEWLINE
 			;
 
 close_scope_arp		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_ARP); };
+close_scope_comp	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_COMP); };
 close_scope_ct		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CT); };
 close_scope_counter	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_COUNTER); };
 close_scope_eth		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_ETH); };
@@ -4817,7 +4818,7 @@ primary_rhs_expr	:	symbol_expr		{ $$ = $1; }
 							 BYTEORDER_HOST_ENDIAN,
 							 sizeof(data) * BITS_PER_BYTE, &data);
 			}
-			|	COMP
+			|	COMP	close_scope_comp
 			{
 				uint8_t data = IPPROTO_COMP;
 				$$ = constant_expr_alloc(&@$, &inet_protocol_type,
@@ -5468,7 +5469,7 @@ esp_hdr_field		:	SPI		{ $$ = ESPHDR_SPI; }
 			|	SEQUENCE	{ $$ = ESPHDR_SEQUENCE; }
 			;
 
-comp_hdr_expr		:	COMP	comp_hdr_field
+comp_hdr_expr		:	COMP	comp_hdr_field	close_scope_comp
 			{
 				$$ = payload_expr_alloc(&@$, &proto_comp, $2);
 			}
