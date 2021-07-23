@@ -201,6 +201,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_COUNTER
 %s SCANSTATE_ETH
 %s SCANSTATE_ICMP
+%s SCANSTATE_IGMP
 %s SCANSTATE_IP
 %s SCANSTATE_IP6
 %s SCANSTATE_LIMIT
@@ -369,11 +370,11 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 
 "log"			{ scanner_push_start_cond(yyscanner, SCANSTATE_STMT_LOG); return LOG; }
 "prefix"		{ return PREFIX; }
-"group"			{ return GROUP; }
 <SCANSTATE_STMT_LOG>{
 	"snaplen"		{ return SNAPLEN; }
 	"queue-threshold"	{ return QUEUE_THRESHOLD; }
 	"level"			{ return LEVEL; }
+	"group"			{ return GROUP; }
 }
 
 "queue"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_QUEUE); return QUEUE;}
@@ -508,8 +509,11 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 }
 "sequence"		{ return SEQUENCE; }
 
-"igmp"			{ return IGMP; }
-"mrt"			{ return MRT; }
+"igmp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_IGMP); return IGMP; }
+<SCANSTATE_IGMP>{
+	"mrt"			{ return MRT; }
+	"group"			{ return GROUP; }
+}
 
 "ip6"			{ scanner_push_start_cond(yyscanner, SCANSTATE_IP6); return IP6; }
 "priority"		{ return PRIORITY; }
