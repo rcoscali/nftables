@@ -961,6 +961,7 @@ close_scope_sctp_chunk	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_S
 close_scope_secmark	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_SECMARK); };
 close_scope_socket	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_SOCKET); }
 close_scope_tcp		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_TCP); };
+close_scope_type	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_TYPE); };
 close_scope_th		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_TH); };
 close_scope_udp		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_UDP); };
 close_scope_udplite	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_UDPLITE); };
@@ -1921,7 +1922,7 @@ set_block_alloc		:	/* empty */
 set_block		:	/* empty */	{ $$ = $<set>-1; }
 			|	set_block	common_block
 			|	set_block	stmt_separator
-			|	set_block	TYPE		data_type_expr	stmt_separator
+			|	set_block	TYPE		data_type_expr	stmt_separator	close_scope_type
 			{
 				$1->key = $3;
 				$$ = $1;
@@ -2015,7 +2016,7 @@ map_block		:	/* empty */	{ $$ = $<set>-1; }
 			}
 			|	map_block	TYPE
 						data_type_expr	COLON	data_type_expr
-						stmt_separator
+						stmt_separator	close_scope_type
 			{
 				$1->key = $3;
 				$1->data = $5;
@@ -2025,7 +2026,7 @@ map_block		:	/* empty */	{ $$ = $<set>-1; }
 			}
 			|	map_block	TYPE
 						data_type_expr	COLON	INTERVAL	data_type_expr
-						stmt_separator
+						stmt_separator	close_scope_type
 			{
 				$1->key = $3;
 				$1->data = $6;
@@ -2059,7 +2060,7 @@ map_block		:	/* empty */	{ $$ = $<set>-1; }
 			}
 			|	map_block	TYPE
 						data_type_expr	COLON	map_block_obj_type
-						stmt_separator
+						stmt_separator	close_scope_type
 			{
 				$1->key = $3;
 				$1->objtype = $5;
@@ -2376,33 +2377,33 @@ type_identifier		:	STRING	{ $$ = $1; }
 			|	CLASSID { $$ = xstrdup("classid"); }
 			;
 
-hook_spec		:	TYPE		STRING		HOOK		STRING		dev_spec	prio_spec
+hook_spec		:	TYPE		close_scope_type	STRING		HOOK		STRING		dev_spec	prio_spec
 			{
-				const char *chain_type = chain_type_name_lookup($2);
+				const char *chain_type = chain_type_name_lookup($3);
 
 				if (chain_type == NULL) {
-					erec_queue(error(&@2, "unknown chain type"),
+					erec_queue(error(&@3, "unknown chain type"),
 						   state->msgs);
-					xfree($2);
+					xfree($3);
 					YYERROR;
 				}
-				$<chain>0->type.loc = @2;
+				$<chain>0->type.loc = @3;
 				$<chain>0->type.str = xstrdup(chain_type);
-				xfree($2);
+				xfree($3);
 
 				$<chain>0->loc = @$;
-				$<chain>0->hook.loc = @4;
-				$<chain>0->hook.name = chain_hookname_lookup($4);
+				$<chain>0->hook.loc = @5;
+				$<chain>0->hook.name = chain_hookname_lookup($5);
 				if ($<chain>0->hook.name == NULL) {
-					erec_queue(error(&@4, "unknown chain hook"),
+					erec_queue(error(&@5, "unknown chain hook"),
 						   state->msgs);
-					xfree($4);
+					xfree($5);
 					YYERROR;
 				}
-				xfree($4);
+				xfree($5);
 
-				$<chain>0->dev_expr	= $5;
-				$<chain>0->priority	= $6;
+				$<chain>0->dev_expr	= $6;
+				$<chain>0->priority	= $7;
 				$<chain>0->flags	|= CHAIN_F_BASECHAIN;
 			}
 			;
@@ -3359,7 +3360,7 @@ reject_opts		:       /* empty */
 				$<stmt>0->reject.type = -1;
 				$<stmt>0->reject.icmp_code = -1;
 			}
-			|	WITH	ICMP	TYPE	reject_with_expr close_scope_icmp
+			|	WITH	ICMP	TYPE	reject_with_expr close_scope_type close_scope_icmp
 			{
 				$<stmt>0->reject.family = NFPROTO_IPV4;
 				$<stmt>0->reject.type = NFT_REJECT_ICMP_UNREACH;
@@ -3373,7 +3374,7 @@ reject_opts		:       /* empty */
 				$<stmt>0->reject.expr = $3;
 				datatype_set($<stmt>0->reject.expr, &icmp_code_type);
 			}
-			|	WITH	ICMP6	TYPE	reject_with_expr close_scope_icmp
+			|	WITH	ICMP6	TYPE	reject_with_expr close_scope_type close_scope_icmp
 			{
 				$<stmt>0->reject.family = NFPROTO_IPV6;
 				$<stmt>0->reject.type = NFT_REJECT_ICMP_UNREACH;
@@ -3387,7 +3388,7 @@ reject_opts		:       /* empty */
 				$<stmt>0->reject.expr = $3;
 				datatype_set($<stmt>0->reject.expr, &icmpv6_code_type);
 			}
-			|	WITH	ICMPX	TYPE	reject_with_expr
+			|	WITH	ICMPX	TYPE	reject_with_expr close_scope_type
 			{
 				$<stmt>0->reject.type = NFT_REJECT_ICMPX_UNREACH;
 				$<stmt>0->reject.expr = $4;
@@ -4098,7 +4099,7 @@ fib_expr		:	FIB	fib_tuple	fib_result	close_scope_fib
 
 fib_result		:	OIF	{ $$ =NFT_FIB_RESULT_OIF; }
 			|	OIFNAME { $$ =NFT_FIB_RESULT_OIFNAME; }
-			|	TYPE	{ $$ =NFT_FIB_RESULT_ADDRTYPE; }
+			|	TYPE	close_scope_type	{ $$ =NFT_FIB_RESULT_ADDRTYPE; }
 			;
 
 fib_flag		:       SADDR	{ $$ = NFTA_FIB_F_SADDR; }
@@ -4503,7 +4504,7 @@ ct_l4protoname		:	TCP	close_scope_tcp	{ $$ = IPPROTO_TCP; }
 			|	UDP	close_scope_udp	{ $$ = IPPROTO_UDP; }
 			;
 
-ct_helper_config		:	TYPE	QUOTED_STRING	PROTOCOL	ct_l4protoname	stmt_separator
+ct_helper_config		:	TYPE	QUOTED_STRING	PROTOCOL	ct_l4protoname	stmt_separator	close_scope_type
 			{
 				struct ct_helper *ct;
 				int ret;
@@ -5319,7 +5320,7 @@ eth_hdr_expr		:	ETHER	eth_hdr_field	close_scope_eth
 
 eth_hdr_field		:	SADDR		{ $$ = ETHHDR_SADDR; }
 			|	DADDR		{ $$ = ETHHDR_DADDR; }
-			|	TYPE		{ $$ = ETHHDR_TYPE; }
+			|	TYPE		close_scope_type	{ $$ = ETHHDR_TYPE; }
 			;
 
 vlan_hdr_expr		:	VLAN	vlan_hdr_field	close_scope_vlan
@@ -5332,7 +5333,7 @@ vlan_hdr_field		:	ID		{ $$ = VLANHDR_VID; }
 			|	CFI		{ $$ = VLANHDR_CFI; }
 			|	DEI		{ $$ = VLANHDR_DEI; }
 			|	PCP		{ $$ = VLANHDR_PCP; }
-			|	TYPE		{ $$ = VLANHDR_TYPE; }
+			|	TYPE		close_scope_type	{ $$ = VLANHDR_TYPE; }
 			;
 
 arp_hdr_expr		:	ARP	arp_hdr_field	close_scope_arp
@@ -5391,7 +5392,7 @@ ip_option_type		:	LSRR		{ $$ = IPOPT_LSRR; }
 			|	RA		{ $$ = IPOPT_RA; }
 			;
 
-ip_option_field		:	TYPE		{ $$ = IPOPT_FIELD_TYPE; }
+ip_option_field		:	TYPE		close_scope_type	{ $$ = IPOPT_FIELD_TYPE; }
 			|	LENGTH		{ $$ = IPOPT_FIELD_LENGTH; }
 			|	VALUE		{ $$ = IPOPT_FIELD_VALUE; }
 			|	PTR		{ $$ = IPOPT_FIELD_PTR; }
@@ -5404,7 +5405,7 @@ icmp_hdr_expr		:	ICMP	icmp_hdr_field	close_scope_icmp
 			}
 			;
 
-icmp_hdr_field		:	TYPE		{ $$ = ICMPHDR_TYPE; }
+icmp_hdr_field		:	TYPE		close_scope_type	{ $$ = ICMPHDR_TYPE; }
 			|	CODE		{ $$ = ICMPHDR_CODE; }
 			|	CHECKSUM	{ $$ = ICMPHDR_CHECKSUM; }
 			|	ID		{ $$ = ICMPHDR_ID; }
@@ -5419,7 +5420,7 @@ igmp_hdr_expr		:	IGMP	igmp_hdr_field	close_scope_igmp
 			}
 			;
 
-igmp_hdr_field		:	TYPE		{ $$ = IGMPHDR_TYPE; }
+igmp_hdr_field		:	TYPE		close_scope_type	{ $$ = IGMPHDR_TYPE; }
 			|	CHECKSUM	{ $$ = IGMPHDR_CHECKSUM; }
 			|	MRT		{ $$ = IGMPHDR_MRT; }
 			|	GROUP		{ $$ = IGMPHDR_GROUP; }
@@ -5447,7 +5448,7 @@ icmp6_hdr_expr		:	ICMP6	icmp6_hdr_field	close_scope_icmp
 			}
 			;
 
-icmp6_hdr_field		:	TYPE		{ $$ = ICMP6HDR_TYPE; }
+icmp6_hdr_field		:	TYPE		close_scope_type	{ $$ = ICMP6HDR_TYPE; }
 			|	CODE		{ $$ = ICMP6HDR_CODE; }
 			|	CHECKSUM	{ $$ = ICMP6HDR_CHECKSUM; }
 			|	PPTR		{ $$ = ICMP6HDR_PPTR; }
@@ -5638,7 +5639,7 @@ dccp_hdr_expr		:	DCCP	dccp_hdr_field	close_scope_dccp
 
 dccp_hdr_field		:	SPORT		{ $$ = DCCPHDR_SPORT; }
 			|	DPORT		{ $$ = DCCPHDR_DPORT; }
-			|	TYPE		{ $$ = DCCPHDR_TYPE; }
+			|	TYPE		close_scope_type	{ $$ = DCCPHDR_TYPE; }
 			;
 
 sctp_chunk_type		:	DATA		{ $$ = SCTP_CHUNK_TYPE_DATA; }
@@ -5661,7 +5662,7 @@ sctp_chunk_type		:	DATA		{ $$ = SCTP_CHUNK_TYPE_DATA; }
 			|	ASCONF		{ $$ = SCTP_CHUNK_TYPE_ASCONF; }
 			;
 
-sctp_chunk_common_field	:	TYPE	{ $$ = SCTP_CHUNK_COMMON_TYPE; }
+sctp_chunk_common_field	:	TYPE	close_scope_type	{ $$ = SCTP_CHUNK_COMMON_TYPE; }
 			|	FLAGS	{ $$ = SCTP_CHUNK_COMMON_FLAGS; }
 			|	LENGTH	{ $$ = SCTP_CHUNK_COMMON_LENGTH; }
 			;
@@ -5798,7 +5799,7 @@ rt_hdr_expr		:	RT	rt_hdr_field	close_scope_rt
 
 rt_hdr_field		:	NEXTHDR		{ $$ = RTHDR_NEXTHDR; }
 			|	HDRLENGTH	{ $$ = RTHDR_HDRLENGTH; }
-			|	TYPE		{ $$ = RTHDR_TYPE; }
+			|	TYPE		close_scope_type	{ $$ = RTHDR_TYPE; }
 			|	SEG_LEFT	{ $$ = RTHDR_SEG_LEFT; }
 			;
 
@@ -5870,7 +5871,7 @@ mh_hdr_expr		:	MH	mh_hdr_field	close_scope_mh
 
 mh_hdr_field		:	NEXTHDR		{ $$ = MHHDR_NEXTHDR; }
 			|	HDRLENGTH	{ $$ = MHHDR_HDRLENGTH; }
-			|	TYPE		{ $$ = MHHDR_TYPE; }
+			|	TYPE		close_scope_type	{ $$ = MHHDR_TYPE; }
 			|	RESERVED	{ $$ = MHHDR_RESERVED; }
 			|	CHECKSUM	{ $$ = MHHDR_CHECKSUM; }
 			;

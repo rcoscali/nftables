@@ -209,6 +209,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_SCTP
 %s SCANSTATE_SECMARK
 %s SCANSTATE_TCP
+%s SCANSTATE_TYPE
 %s SCANSTATE_VLAN
 %s SCANSTATE_CMD_LIST
 %s SCANSTATE_EXPR_AH
@@ -440,7 +441,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"saddr"			{ return SADDR; }
 	"daddr"			{ return DADDR; }
 }
-"type"			{ return TYPE; }
+"type"			{ scanner_push_start_cond(yyscanner, SCANSTATE_TYPE); return TYPE; }
 "typeof"		{ return TYPEOF; }
 
 "vlan"			{ scanner_push_start_cond(yyscanner, SCANSTATE_VLAN); return VLAN; }
@@ -469,7 +470,9 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 <SCANSTATE_EXPR_AH,SCANSTATE_EXPR_DST,SCANSTATE_EXPR_HBH,SCANSTATE_EXPR_MH,SCANSTATE_EXPR_RT,SCANSTATE_IP>{
 	"hdrlength"		{ return HDRLENGTH; }
 }
-"dscp"			{ return DSCP; }
+<SCANSTATE_IP,SCANSTATE_IP6,SCANSTATE_TYPE>{
+	"dscp"			{ return DSCP; }
+}
 "ecn"			{ return ECN; }
 "length"		{ return LENGTH; }
 <SCANSTATE_EXPR_FRAG,SCANSTATE_IP>{
@@ -560,7 +563,9 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"flowlabel"		{ return FLOWLABEL; }
 	"hoplimit"		{ return HOPLIMIT; }
 }
-"nexthdr"		{ return NEXTHDR; }
+<SCANSTATE_EXPR_AH,SCANSTATE_EXPR_COMP,SCANSTATE_EXPR_DST,SCANSTATE_EXPR_FRAG,SCANSTATE_EXPR_HBH,SCANSTATE_EXPR_MH,SCANSTATE_EXPR_RT,SCANSTATE_IP6>{
+	"nexthdr"		{ return NEXTHDR; }
+}
 
 "ah"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_AH); return AH; }
 <SCANSTATE_EXPR_AH,SCANSTATE_EXPR_FRAG,SCANSTATE_EXPR_MH,SCANSTATE_TCP>{
@@ -681,10 +686,12 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "cgroup"		{ return CGROUP; }
 
 <SCANSTATE_EXPR_RT>{
-	"classid"		{ return CLASSID; }
 	"nexthop"		{ return NEXTHOP; }
 	"seg-left"		{ return SEG_LEFT; }
 	"mtu"			{ return MTU; }
+}
+<SCANSTATE_EXPR_RT,SCANSTATE_TYPE>{
+	"classid"		{ return CLASSID; }
 }
 
 "ct"			{ scanner_push_start_cond(yyscanner, SCANSTATE_CT); return CT; }
