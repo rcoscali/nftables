@@ -5803,7 +5803,7 @@ rt_hdr_field		:	NEXTHDR		{ $$ = RTHDR_NEXTHDR; }
 			|	SEG_LEFT	{ $$ = RTHDR_SEG_LEFT; }
 			;
 
-rt0_hdr_expr		:	RT0	rt0_hdr_field
+rt0_hdr_expr		:	RT0	rt0_hdr_field	close_scope_rt
 			{
 				$$ = exthdr_expr_alloc(&@$, &exthdr_rt0, $2);
 			}
@@ -5815,7 +5815,7 @@ rt0_hdr_field		:	ADDR	'['	NUM	']'
 			}
 			;
 
-rt2_hdr_expr		:	RT2	rt2_hdr_field
+rt2_hdr_expr		:	RT2	rt2_hdr_field	close_scope_rt
 			{
 				$$ = exthdr_expr_alloc(&@$, &exthdr_rt2, $2);
 			}
@@ -5824,7 +5824,7 @@ rt2_hdr_expr		:	RT2	rt2_hdr_field
 rt2_hdr_field		:	ADDR		{ $$ = RT2HDR_ADDR; }
 			;
 
-rt4_hdr_expr		:	RT4	rt4_hdr_field
+rt4_hdr_expr		:	RT4	rt4_hdr_field	close_scope_rt
 			{
 				$$ = exthdr_expr_alloc(&@$, &exthdr_rt4, $2);
 			}

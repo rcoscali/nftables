@@ -643,13 +643,10 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 }
 
 "rt"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_RT); return RT; }
-"rt0"			{ return RT0; }
-"rt2"			{ return RT2; }
-"srh"			{ return RT4; }
+"rt0"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_RT); return RT0; }
+"rt2"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_RT); return RT2; }
+"srh"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_RT); return RT4; }
 "addr"			{ return ADDR; }
-"last-entry"		{ return LAST_ENT; }
-"tag"			{ return TAG; }
-"sid"			{ return SID; }
 
 "hbh"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_HBH); return HBH; }
 
@@ -689,6 +686,9 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"nexthop"		{ return NEXTHOP; }
 	"seg-left"		{ return SEG_LEFT; }
 	"mtu"			{ return MTU; }
+	"last-entry"		{ return LAST_ENT; }
+	"tag"			{ return TAG; }
+	"sid"			{ return SID; }
 }
 <SCANSTATE_EXPR_RT,SCANSTATE_TYPE>{
 	"classid"		{ return CLASSID; }
