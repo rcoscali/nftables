@@ -145,7 +145,8 @@ int nft_ctx_add_var(struct nft_ctx *ctx, const char *var)
 	return 0;
 }
 
-static void nft_ctx_clear_vars(struct nft_ctx *ctx)
+EXPORT_SYMBOL(nft_ctx_clear_vars);
+void nft_ctx_clear_vars(struct nft_ctx *ctx)
 {
 	unsigned int i;
 
@@ -153,6 +154,7 @@ static void nft_ctx_clear_vars(struct nft_ctx *ctx)
 		xfree(ctx->vars[i].key);
 		xfree(ctx->vars[i].value);
 	}
+	ctx->num_vars = 0;
 	xfree(ctx->vars);
 }
 

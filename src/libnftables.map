@@ -26,4 +26,5 @@ local: *;
 
 LIBNFTABLES_2 {
   nft_ctx_add_var;
+  nft_ctx_clear_vars;
 } LIBNFTABLES_1;
