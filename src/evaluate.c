@@ -1351,10 +1351,12 @@ static int __expr_evaluate_set_elem(struct eval_ctx *ctx, struct expr *elem)
 					  "but element has %d", num_set_exprs,
 					  num_elem_exprs);
 		} else if (num_set_exprs == 0) {
-			if (!(set->flags & NFT_SET_EVAL))
-				return expr_error(ctx->msgs, elem,
-						  "missing statements in %s definition",
+			if (!(set->flags & NFT_SET_EVAL)) {
+				elem_stmt = list_first_entry(&elem->stmt_list, struct stmt, list);
+				return stmt_error(ctx, elem_stmt,
+						  "missing statement in %s declaration",
 						  set_is_map(set->flags) ? "map" : "set");
+			}
 			return 0;
 		}
 
