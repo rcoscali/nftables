@@ -75,6 +75,16 @@
     }
 ]
 
+# reject with icmp 3
+[
+    {
+        "reject": {
+            "expr": "port-unreachable",
+            "type": "icmp"
+        }
+    }
+]
+
 # mark 0x80000000 reject with tcp reset
 [
     {

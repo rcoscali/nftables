@@ -205,6 +205,16 @@
     }
 ]
 
+# reject with icmpx 3
+[
+    {
+        "reject": {
+            "expr": "admin-prohibited",
+            "type": "icmpx"
+        }
+    }
+]
+
 # meta nfproto ipv4 reject with icmp host-unreachable
 [
     {

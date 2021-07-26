@@ -65,6 +65,16 @@
     }
 ]
 
+# reject with icmpv6 3
+[
+    {
+        "reject": {
+            "expr": "addr-unreachable",
+            "type": "icmpv6"
+        }
+    }
+]
+
 # mark 0x80000000 reject with tcp reset
 [
     {
