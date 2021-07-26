@@ -2052,6 +2052,12 @@ map_block		:	/* empty */	{ $$ = $<set>-1; }
 				$1->flags |= $3;
 				$$ = $1;
 			}
+			|	map_block	stateful_stmt_list		stmt_separator
+			{
+				list_splice_tail($2, &$1->stmt_list);
+				$$ = $1;
+				free($2);
+			}
 			|	map_block	ELEMENTS	'='		set_block_expr
 			{
 				$1->init = $4;
