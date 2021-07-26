@@ -585,7 +585,7 @@ static void reject_stmt_print(const struct stmt *stmt, struct output_ctx *octx)
 	case NFT_REJECT_ICMPX_UNREACH:
 		if (stmt->reject.icmp_code == NFT_REJECT_ICMPX_PORT_UNREACH)
 			break;
-		nft_print(octx, " with icmpx type ");
+		nft_print(octx, " with icmpx ");
 		expr_print(stmt->reject.expr, octx);
 		break;
 	case NFT_REJECT_ICMP_UNREACH:
@@ -594,14 +594,14 @@ static void reject_stmt_print(const struct stmt *stmt, struct output_ctx *octx)
 			if (!stmt->reject.verbose_print &&
 			     stmt->reject.icmp_code == ICMP_PORT_UNREACH)
 				break;
-			nft_print(octx, " with icmp type ");
+			nft_print(octx, " with icmp ");
 			expr_print(stmt->reject.expr, octx);
 			break;
 		case NFPROTO_IPV6:
 			if (!stmt->reject.verbose_print &&
 			    stmt->reject.icmp_code == ICMP6_DST_UNREACH_NOPORT)
 				break;
-			nft_print(octx, " with icmpv6 type ");
+			nft_print(octx, " with icmpv6 ");
 			expr_print(stmt->reject.expr, octx);
 			break;
 		}

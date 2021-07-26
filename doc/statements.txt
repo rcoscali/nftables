@@ -163,9 +163,9 @@ REJECT STATEMENT
 ____
 *reject* [ *with* 'REJECT_WITH' ]
 
-'REJECT_WITH' := *icmp type* 'icmp_code' |
-                 *icmpv6 type* 'icmpv6_code' |
-                 *icmpx type* 'icmpx_code' |
+'REJECT_WITH' := *icmp* 'icmp_code' |
+                 *icmpv6* 'icmpv6_code' |
+                 *icmpx* 'icmpx_code' |
                  *tcp reset*
 ____
 
