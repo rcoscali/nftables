@@ -705,8 +705,8 @@ int nft_lex(void *, void *, void *);
 
 %type <stmt>			queue_stmt queue_stmt_alloc	queue_stmt_compat
 %destructor { stmt_free($$); }	queue_stmt queue_stmt_alloc	queue_stmt_compat
-%type <expr>			queue_stmt_expr_simple queue_stmt_expr
-%destructor { expr_free($$); }	queue_stmt_expr_simple queue_stmt_expr
+%type <expr>			queue_stmt_expr_simple queue_stmt_expr reject_with_expr
+%destructor { expr_free($$); }	queue_stmt_expr_simple queue_stmt_expr reject_with_expr
 %type <val>			queue_stmt_flags queue_stmt_flag
 %type <stmt>			dup_stmt
 %destructor { stmt_free($$); }	dup_stmt
@@ -3298,42 +3298,39 @@ reject_stmt_alloc	:	_REJECT
 			}
 			;
 
+reject_with_expr	:	STRING
+			{
+				$$ = symbol_expr_alloc(&@$, SYMBOL_VALUE,
+						       current_scope(state), $1);
+				xfree($1);
+			}
+			|	integer_expr	{ $$ = $1; }
+			;
+
 reject_opts		:       /* empty */
 			{
 				$<stmt>0->reject.type = -1;
 				$<stmt>0->reject.icmp_code = -1;
 			}
-			|	WITH	ICMP	TYPE	STRING
+			|	WITH	ICMP	TYPE	reject_with_expr
 			{
 				$<stmt>0->reject.family = NFPROTO_IPV4;
 				$<stmt>0->reject.type = NFT_REJECT_ICMP_UNREACH;
-				$<stmt>0->reject.expr =
-					symbol_expr_alloc(&@$, SYMBOL_VALUE,
-							  current_scope(state),
-							  $4);
+				$<stmt>0->reject.expr = $4;
 				datatype_set($<stmt>0->reject.expr, &icmp_code_type);
-				xfree($4);
 			}
-			|	WITH	ICMP6	TYPE	STRING
+			|	WITH	ICMP6	TYPE	reject_with_expr
 			{
 				$<stmt>0->reject.family = NFPROTO_IPV6;
 				$<stmt>0->reject.type = NFT_REJECT_ICMP_UNREACH;
-				$<stmt>0->reject.expr =
-					symbol_expr_alloc(&@$, SYMBOL_VALUE,
-							  current_scope(state),
-							  $4);
+				$<stmt>0->reject.expr = $4;
 				datatype_set($<stmt>0->reject.expr, &icmpv6_code_type);
-				xfree($4);
 			}
-			|	WITH	ICMPX	TYPE	STRING
+			|	WITH	ICMPX	TYPE	reject_with_expr
 			{
 				$<stmt>0->reject.type = NFT_REJECT_ICMPX_UNREACH;
-				$<stmt>0->reject.expr =
-					symbol_expr_alloc(&@$, SYMBOL_VALUE,
-							  current_scope(state),
-							  $4);
+				$<stmt>0->reject.expr = $4;
 				datatype_set($<stmt>0->reject.expr, &icmpx_code_type);
-				xfree($4);
 			}
 			|	WITH	TCP	RESET
 			{

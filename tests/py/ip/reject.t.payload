@@ -30,6 +30,10 @@ ip test-ip4 output
 ip test-ip4 output
   [ reject type 0 code 13 ]
 
+# reject with icmp type 3
+ip test-ip4 output
+  [ reject type 0 code 3 ]
+
 # mark 0x80000000 reject with tcp reset
 ip test-ip4 output
   [ meta load l4proto => reg 1 ]

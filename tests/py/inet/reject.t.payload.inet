@@ -104,6 +104,10 @@ inet test-inet input
 inet test-inet input
   [ reject type 2 code 1 ]
 
+# reject with icmpx type 3
+inet test-inet input
+  [ reject type 2 code 3 ]
+
 # meta nfproto ipv4 reject with icmp type host-unreachable
 inet test-inet input
   [ meta load nfproto => reg 1 ]

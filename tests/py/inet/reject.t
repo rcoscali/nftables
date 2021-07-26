@@ -25,6 +25,7 @@ reject with icmpx type host-unreachable;ok
 reject with icmpx type no-route;ok
 reject with icmpx type admin-prohibited;ok
 reject with icmpx type port-unreachable;ok;reject
+reject with icmpx type 3;ok;reject with icmpx type admin-prohibited
 
 meta nfproto ipv4 reject with icmp type host-unreachable;ok;reject with icmp type host-unreachable
 meta nfproto ipv6 reject with icmpv6 type no-route;ok;reject with icmpv6 type no-route
