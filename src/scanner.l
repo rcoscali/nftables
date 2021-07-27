@@ -211,6 +211,8 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_TCP
 %s SCANSTATE_TYPE
 %s SCANSTATE_VLAN
+%s SCANSTATE_CMD_EXPORT
+%s SCANSTATE_CMD_IMPORT
 %s SCANSTATE_CMD_LIST
 %s SCANSTATE_CMD_MONITOR
 %s SCANSTATE_CMD_RESET
@@ -344,8 +346,8 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "reset"			{ scanner_push_start_cond(yyscanner, SCANSTATE_CMD_RESET); return RESET; }
 "flush"			{ return FLUSH; }
 "rename"		{ return RENAME; }
-"import"                { return IMPORT; }
-"export"		{ return EXPORT; }
+"import"                { scanner_push_start_cond(yyscanner, SCANSTATE_CMD_IMPORT); return IMPORT; }
+"export"		{ scanner_push_start_cond(yyscanner, SCANSTATE_CMD_EXPORT); return EXPORT; }
 "monitor"		{ scanner_push_start_cond(yyscanner, SCANSTATE_CMD_MONITOR); return MONITOR; }
 
 "position"		{ return POSITION; }
@@ -759,9 +761,11 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 
 "all"			{ return ALL; }
 
-"xml"			{ return XML; }
-"json"			{ return JSON; }
-"vm"                    { return VM; }
+<SCANSTATE_CMD_EXPORT,SCANSTATE_CMD_IMPORT,SCANSTATE_CMD_MONITOR>{
+	"xml"			{ return XML; }
+	"json"			{ return JSON; }
+	"vm"                    { return VM; }
+}
 
 "exists"		{ return EXISTS; }
 "missing"		{ return MISSING; }
