@@ -1496,3 +1496,28 @@
         }
     }
 ]
+
+# tcp flags != syn / fin,syn
+[
+    {
+        "match": {
+            "left": {
+                "&": [
+                    {
+                        "payload": {
+                            "field": "flags",
+                            "protocol": "tcp"
+                        }
+                    },
+                    [
+                        "fin",
+                        "syn"
+                    ]
+                ]
+            },
+            "op": "!=",
+            "right": "syn"
+        }
+    }
+]
+
