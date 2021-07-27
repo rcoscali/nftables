@@ -956,6 +956,7 @@ close_scope_numgen	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_NUMGE
 close_scope_osf		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_OSF); };
 close_scope_quota	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_QUOTA); };
 close_scope_queue	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_QUEUE); };
+close_scope_reset	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CMD_RESET); };
 close_scope_rt		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_RT); };
 close_scope_sctp	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_SCTP); };
 close_scope_sctp_chunk	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_SCTP_CHUNK); };
@@ -1051,7 +1052,7 @@ base_cmd		:	/* empty */	add_cmd		{ $$ = $1; }
 			|	DELETE		delete_cmd	{ $$ = $2; }
 			|	GET		get_cmd		{ $$ = $2; }
 			|	LIST		list_cmd	close_scope_list	{ $$ = $2; }
-			|	RESET		reset_cmd	{ $$ = $2; }
+			|	RESET		reset_cmd	close_scope_reset	{ $$ = $2; }
 			|	FLUSH		flush_cmd	{ $$ = $2; }
 			|	RENAME		rename_cmd	{ $$ = $2; }
 			|       IMPORT          import_cmd      { $$ = $2; }
@@ -3401,7 +3402,7 @@ reject_opts		:       /* empty */
 				$<stmt>0->reject.expr = $3;
 				datatype_set($<stmt>0->reject.expr, &icmpx_code_type);
 			}
-			|	WITH	TCP	close_scope_tcp RESET
+			|	WITH	TCP	close_scope_tcp RESET close_scope_reset
 			{
 				$<stmt>0->reject.type = NFT_REJECT_TCP_RST;
 			}
@@ -4765,7 +4766,7 @@ keyword_expr		:	ETHER   close_scope_eth { $$ = symbol_value(&@$, "ether"); }
 			|	DNAT			{ $$ = symbol_value(&@$, "dnat"); }
 			|	SNAT			{ $$ = symbol_value(&@$, "snat"); }
 			|	ECN			{ $$ = symbol_value(&@$, "ecn"); }
-			|	RESET			{ $$ = symbol_value(&@$, "reset"); }
+			|	RESET	close_scope_reset	{ $$ = symbol_value(&@$, "reset"); }
 			|	ORIGINAL		{ $$ = symbol_value(&@$, "original"); }
 			|	REPLY			{ $$ = symbol_value(&@$, "reply"); }
 			|	LABEL			{ $$ = symbol_value(&@$, "label"); }

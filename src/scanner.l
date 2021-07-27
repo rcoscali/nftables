@@ -213,6 +213,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_VLAN
 %s SCANSTATE_CMD_LIST
 %s SCANSTATE_CMD_MONITOR
+%s SCANSTATE_CMD_RESET
 %s SCANSTATE_EXPR_AH
 %s SCANSTATE_EXPR_COMP
 %s SCANSTATE_EXPR_DCCP
@@ -340,7 +341,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "delete"		{ return DELETE; }
 "get"			{ return GET; }
 "list"			{ scanner_push_start_cond(yyscanner, SCANSTATE_CMD_LIST); return LIST; }
-"reset"			{ return RESET; }
+"reset"			{ scanner_push_start_cond(yyscanner, SCANSTATE_CMD_RESET); return RESET; }
 "flush"			{ return FLUSH; }
 "rename"		{ return RENAME; }
 "import"                { return IMPORT; }
@@ -384,8 +385,10 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 <SCANSTATE_COUNTER,SCANSTATE_CT,SCANSTATE_LIMIT>"packets"		{ return PACKETS; }
 <SCANSTATE_COUNTER,SCANSTATE_CT,SCANSTATE_LIMIT,SCANSTATE_QUOTA>"bytes"	{ return BYTES; }
 
-"counters"		{ return COUNTERS; }
-"quotas"		{ return QUOTAS; }
+<SCANSTATE_CMD_LIST,SCANSTATE_CMD_RESET>{
+	"counters"		{ return COUNTERS; }
+	"quotas"		{ return QUOTAS; }
+}
 
 "log"			{ scanner_push_start_cond(yyscanner, SCANSTATE_STMT_LOG); return LOG; }
 "prefix"		{ return PREFIX; }
