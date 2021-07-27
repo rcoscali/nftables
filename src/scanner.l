@@ -238,6 +238,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_EXPR_UDPLITE
 
 %s SCANSTATE_STMT_LOG
+%s SCANSTATE_STMT_REJECT
 %s SCANSTATE_STMT_SYNPROXY
 
 %%
@@ -428,9 +429,11 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "hour"			{ return HOUR; }
 "day"			{ return DAY; }
 
-"reject"		{ return _REJECT; }
-"with"			{ return WITH; }
-"icmpx"			{ return ICMPX; }
+"reject"		{ scanner_push_start_cond(yyscanner, SCANSTATE_STMT_REJECT); return _REJECT; }
+<SCANSTATE_STMT_REJECT>{
+	"with"			{ return WITH; }
+	"icmpx"			{ return ICMPX; }
+}
 
 "snat"			{ return SNAT; }
 "dnat"			{ return DNAT; }
