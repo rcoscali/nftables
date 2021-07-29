@@ -286,7 +286,6 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "set"			{ return SET; }
 "element"		{ return ELEMENT; }
 "map"			{ return MAP; }
-"maps"			{ return MAPS; }
 "flowtable"		{ return FLOWTABLE; }
 "handle"		{ return HANDLE; }
 "ruleset"		{ return RULESET; }
@@ -353,6 +352,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"meters"		{ return METERS; }
 	"flowtables"		{ return FLOWTABLES; }
 	"limits"		{ return LIMITS; }
+	"maps"			{ return MAPS; }
 	"secmarks"		{ return SECMARKS; }
 	"synproxys"		{ return SYNPROXYS; }
 	"hooks"			{ return HOOKS; }
