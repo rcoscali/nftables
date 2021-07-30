@@ -241,10 +241,13 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_EXPR_UDP
 %s SCANSTATE_EXPR_UDPLITE
 
+%s SCANSTATE_STMT_DUP
+%s SCANSTATE_STMT_FWD
 %s SCANSTATE_STMT_LOG
 %s SCANSTATE_STMT_NAT
 %s SCANSTATE_STMT_REJECT
 %s SCANSTATE_STMT_SYNPROXY
+%s SCANSTATE_STMT_TPROXY
 
 %%
 
@@ -328,7 +331,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"cgroupv2"		{ return CGROUPV2; }
 	"level"			{ return LEVEL; }
 }
-"tproxy"		{ return TPROXY; }
+"tproxy"		{ scanner_push_start_cond(yyscanner, SCANSTATE_STMT_TPROXY); return TPROXY; }
 
 "accept"		{ return ACCEPT; }
 "drop"			{ return DROP; }
@@ -336,7 +339,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "jump"			{ return JUMP; }
 "goto"			{ return GOTO; }
 "return"		{ return RETURN; }
-"to"			{ return TO; }
+<SCANSTATE_EXPR_QUEUE,SCANSTATE_STMT_DUP,SCANSTATE_STMT_FWD,SCANSTATE_STMT_NAT,SCANSTATE_STMT_TPROXY,SCANSTATE_FLAGS,SCANSTATE_IP,SCANSTATE_IP6>"to"			{ return TO; } /* XXX: SCANSTATE_FLAGS and SCANSTATE_IP here are workarounds */
 
 "inet"			{ return INET; }
 "netdev"		{ return NETDEV; }
@@ -759,8 +762,8 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"mod"		{ return MOD; }
 	"offset"	{ return OFFSET; }
 }
-"dup"			{ return DUP; }
-"fwd"			{ return FWD; }
+"dup"			{ scanner_push_start_cond(yyscanner, SCANSTATE_STMT_DUP); return DUP; }
+"fwd"			{ scanner_push_start_cond(yyscanner, SCANSTATE_STMT_FWD); return FWD; }
 
 "fib"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_FIB); return FIB; }
 
