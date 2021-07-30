@@ -207,6 +207,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_IP
 %s SCANSTATE_IP6
 %s SCANSTATE_LIMIT
+%s SCANSTATE_META
 %s SCANSTATE_POLICY
 %s SCANSTATE_QUOTA
 %s SCANSTATE_SCTP
@@ -503,14 +504,14 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"dscp"			{ return DSCP; }
 }
 "ecn"			{ return ECN; }
-"length"		{ return LENGTH; }
+<SCANSTATE_EXPR_UDP,SCANSTATE_IP,SCANSTATE_IP6,SCANSTATE_META,SCANSTATE_TCP,SCANSTATE_SCTP,SCANSTATE_EXPR_SCTP_CHUNK>"length"		{ return LENGTH; }
 <SCANSTATE_EXPR_FRAG,SCANSTATE_IP>{
 	"frag-off"		{ return FRAG_OFF; }
 }
 <SCANSTATE_EXPR_OSF,SCANSTATE_IP>{
 	"ttl"			{ return TTL; }
 }
-"protocol"		{ return PROTOCOL; }
+<SCANSTATE_CT,SCANSTATE_IP,SCANSTATE_META,SCANSTATE_TYPE>"protocol"		{ return PROTOCOL; }
 <SCANSTATE_EXPR_MH,SCANSTATE_EXPR_UDP,SCANSTATE_EXPR_UDPLITE,SCANSTATE_ICMP,SCANSTATE_IGMP,SCANSTATE_IP,SCANSTATE_SCTP,SCANSTATE_TCP>{
 	"checksum"		{ return CHECKSUM; }
 }
@@ -688,7 +689,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 
 "mh"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_MH); return MH; }
 
-"meta"			{ return META; }
+"meta"			{ scanner_push_start_cond(yyscanner, SCANSTATE_META); return META; }
 "mark"			{ return MARK; }
 "iif"			{ return IIF; }
 "iifname"		{ return IIFNAME; }

@@ -954,6 +954,7 @@ close_scope_import	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CMD_IMPORT
 close_scope_ipsec	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_IPSEC); };
 close_scope_list	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CMD_LIST); };
 close_scope_limit	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_LIMIT); };
+close_scope_meta	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_META); };
 close_scope_mh		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_MH); };
 close_scope_monitor	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CMD_MONITOR); };
 close_scope_nat		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_STMT_NAT); };
@@ -4916,7 +4917,7 @@ chain_expr		:	variable_expr
 			}
 			;
 
-meta_expr		:	META	meta_key
+meta_expr		:	META	meta_key	close_scope_meta
 			{
 				$$ = meta_expr_alloc(&@$, $2);
 			}
@@ -4924,7 +4925,7 @@ meta_expr		:	META	meta_key
 			{
 				$$ = meta_expr_alloc(&@$, $1);
 			}
-			|	META	STRING
+			|	META	STRING	close_scope_meta
 			{
 				struct error_record *erec;
 				unsigned int key;
@@ -4977,7 +4978,7 @@ meta_key_unqualified	:	MARK		{ $$ = NFT_META_MARK; }
 			|       HOUR		{ $$ = NFT_META_TIME_HOUR; }
 			;
 
-meta_stmt		:	META	meta_key	SET	stmt_expr
+meta_stmt		:	META	meta_key	SET	stmt_expr	close_scope_meta
 			{
 				switch ($2) {
 				case NFT_META_SECMARK:
@@ -5001,7 +5002,7 @@ meta_stmt		:	META	meta_key	SET	stmt_expr
 			{
 				$$ = meta_stmt_alloc(&@$, $1, $3);
 			}
-			|	META	STRING	SET	stmt_expr
+			|	META	STRING	SET	stmt_expr	close_scope_meta
 			{
 				struct error_record *erec;
 				unsigned int key;
