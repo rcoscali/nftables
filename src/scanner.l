@@ -206,6 +206,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_IP
 %s SCANSTATE_IP6
 %s SCANSTATE_LIMIT
+%s SCANSTATE_POLICY
 %s SCANSTATE_QUOTA
 %s SCANSTATE_SCTP
 %s SCANSTATE_SECMARK
@@ -370,10 +371,12 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "elements"		{ return ELEMENTS; }
 "expires"		{ return EXPIRES; }
 
-"policy"		{ return POLICY; }
+"policy"		{ scanner_push_start_cond(yyscanner, SCANSTATE_POLICY); return POLICY; }
 "size"			{ return SIZE; }
-"performance"		{ return PERFORMANCE; }
-"memory"		{ return MEMORY; }
+<SCANSTATE_POLICY>{
+	"performance"		{ return PERFORMANCE; }
+	"memory"		{ return MEMORY; }
+}
 
 "flow"			{ return FLOW; }
 "offload"		{ return OFFLOAD; }

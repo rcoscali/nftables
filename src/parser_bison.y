@@ -957,6 +957,7 @@ close_scope_mh		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_MH); };
 close_scope_monitor	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CMD_MONITOR); };
 close_scope_numgen	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_NUMGEN); };
 close_scope_osf		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_OSF); };
+close_scope_policy	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_POLICY); };
 close_scope_quota	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_QUOTA); };
 close_scope_queue	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_QUEUE); };
 close_scope_reject	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_STMT_REJECT); };
@@ -2101,7 +2102,7 @@ map_block		:	/* empty */	{ $$ = $<set>-1; }
 			|	map_block	set_mechanism	stmt_separator
 			;
 
-set_mechanism		:	POLICY		set_policy_spec
+set_mechanism		:	POLICY		set_policy_spec	close_scope_policy
 			{
 				$<set>0->policy = $2;
 			}
@@ -2519,7 +2520,7 @@ flags_spec		:	FLAGS		OFFLOAD	close_scope_flags
 			}
 			;
 
-policy_spec		:	POLICY		policy_expr
+policy_spec		:	POLICY		policy_expr	close_scope_policy
 			{
 				if ($<chain>0->policy) {
 					erec_queue(error(&@$, "you cannot set chain policy twice"),
@@ -4567,7 +4568,7 @@ ct_timeout_config	:	PROTOCOL	ct_l4protoname	stmt_separator
 				ct = &$<obj>0->ct_timeout;
 				ct->l4proto = l4proto;
 			}
-			|	POLICY 	'=' 	'{' 	timeout_states 	'}'	 stmt_separator
+			|	POLICY 	'=' 	'{' 	timeout_states 	'}'	 stmt_separator	close_scope_policy
 			{
 				struct ct_timeout *ct;
 
