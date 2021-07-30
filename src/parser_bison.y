@@ -955,6 +955,7 @@ close_scope_list	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CMD_LIST); }
 close_scope_limit	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_LIMIT); };
 close_scope_mh		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_MH); };
 close_scope_monitor	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CMD_MONITOR); };
+close_scope_nat		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_STMT_NAT); };
 close_scope_numgen	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_NUMGEN); };
 close_scope_osf		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_OSF); };
 close_scope_policy	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_POLICY); };
@@ -2842,12 +2843,12 @@ stmt			:	verdict_stmt
 			|	meta_stmt
 			|	log_stmt	close_scope_log
 			|	reject_stmt	close_scope_reject
-			|	nat_stmt
+			|	nat_stmt	close_scope_nat
 			|	tproxy_stmt
 			|	queue_stmt
 			|	ct_stmt
-			|	masq_stmt
-			|	redir_stmt
+			|	masq_stmt	close_scope_nat
+			|	redir_stmt	close_scope_nat
 			|	dup_stmt
 			|	fwd_stmt
 			|	set_stmt
@@ -4768,8 +4769,8 @@ keyword_expr		:	ETHER   close_scope_eth { $$ = symbol_value(&@$, "ether"); }
 			|	IP6	close_scope_ip6 { $$ = symbol_value(&@$, "ip6"); }
 			|	VLAN	close_scope_vlan { $$ = symbol_value(&@$, "vlan"); }
 			|	ARP	close_scope_arp { $$ = symbol_value(&@$, "arp"); }
-			|	DNAT			{ $$ = symbol_value(&@$, "dnat"); }
-			|	SNAT			{ $$ = symbol_value(&@$, "snat"); }
+			|	DNAT	close_scope_nat	{ $$ = symbol_value(&@$, "dnat"); }
+			|	SNAT	close_scope_nat	{ $$ = symbol_value(&@$, "snat"); }
 			|	ECN			{ $$ = symbol_value(&@$, "ecn"); }
 			|	RESET	close_scope_reset	{ $$ = symbol_value(&@$, "reset"); }
 			|	ORIGINAL		{ $$ = symbol_value(&@$, "original"); }
@@ -4858,7 +4859,7 @@ primary_rhs_expr	:	symbol_expr		{ $$ = $1; }
 							 BYTEORDER_HOST_ENDIAN,
 							 sizeof(data) * BITS_PER_BYTE, &data);
 			}
-			|	REDIRECT
+			|	REDIRECT	close_scope_nat
 			{
 				uint8_t data = ICMP_REDIRECT;
 				$$ = constant_expr_alloc(&@$, &icmp_type_type,

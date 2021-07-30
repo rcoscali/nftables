@@ -240,6 +240,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_EXPR_UDPLITE
 
 %s SCANSTATE_STMT_LOG
+%s SCANSTATE_STMT_NAT
 %s SCANSTATE_STMT_REJECT
 %s SCANSTATE_STMT_SYNPROXY
 
@@ -403,7 +404,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 }
 
 "log"			{ scanner_push_start_cond(yyscanner, SCANSTATE_STMT_LOG); return LOG; }
-"prefix"		{ return PREFIX; }
+<SCANSTATE_STMT_LOG,SCANSTATE_STMT_NAT,SCANSTATE_IP>"prefix"		{ return PREFIX; }
 <SCANSTATE_STMT_LOG>{
 	"snaplen"		{ return SNAPLEN; }
 	"queue-threshold"	{ return QUEUE_THRESHOLD; }
@@ -444,13 +445,16 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"icmpx"			{ return ICMPX; }
 }
 
-"snat"			{ return SNAT; }
-"dnat"			{ return DNAT; }
-"masquerade"		{ return MASQUERADE; }
-"redirect"		{ return REDIRECT; }
+"snat"			{ scanner_push_start_cond(yyscanner, SCANSTATE_STMT_NAT); return SNAT; }
+"dnat"			{ scanner_push_start_cond(yyscanner, SCANSTATE_STMT_NAT); return DNAT; }
+"masquerade"		{ scanner_push_start_cond(yyscanner, SCANSTATE_STMT_NAT); return MASQUERADE; }
+"redirect"		{ scanner_push_start_cond(yyscanner, SCANSTATE_STMT_NAT); return REDIRECT; }
 "random"		{ return RANDOM; }
-"fully-random"		{ return FULLY_RANDOM; }
-"persistent"		{ return PERSISTENT; }
+<SCANSTATE_STMT_NAT>{
+	"fully-random"		{ return FULLY_RANDOM; }
+	"persistent"		{ return PERSISTENT; }
+	"port"			{ return PORT; }
+}
 
 "ll"			{ return LL_HDR; }
 "nh"			{ return NETWORK_HDR; }
@@ -614,7 +618,6 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 <SCANSTATE_CT,SCANSTATE_EXPR_DCCP,SCANSTATE_SCTP,SCANSTATE_TCP,SCANSTATE_EXPR_TH,SCANSTATE_EXPR_UDP,SCANSTATE_EXPR_UDPLITE>{
 	"dport"			{ return DPORT; }
 }
-"port"			{ return PORT; }
 
 "tcp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_TCP); return TCP; }
 
@@ -668,7 +671,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "rt0"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_RT); return RT0; }
 "rt2"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_RT); return RT2; }
 "srh"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_RT); return RT4; }
-"addr"			{ return ADDR; }
+<SCANSTATE_EXPR_RT,SCANSTATE_STMT_NAT>"addr"			{ return ADDR; }
 
 "hbh"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_HBH); return HBH; }
 
