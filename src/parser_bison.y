@@ -931,6 +931,7 @@ opt_newline		:	NEWLINE
 
 close_scope_ah		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_AH); };
 close_scope_arp		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_ARP); };
+close_scope_at		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_AT); };
 close_scope_comp	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_COMP); };
 close_scope_ct		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CT); };
 close_scope_counter	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_COUNTER); };
@@ -4045,7 +4046,7 @@ set_ref_expr		:	set_ref_symbol_expr
 			|	variable_expr
 			;
 
-set_ref_symbol_expr	:	AT	identifier
+set_ref_symbol_expr	:	AT	identifier	close_scope_at
 			{
 				$$ = symbol_expr_alloc(&@$, SYMBOL_SET,
 						       current_scope(state),
@@ -5018,11 +5019,11 @@ meta_stmt		:	META	meta_key	SET	stmt_expr
 			{
 				$$ = notrack_stmt_alloc(&@$);
 			}
-			|	FLOW	OFFLOAD	AT string
+			|	FLOW	OFFLOAD	AT string	close_scope_at
 			{
 				$$ = flow_offload_stmt_alloc(&@$, $4);
 			}
-			|	FLOW	ADD	AT string
+			|	FLOW	ADD	AT string	close_scope_at
 			{
 				$$ = flow_offload_stmt_alloc(&@$, $4);
 			}
@@ -5295,7 +5296,7 @@ payload_expr		:	payload_raw_expr
 			|	th_hdr_expr
 			;
 
-payload_raw_expr	:	AT	payload_base_spec	COMMA	NUM	COMMA	NUM
+payload_raw_expr	:	AT	payload_base_spec	COMMA	NUM	COMMA	NUM	close_scope_at
 			{
 				$$ = payload_expr_alloc(&@$, NULL, 0);
 				payload_init_raw($$, $2, $4, $6);
@@ -5537,10 +5538,10 @@ tcp_hdr_expr		:	TCP	tcp_hdr_field
 			{
 				$$ = tcpopt_expr_alloc(&@$, $3.kind, $3.field);
 			}
-			|	TCP	OPTION	AT tcp_hdr_option_type	COMMA	NUM	COMMA	NUM
+			|	TCP	OPTION	AT	close_scope_at	tcp_hdr_option_type	COMMA	NUM	COMMA	NUM
 			{
-				$$ = tcpopt_expr_alloc(&@$, $4, 0);
-				tcpopt_init_raw($$, $4, $6, $8, 0);
+				$$ = tcpopt_expr_alloc(&@$, $5, 0);
+				tcpopt_init_raw($$, $5, $7, $9, 0);
 			}
 			;
 

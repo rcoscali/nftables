@@ -197,6 +197,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %option warn
 %option stack
 %s SCANSTATE_ARP
+%s SCANSTATE_AT
 %s SCANSTATE_CT
 %s SCANSTATE_COUNTER
 %s SCANSTATE_ETH
@@ -283,7 +284,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "/"			{ return SLASH; }
 "-"			{ return DASH; }
 "*"			{ return ASTERISK; }
-"@"			{ return AT; }
+"@"			{ scanner_push_start_cond(yyscanner, SCANSTATE_AT); return AT; }
 "$"			{ return '$'; }
 "="			{ return '='; }
 "vmap"			{ return VMAP; }
@@ -456,8 +457,10 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"port"			{ return PORT; }
 }
 
-"ll"			{ return LL_HDR; }
-"nh"			{ return NETWORK_HDR; }
+<SCANSTATE_AT>{
+	"ll"			{ return LL_HDR; }
+	"nh"			{ return NETWORK_HDR; }
+}
 "th"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_TH); return TRANSPORT_HDR; }
 
 "bridge"		{ return BRIDGE; }
