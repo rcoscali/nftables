@@ -200,6 +200,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_CT
 %s SCANSTATE_COUNTER
 %s SCANSTATE_ETH
+%s SCANSTATE_FLAGS
 %s SCANSTATE_ICMP
 %s SCANSTATE_IGMP
 %s SCANSTATE_IP
@@ -355,9 +356,14 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "index"			{ return INDEX; }
 "comment"		{ return COMMENT; }
 
-"constant"		{ return CONSTANT; }
+<SCANSTATE_FLAGS>{
+	"constant"		{ return CONSTANT; }
+	"dynamic"		{ return DYNAMIC; }
+
+	/* log flags */
+	"all"			{ return ALL; }
+}
 "interval"		{ return INTERVAL; }
-"dynamic"		{ return DYNAMIC; }
 "auto-merge"		{ return AUTOMERGE; }
 "timeout"		{ return TIMEOUT; }
 "gc-interval"		{ return GC_INTERVAL; }
@@ -403,7 +409,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 }
 
 "queue"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_QUEUE); return QUEUE;}
-<SCANSTATE_EXPR_QUEUE>{
+<SCANSTATE_FLAGS,SCANSTATE_EXPR_QUEUE>{
 	"num"		{ return QUEUENUM;}
 	"bypass"	{ return BYPASS;}
 	"fanout"	{ return FANOUT;}
@@ -592,7 +598,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 <SCANSTATE_EXPR_COMP>{
 	"cpi"			{ return CPI; }
 }
-"flags"			{ return FLAGS; }
+"flags"			{ scanner_push_start_cond(yyscanner, SCANSTATE_FLAGS); return FLAGS; }
 
 "udp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_UDP); return UDP; }
 "udplite"		{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_UDPLITE); return UDPLITE; }
@@ -761,8 +767,6 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 }
 
 "notrack"		{ return NOTRACK; }
-
-"all"			{ return ALL; }
 
 <SCANSTATE_CMD_EXPORT,SCANSTATE_CMD_IMPORT,SCANSTATE_CMD_MONITOR>{
 	"xml"			{ return XML; }

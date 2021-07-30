@@ -940,6 +940,7 @@ close_scope_esp		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_ESP); }
 close_scope_eth		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_ETH); };
 close_scope_export	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CMD_EXPORT); };
 close_scope_fib		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_FIB); };
+close_scope_flags	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_FLAGS); };
 close_scope_frag	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_FRAG); };
 close_scope_hash	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_HASH); };
 close_scope_hbh		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_HBH); };
@@ -1671,7 +1672,7 @@ table_block_alloc	:	/* empty */
 			}
 			;
 
-table_options		:	FLAGS		STRING
+table_options		:	FLAGS		STRING	close_scope_flags
 			{
 				if (strcmp($2, "dormant") == 0) {
 					$<table>0->flags |= TABLE_F_DORMANT;
@@ -1938,7 +1939,7 @@ set_block		:	/* empty */	{ $$ = $<set>-1; }
 				datatype_set($1->key, $3->dtype);
 				$$ = $1;
 			}
-			|	set_block	FLAGS		set_flag_list	stmt_separator
+			|	set_block	FLAGS		set_flag_list	stmt_separator	close_scope_flags
 			{
 				$1->flags = $3;
 				$$ = $1;
@@ -2072,7 +2073,7 @@ map_block		:	/* empty */	{ $$ = $<set>-1; }
 				$1->flags  |= NFT_SET_OBJECT;
 				$$ = $1;
 			}
-			|	map_block	FLAGS		set_flag_list	stmt_separator
+			|	map_block	FLAGS		set_flag_list	stmt_separator	close_scope_flags
 			{
 				$1->flags |= $3;
 				$$ = $1;
@@ -2145,7 +2146,7 @@ flowtable_block		:	/* empty */	{ $$ = $<flowtable>-1; }
 			{
 				$$->flags |= NFT_FLOWTABLE_COUNTER;
 			}
-			|	flowtable_block	FLAGS	OFFLOAD	stmt_separator
+			|	flowtable_block	FLAGS	OFFLOAD	stmt_separator	close_scope_flags
 			{
 				$$->flags |= FLOWTABLE_F_HW_OFFLOAD;
 			}
@@ -2512,7 +2513,7 @@ dev_spec		:	DEVICE	string
 			|	/* empty */		{ $$ = NULL; }
 			;
 
-flags_spec		:	FLAGS		OFFLOAD
+flags_spec		:	FLAGS		OFFLOAD	close_scope_flags
 			{
 				$<chain>0->flags |= CHAIN_F_HW_OFFLOAD;
 			}
@@ -3118,7 +3119,7 @@ log_arg			:	PREFIX			string
 				$<stmt>0->log.level	= $2;
 				$<stmt>0->log.flags 	|= STMT_LOG_LEVEL;
 			}
-			|	FLAGS			log_flags
+			|	FLAGS			log_flags	close_scope_flags
 			{
 				$<stmt>0->log.logflags	|= $2;
 			}
@@ -3820,13 +3821,13 @@ queue_stmt		:	queue_stmt_compat	close_scope_queue
 			{
 				$$ = queue_stmt_alloc(&@$, $3, 0);
 			}
-			|	QUEUE FLAGS	queue_stmt_flags TO queue_stmt_expr close_scope_queue
+			|	QUEUE FLAGS	queue_stmt_flags close_scope_flags TO queue_stmt_expr close_scope_queue
 			{
-				$$ = queue_stmt_alloc(&@$, $5, $3);
+				$$ = queue_stmt_alloc(&@$, $6, $3);
 			}
-			|	QUEUE	FLAGS	queue_stmt_flags QUEUENUM queue_stmt_expr_simple close_scope_queue
+			|	QUEUE	FLAGS	queue_stmt_flags close_scope_flags QUEUENUM queue_stmt_expr_simple close_scope_queue
 			{
-				$$ = queue_stmt_alloc(&@$, $5, $3);
+				$$ = queue_stmt_alloc(&@$, $6, $3);
 			}
 			;
 
@@ -5493,7 +5494,7 @@ comp_hdr_expr		:	COMP	comp_hdr_field	close_scope_comp
 			;
 
 comp_hdr_field		:	NEXTHDR		{ $$ = COMPHDR_NEXTHDR; }
-			|	FLAGS		{ $$ = COMPHDR_FLAGS; }
+			|	FLAGS	close_scope_flags	{ $$ = COMPHDR_FLAGS; }
 			|	CPI		{ $$ = COMPHDR_CPI; }
 			;
 
@@ -5554,7 +5555,7 @@ tcp_hdr_field		:	SPORT		{ $$ = TCPHDR_SPORT; }
 			|	ACKSEQ		{ $$ = TCPHDR_ACKSEQ; }
 			|	DOFF		{ $$ = TCPHDR_DOFF; }
 			|	RESERVED	{ $$ = TCPHDR_RESERVED; }
-			|	FLAGS		{ $$ = TCPHDR_FLAGS; }
+			|	FLAGS	close_scope_flags	{ $$ = TCPHDR_FLAGS; }
 			|	WINDOW		{ $$ = TCPHDR_WINDOW; }
 			|	CHECKSUM	{ $$ = TCPHDR_CHECKSUM; }
 			|	URGPTR		{ $$ = TCPHDR_URGPTR; }
@@ -5668,7 +5669,7 @@ sctp_chunk_type		:	DATA		{ $$ = SCTP_CHUNK_TYPE_DATA; }
 			;
 
 sctp_chunk_common_field	:	TYPE	close_scope_type	{ $$ = SCTP_CHUNK_COMMON_TYPE; }
-			|	FLAGS	{ $$ = SCTP_CHUNK_COMMON_FLAGS; }
+			|	FLAGS	close_scope_flags	{ $$ = SCTP_CHUNK_COMMON_FLAGS; }
 			|	LENGTH	{ $$ = SCTP_CHUNK_COMMON_LENGTH; }
 			;
 
@@ -5836,7 +5837,7 @@ rt4_hdr_expr		:	RT4	rt4_hdr_field	close_scope_rt
 			;
 
 rt4_hdr_field		:	LAST_ENT	{ $$ = RT4HDR_LASTENT; }
-			|	FLAGS		{ $$ = RT4HDR_FLAGS; }
+			|	FLAGS	close_scope_flags	{ $$ = RT4HDR_FLAGS; }
 			|	TAG		{ $$ = RT4HDR_TAG; }
 			|	SID		'['	NUM	']'
 			{
