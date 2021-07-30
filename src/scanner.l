@@ -385,6 +385,11 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 <SCANSTATE_LIMIT>{
 	"rate"			{ return RATE; }
 	"burst"			{ return BURST; }
+
+	/* time_unit */
+	"second"		{ return SECOND; }
+	"minute"		{ return MINUTE; }
+	"week"			{ return WEEK; }
 }
 <SCANSTATE_CT,SCANSTATE_LIMIT,SCANSTATE_QUOTA>"over"		{ return OVER; }
 
@@ -394,11 +399,8 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"until"		{ return UNTIL; }
 }
 
-"second"		{ return SECOND; }
-"minute"		{ return MINUTE; }
 "hour"			{ return HOUR; }
 "day"			{ return DAY; }
-"week"			{ return WEEK; }
 
 "reject"		{ return _REJECT; }
 "with"			{ return WITH; }
