@@ -822,6 +822,8 @@ const char *hooknum2str(unsigned int family, unsigned int hooknum)
 			return "forward";
 		case NF_ARP_OUT:
 			return "output";
+		case __NF_ARP_INGRESS:
+			return "ingress";
 		default:
 			break;
 		}

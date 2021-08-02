@@ -8,10 +8,10 @@ enum nfnl_hook_msg_types {
 };
 
 /**
- * enum nfnl_hook_attributes - nf_tables netfilter hook netlink attributes
+ * enum nfnl_hook_attributes - netfilter hook netlink attributes
  *
  * @NFNLA_HOOK_HOOKNUM: netfilter hook number (NLA_U32)
- * @NFNLAA_HOOK_PRIORITY: netfilter hook priority (NLA_U32)
+ * @NFNLA_HOOK_PRIORITY: netfilter hook priority (NLA_U32)
  * @NFNLA_HOOK_DEV: netdevice name (NLA_STRING)
  * @NFNLA_HOOK_FUNCTION_NAME: hook function name (NLA_STRING)
  * @NFNLA_HOOK_MODULE_NAME: kernel module that registered this hook (NLA_STRING)
@@ -43,6 +43,15 @@ enum nfnl_hook_chain_info_attributes {
 };
 #define NFNLA_HOOK_INFO_MAX (__NFNLA_HOOK_INFO_MAX - 1)
 
+enum nfnl_hook_chain_desc_attributes {
+	NFNLA_CHAIN_UNSPEC,
+	NFNLA_CHAIN_TABLE,
+	NFNLA_CHAIN_FAMILY,
+	NFNLA_CHAIN_NAME,
+	__NFNLA_CHAIN_MAX,
+};
+#define NFNLA_CHAIN_MAX (__NFNLA_CHAIN_MAX - 1)
+
 /**
  * enum nfnl_hook_chaintype - chain type
  *
@@ -51,4 +60,5 @@ enum nfnl_hook_chain_info_attributes {
 enum nfnl_hook_chaintype {
 	NFNL_HOOK_TYPE_NFTABLES = 0x1,
 };
+
 #endif /* _NFNL_HOOK_H */

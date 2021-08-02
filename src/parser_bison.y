@@ -1474,11 +1474,7 @@ list_cmd		:	TABLE		table_spec
 			}
 			;
 
-basehook_device_name	:	/* NULL */
-			{
-				$$ = NULL;
-			}
-			|	DEVICE STRING
+basehook_device_name	:	DEVICE STRING
 			{
 				$$ = $2;
 			}
@@ -1488,22 +1484,11 @@ basehook_spec		:	ruleset_spec
 			{
 				$$ = $1;
 			}
-			|	ruleset_spec    STRING  basehook_device_name
+			|	ruleset_spec    basehook_device_name
 			{
-				const char *name = chain_hookname_lookup($2);
-
-				if (name == NULL) {
-					erec_queue(error(&@2, "unknown chain hook"),
-						   state->msgs);
-					xfree($3);
-					YYERROR;
-				}
-
-				$1.chain.name = $2;
-				$1.chain.location = @2;
-				if ($3) {
-					$1.obj.name = $3;
-					$1.obj.location = @3;
+				if ($2) {
+					$1.obj.name = $2;
+					$1.obj.location = @2;
 				}
 				$$ = $1;
 			}

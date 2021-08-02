@@ -44,6 +44,9 @@ struct basehook {
 	const char *hookfn;
 	const char *table;
 	const char *chain;
+	int family;
+	int chain_family;
+	uint32_t num;
 	int prio;
 };
 
@@ -1948,6 +1951,20 @@ static void basehook_free(struct basehook *b)
 
 static void basehook_list_add_tail(struct basehook *b, struct list_head *head)
 {
+	struct basehook *hook;
+
+	list_for_each_entry(hook, head, list) {
+		if (hook->family != b->family)
+			continue;
+		if (hook->num != b->num)
+			continue;
+		if (hook->prio < b->prio)
+			continue;
+
+		list_add(&b->list, &hook->list);
+		return;
+	}
+
 	list_add_tail(&b->list, head);
 }
 
@@ -2016,13 +2033,17 @@ static int dump_nf_attr_chain_cb(const struct nlattr *attr, void *data)
 	int type = mnl_attr_get_type(attr);
 	const struct nlattr **tb = data;
 
-	if (mnl_attr_type_valid(attr, NFTA_CHAIN_MAX) < 0)
+	if (mnl_attr_type_valid(attr, NFNLA_CHAIN_MAX) < 0)
 		return MNL_CB_OK;
 
 	switch(type) {
-	case NFTA_CHAIN_TABLE:
-	case NFTA_CHAIN_NAME:
+	case NFNLA_CHAIN_TABLE:
+	case NFNLA_CHAIN_NAME:
                 if (mnl_attr_validate(attr, MNL_TYPE_NUL_STRING) < 0)
+                        return MNL_CB_ERROR;
+		break;
+	case NFNLA_CHAIN_FAMILY:
+                if (mnl_attr_validate(attr, MNL_TYPE_U8) < 0)
                         return MNL_CB_ERROR;
 		break;
 	default:
@@ -2033,11 +2054,16 @@ static int dump_nf_attr_chain_cb(const struct nlattr *attr, void *data)
 	return MNL_CB_OK;
 }
 
-static int dump_nf_hooks(const struct nlmsghdr *nlh, void *data)
+struct dump_nf_hook_data {
+	struct list_head *hook_list;
+	int family;
+};
+
+static int dump_nf_hooks(const struct nlmsghdr *nlh, void *_data)
 {
 	const struct nfgenmsg *nfg = mnl_nlmsg_get_payload(nlh);
 	struct nlattr *tb[NFNLA_HOOK_MAX + 1] = {};
-	struct list_head *head = data;
+	struct dump_nf_hook_data *data = _data;
 	struct basehook *hook;
 
 	/* NB: Don't check the nft generation ID, this is not
@@ -2067,22 +2093,47 @@ static int dump_nf_hooks(const struct nlmsghdr *nlh, void *data)
 
 		type = ntohl(mnl_attr_get_u32(nested[NFNLA_HOOK_INFO_TYPE]));
 		if (type == NFNL_HOOK_TYPE_NFTABLES) {
-			struct nlattr *info[NFTA_CHAIN_MAX + 1] = {};
+			struct nlattr *info[NFNLA_CHAIN_MAX + 1] = {};
 			const char *tablename, *chainname;
 
 			if (mnl_attr_parse_nested(nested[NFNLA_HOOK_INFO_DESC], dump_nf_attr_chain_cb, info) < 0)
 				return -1;
 
-			tablename = mnl_attr_get_str(info[NFTA_CHAIN_TABLE]);
-			chainname = mnl_attr_get_str(info[NFTA_CHAIN_NAME]);
+			tablename = mnl_attr_get_str(info[NFNLA_CHAIN_TABLE]);
+			chainname = mnl_attr_get_str(info[NFNLA_CHAIN_NAME]);
 			if (tablename && chainname) {
 				hook->table = xstrdup(tablename);
 				hook->chain = xstrdup(chainname);
 			}
+			hook->chain_family = mnl_attr_get_u8(info[NFNLA_CHAIN_FAMILY]);
+		}
+	}
+	if (tb[NFNLA_HOOK_HOOKNUM])
+		hook->num = ntohl(mnl_attr_get_u32(tb[NFNLA_HOOK_HOOKNUM]));
+
+	hook->family = nfg->nfgen_family;
+
+	/* Netdev hooks potentially interfer with this family datapath. */
+	if (hook->family == NFPROTO_NETDEV) {
+		switch (data->family) {
+		case NFPROTO_IPV4:
+		case NFPROTO_IPV6:
+		case NFPROTO_INET:
+		case NFPROTO_BRIDGE:
+			hook->family = data->family;
+			hook->num = NF_INET_INGRESS;
+			break;
+		case NFPROTO_ARP:
+			if (hook->chain_family == NFPROTO_NETDEV) {
+				hook->family = data->family;
+				hook->num = __NF_ARP_INGRESS;
+			}
+			break;
 		}
 	}
 
-	basehook_list_add_tail(hook, head);
+	basehook_list_add_tail(hook, data->hook_list);
+
 	return MNL_CB_OK;
 }
 
@@ -2102,14 +2153,17 @@ static struct nlmsghdr *nf_hook_dump_request(char *buf, uint8_t family, uint32_t
 	return nlh;
 }
 
-static int __mnl_nft_dump_nf_hooks(struct netlink_ctx *ctx, uint8_t family, uint8_t hooknum, const char *devname)
+static int __mnl_nft_dump_nf_hooks(struct netlink_ctx *ctx, uint8_t query_family,
+				   uint8_t family, uint8_t hooknum,
+				   const char *devname,
+				   struct list_head *hook_list)
 {
 	char buf[MNL_SOCKET_BUFFER_SIZE];
-	struct basehook *hook, *tmp;
+	struct dump_nf_hook_data data = {
+		.hook_list	= hook_list,
+		.family		= query_family,
+	};
 	struct nlmsghdr *nlh;
-	LIST_HEAD(hook_list);
-	FILE *fp;
-	int ret;
 
 	nlh = nf_hook_dump_request(buf, family, ctx->seqnum);
 	if (devname)
@@ -2117,130 +2171,219 @@ static int __mnl_nft_dump_nf_hooks(struct netlink_ctx *ctx, uint8_t family, uint
 
 	mnl_attr_put_u32(nlh, NFNLA_HOOK_HOOKNUM, htonl(hooknum));
 
-	ret = nft_mnl_talk(ctx, nlh, nlh->nlmsg_len, dump_nf_hooks, &hook_list);
-	if (ret)
-		return ret;
+	return nft_mnl_talk(ctx, nlh, nlh->nlmsg_len, dump_nf_hooks, &data);
+}
 
-	if (list_empty(&hook_list))
-		return 0;
+static void print_hooks(struct netlink_ctx *ctx, int family, struct list_head *hook_list)
+{
+	struct basehook *hook, *tmp, *prev = NULL;
+	bool same, family_in_use = false;
+	int prio;
+	FILE *fp;
 
 	fp = ctx->nft->output.output_fp;
-	fprintf(fp, "family %s hook %s", family2str(family), hooknum2str(family, hooknum));
-	if (devname)
-		fprintf(fp, " device %s", devname);
 
-	fprintf(fp, " {\n");
-
-	list_for_each_entry_safe(hook, tmp, &hook_list, list) {
-		int prio = hook->prio;
-
-		if (prio < 0)
-			fprintf(fp, "\t%011d", prio); /* outputs a '-' sign */
-		else
-			fprintf(fp, "\t+%010u", prio);
-
-		if (hook->hookfn) {
-			fprintf(fp, " %s", hook->hookfn);
-			if (hook->module_name)
-				fprintf(fp, " [%s]", hook->module_name);
+	list_for_each_entry_safe(hook, tmp, hook_list, list) {
+		if (hook->family == family) {
+			family_in_use = true;
+			break;
 		}
-
-		if (hook->table && hook->chain)
-			fprintf(fp, "\t# nft table %s %s chain %s", family2str(family), hook->table, hook->chain);
-
-		fprintf(fp, "\n");
-		basehook_free(hook);
 	}
 
+	if (!family_in_use)
+		return;
+
+	fprintf(fp, "family %s {\n", family2str(family));
+
+	list_for_each_entry_safe(hook, tmp, hook_list, list) {
+		if (hook->family != family)
+			continue;
+
+		if (prev) {
+			if (prev->num == hook->num) {
+				fprintf(fp, "\n");
+				same = true;
+			} else {
+				same = false;
+				fprintf(fp, "\n\t}\n");
+			}
+		} else {
+			same = false;
+		}
+		prev = hook;
+
+		if (!same) {
+			fprintf(fp, "\thook %s {\n",
+				hooknum2str(family, hook->num));
+		}
+
+		prio = hook->prio;
+		if (prio < 0)
+			fprintf(fp, "\t\t%011d", prio); /* outputs a '-' sign */
+		else if (prio == 0)
+			fprintf(fp, "\t\t %010u", prio);
+		else
+			fprintf(fp, "\t\t+%010u", prio);
+
+		if (hook->table && hook->chain)
+			fprintf(fp, " chain %s %s %s", family2str(hook->chain_family), hook->table, hook->chain);
+		else if (hook->hookfn) {
+			fprintf(fp, " %s", hook->hookfn);
+		}
+		if (hook->module_name)
+			fprintf(fp, " [%s]", hook->module_name);
+	}
+
+	fprintf(fp, "\n\t}\n");
 	fprintf(fp, "}\n");
-	return ret;
+}
+
+#define HOOK_FAMILY_MAX	5
+
+static uint8_t hook_family[HOOK_FAMILY_MAX] = {
+	NFPROTO_IPV4,
+	NFPROTO_IPV6,
+	NFPROTO_BRIDGE,
+	NFPROTO_ARP,
+};
+
+static int mnl_nft_dump_nf(struct netlink_ctx *ctx, int family, int hook,
+			   const char *devname, struct list_head *hook_list,
+			   int *ret)
+{
+	int i, err;
+
+	/* show ingress in first place in hook listing. */
+	err = __mnl_nft_dump_nf_hooks(ctx, family, NFPROTO_NETDEV, NF_NETDEV_INGRESS, devname, hook_list);
+	if (err < 0)
+		*ret = err;
+
+	for (i = 0; i <= NF_INET_POST_ROUTING; i++) {
+		err = __mnl_nft_dump_nf_hooks(ctx, family, family, i, devname, hook_list);
+		if (err < 0)
+			*ret = err;
+	}
+
+	return err;
+}
+
+static int mnl_nft_dump_nf_arp(struct netlink_ctx *ctx, int family, int hook,
+			       const char *devname, struct list_head *hook_list,
+			       int *ret)
+{
+	int err;
+
+	/* show ingress in first place in hook listing. */
+	err = __mnl_nft_dump_nf_hooks(ctx, family, NFPROTO_NETDEV, NF_NETDEV_INGRESS, devname, hook_list);
+	if (err < 0)
+		*ret = err;
+
+	err = __mnl_nft_dump_nf_hooks(ctx, family, family, NF_ARP_IN, devname, hook_list);
+	if (err < 0)
+		*ret = err;
+	err = __mnl_nft_dump_nf_hooks(ctx, family, family, NF_ARP_OUT, devname, hook_list);
+	if (err < 0)
+		*ret = err;
+
+	return err;
+}
+
+static int mnl_nft_dump_nf_netdev(struct netlink_ctx *ctx, int family, int hook,
+				  const char *devname, struct list_head *hook_list,
+				  int *ret)
+{
+	int err;
+
+	err = __mnl_nft_dump_nf_hooks(ctx, family, NFPROTO_NETDEV, NF_NETDEV_INGRESS, devname, hook_list);
+	if (err < 0)
+		*ret = err;
+
+	return err;
+}
+
+static int mnl_nft_dump_nf_decnet(struct netlink_ctx *ctx, int family, int hook,
+				  const char *devname, struct list_head *hook_list,
+				  int *ret)
+{
+	int i, err;
+
+	/* show ingress in first place in hook listing. */
+	err = __mnl_nft_dump_nf_hooks(ctx, family, NFPROTO_NETDEV, NF_NETDEV_INGRESS, devname, hook_list);
+	if (err < 0)
+		*ret = err;
+
+#define NF_DN_NUMHOOKS		7
+	for (i = 0; i < NF_DN_NUMHOOKS; i++) {
+		err = __mnl_nft_dump_nf_hooks(ctx, family, family, i, devname, hook_list);
+		if (err < 0) {
+			*ret = err;
+			return err;
+		}
+	}
+
+	return err;
+}
+
+static void release_hook_list(struct list_head *hook_list)
+{
+	struct basehook *hook, *next;
+
+	list_for_each_entry_safe(hook, next, hook_list, list)
+		basehook_free(hook);
 }
 
 int mnl_nft_dump_nf_hooks(struct netlink_ctx *ctx, int family, int hook, const char *devname)
 {
+	LIST_HEAD(hook_list);
 	unsigned int i;
-	int ret, err;
+	int ret;
 
 	errno = 0;
 	ret = 0;
 
 	switch (family) {
 	case NFPROTO_UNSPEC:
-		if (devname)
-			return mnl_nft_dump_nf_hooks(ctx, NFPROTO_NETDEV, NF_INET_INGRESS, devname);
-
-		err = mnl_nft_dump_nf_hooks(ctx, NFPROTO_INET, hook, NULL);
-		if (err < 0 && errno != EPROTONOSUPPORT)
-			ret = err;
-		err = mnl_nft_dump_nf_hooks(ctx, NFPROTO_ARP, hook, NULL);
-		if (err < 0 && errno != EPROTONOSUPPORT)
-			ret = err;
-		err = mnl_nft_dump_nf_hooks(ctx, NFPROTO_BRIDGE, hook, NULL);
-		if (err < 0 && errno != EPROTONOSUPPORT)
-			ret = err;
-		err = mnl_nft_dump_nf_hooks(ctx, NFPROTO_DECNET, hook, NULL);
-		if (err < 0 && errno != EPROTONOSUPPORT)
-			ret = err;
+		mnl_nft_dump_nf(ctx, NFPROTO_IPV4, hook, devname, &hook_list, &ret);
+		mnl_nft_dump_nf(ctx, NFPROTO_IPV6, hook, devname, &hook_list, &ret);
+		mnl_nft_dump_nf(ctx, NFPROTO_BRIDGE, hook, devname, &hook_list, &ret);
+		mnl_nft_dump_nf_decnet(ctx, NFPROTO_DECNET, hook, devname, &hook_list, &ret);
 		break;
 	case NFPROTO_INET:
-		if (devname) {
-			err = __mnl_nft_dump_nf_hooks(ctx, family, NF_INET_INGRESS, devname);
-			if (err < 0)
-				ret = err;
-		}
-
-		err = mnl_nft_dump_nf_hooks(ctx, NFPROTO_IPV4, hook, NULL);
-		if (err < 0)
-			ret = err;
-		err = mnl_nft_dump_nf_hooks(ctx, NFPROTO_IPV6, hook, NULL);
-		if (err < 0)
-			ret = err;
-
+		mnl_nft_dump_nf(ctx, NFPROTO_IPV4, hook, devname, &hook_list, &ret);
+		mnl_nft_dump_nf(ctx, NFPROTO_IPV6, hook, devname, &hook_list, &ret);
 		break;
 	case NFPROTO_IPV4:
 	case NFPROTO_IPV6:
 	case NFPROTO_BRIDGE:
-		if (hook >= 0)
-			return __mnl_nft_dump_nf_hooks(ctx, family, hook, devname);
-
-		for (i = 0; i <= NF_INET_POST_ROUTING; i++) {
-			err = __mnl_nft_dump_nf_hooks(ctx, family, i, NULL);
-			if (err < 0)
-				err = ret;
-		}
+		mnl_nft_dump_nf(ctx, family, hook, devname, &hook_list, &ret);
 		break;
 	case NFPROTO_ARP:
-		if (hook >= 0)
-			return __mnl_nft_dump_nf_hooks(ctx, family, hook, devname);
-
-		err = __mnl_nft_dump_nf_hooks(ctx, family, NF_ARP_IN, devname);
-		if (err < 0)
-			ret = err;
-		err = __mnl_nft_dump_nf_hooks(ctx, family, NF_ARP_OUT, devname);
-		if (err < 0)
-			ret = err;
+		mnl_nft_dump_nf_arp(ctx, family, hook, devname, &hook_list, &ret);
 		break;
 	case NFPROTO_NETDEV:
-		if (hook >= 0)
-			return __mnl_nft_dump_nf_hooks(ctx, family, hook, devname);
-
-		err = __mnl_nft_dump_nf_hooks(ctx, family, NF_INET_INGRESS, devname);
-		if (err < 0)
-			ret = err;
+		mnl_nft_dump_nf_netdev(ctx, family, hook, devname, &hook_list, &ret);
 		break;
 	case NFPROTO_DECNET:
-		if (hook >= 0)
-			return __mnl_nft_dump_nf_hooks(ctx, family, hook, devname);
-#define NF_DN_NUMHOOKS		7
-		for (i = 0; i < NF_DN_NUMHOOKS; i++) {
-			err = __mnl_nft_dump_nf_hooks(ctx, family, i, devname);
-			if (err < 0) {
-				ret = err;
-				break;
-			}
-		}
+		mnl_nft_dump_nf_decnet(ctx, family, hook, devname, &hook_list, &ret);
 		break;
 	}
+
+	switch (family) {
+	case NFPROTO_UNSPEC:
+		for (i = 0; i < HOOK_FAMILY_MAX; i++)
+			print_hooks(ctx, hook_family[i], &hook_list);
+		break;
+	case NFPROTO_INET:
+		print_hooks(ctx, NFPROTO_IPV4, &hook_list);
+		print_hooks(ctx, NFPROTO_IPV6, &hook_list);
+		break;
+	default:
+		print_hooks(ctx, family, &hook_list);
+		break;
+	}
+
+	release_hook_list(&hook_list);
+	ret = 0;
 
 	return ret;
 }
