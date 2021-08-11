@@ -9,15 +9,22 @@ mydiff() {
 	diff -w -I '^# ' "$@"
 }
 
-if [ "$(id -u)" != "0" ] ; then
-	echo "this requires root!"
+err() {
+	echo "$*" >&2
+}
+
+die() {
+	err "$*"
 	exit 1
+}
+
+if [ "$(id -u)" != "0" ] ; then
+	die "this requires root!"
 fi
 
 testdir=$(mktemp -d)
 if [ ! -d $testdir ]; then
-	echo "Failed to create test directory" >&2
-	exit 1
+	die "Failed to create test directory"
 fi
 trap 'rm -rf $testdir; $nft flush ruleset' EXIT
 
@@ -67,7 +74,7 @@ monitor_run_test() {
 		cat $command_file
 	}
 	$nft -f $command_file || {
-		echo "nft command failed!"
+		err "nft command failed!"
 		kill $monitor_pid
 		wait >/dev/null 2>&1
 		exit 1
@@ -77,8 +84,8 @@ monitor_run_test() {
 	wait >/dev/null 2>&1
 	$test_json && json_output_filter $monitor_output
 	if ! mydiff -q $monitor_output $output_file >/dev/null 2>&1; then
-		echo "monitor output differs!"
-		mydiff -u $output_file $monitor_output
+		err "monitor output differs!"
+		mydiff -u $output_file $monitor_output >&2
 		exit 1
 	fi
 	rm $command_file
@@ -94,12 +101,12 @@ echo_run_test() {
 		cat $command_file
 	}
 	$nft -nn -e -f $command_file >$echo_output || {
-		echo "nft command failed!"
+		err "nft command failed!"
 		exit 1
 	}
 	if ! mydiff -q $echo_output $output_file >/dev/null 2>&1; then
-		echo "echo output differs!"
-		mydiff -u $output_file $echo_output
+		err "echo output differs!"
+		mydiff -u $output_file $echo_output >&2
 		exit 1
 	fi
 	rm $command_file
