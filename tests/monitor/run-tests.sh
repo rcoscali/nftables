@@ -63,6 +63,7 @@ monitor_run_test() {
 	monitor_output=$(mktemp -p $testdir)
 	monitor_args=""
 	$test_json && monitor_args="vm json"
+	local rc=0
 
 	$nft -nn monitor $monitor_args >$monitor_output &
 	monitor_pid=$!
@@ -75,44 +76,48 @@ monitor_run_test() {
 	}
 	$nft -f $command_file || {
 		err "nft command failed!"
-		kill $monitor_pid
-		wait >/dev/null 2>&1
-		exit 1
+		rc=1
 	}
 	sleep 0.5
 	kill $monitor_pid
 	wait >/dev/null 2>&1
 	$test_json && json_output_filter $monitor_output
-	if ! mydiff -q $monitor_output $output_file >/dev/null 2>&1; then
+	mydiff -q $monitor_output $output_file >/dev/null 2>&1
+	if [[ $rc == 0 && $? != 0 ]]; then
 		err "monitor output differs!"
 		mydiff -u $output_file $monitor_output >&2
-		exit 1
+		rc=1
 	fi
 	rm $command_file
 	rm $output_file
 	touch $command_file
 	touch $output_file
+	return $rc
 }
 
 echo_run_test() {
 	echo_output=$(mktemp -p $testdir)
+	local rc=0
+
 	$debug && {
 		echo "command file:"
 		cat $command_file
 	}
 	$nft -nn -e -f $command_file >$echo_output || {
 		err "nft command failed!"
-		exit 1
+		rc=1
 	}
-	if ! mydiff -q $echo_output $output_file >/dev/null 2>&1; then
+	mydiff -q $echo_output $output_file >/dev/null 2>&1
+	if [[ $rc == 0 && $? != 0 ]]; then
 		err "echo output differs!"
 		mydiff -u $output_file $echo_output >&2
-		exit 1
+		rc=1
 	fi
 	rm $command_file
 	rm $output_file
 	touch $command_file
 	touch $output_file
+	return $rc
 }
 
 testcases=""
@@ -150,6 +155,7 @@ else
 	variants="monitor echo"
 fi
 
+rc=0
 for variant in $variants; do
 	run_test=${variant}_run_test
 	output_append=${variant}_output_append
@@ -169,7 +175,10 @@ for variant in $variants; do
 		while read dir line; do
 			case $dir in
 			I)
-				$input_complete && $run_test
+				$input_complete && {
+					$run_test
+					let "rc += $?"
+				}
 				input_complete=false
 				cmd_append "$line"
 				;;
@@ -186,6 +195,10 @@ for variant in $variants; do
 				;;
 			esac
 		done <$testcase
-		$input_complete && $run_test
+		$input_complete && {
+			$run_test
+			let "rc += $?"
+		}
 	done
 done
+exit $rc
