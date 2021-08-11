@@ -1431,6 +1431,23 @@ static int expr_evaluate_set(struct eval_ctx *ctx, struct expr **expr)
 		if (list_member_evaluate(ctx, &i) < 0)
 			return -1;
 
+		if (i->etype == EXPR_MAPPING &&
+		    i->left->etype == EXPR_SET_ELEM &&
+		    i->left->key->etype == EXPR_SET) {
+			struct expr *new, *j;
+
+			list_for_each_entry(j, &i->left->key->expressions, list) {
+				new = mapping_expr_alloc(&i->location,
+							 expr_get(j),
+							 expr_clone(i->right));
+				list_add_tail(&new->list, &set->expressions);
+				set->size++;
+			}
+			list_del(&i->list);
+			expr_free(i);
+			continue;
+		}
+
 		elem = expr_set_elem(i);
 
 		if (elem->etype == EXPR_SET_ELEM &&
