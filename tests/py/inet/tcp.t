@@ -75,6 +75,7 @@ tcp flags & (syn | ack) != 0;ok;tcp flags syn,ack
 tcp flags & (syn | ack) == 0;ok;tcp flags ! syn,ack
 # it should be possible to transform this to: tcp flags syn
 tcp flags & syn == syn;ok
+tcp flags & syn != syn;ok
 tcp flags & (fin | syn | rst | ack) syn;ok;tcp flags syn / fin,syn,rst,ack
 tcp flags & (fin | syn | rst | ack) == syn;ok;tcp flags syn / fin,syn,rst,ack
 tcp flags & (fin | syn | rst | ack) != syn;ok;tcp flags != syn / fin,syn,rst,ack

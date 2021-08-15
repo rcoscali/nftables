@@ -2287,10 +2287,10 @@ static void relational_binop_postprocess(struct rule_pp_ctx *ctx,
 				expr_free(binop);
 			} else if (binop->right->etype == EXPR_VALUE &&
 				   value->etype == EXPR_VALUE &&
-				   expr->op == OP_EQ &&
 				   !mpz_cmp(value->value, binop->right->value)) {
 				/* Skip flag / flag representation for:
 				 * data & flag == flag
+				 * data & flag != flag
 				 */
 				;
 			} else {
