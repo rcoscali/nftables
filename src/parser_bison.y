@@ -705,8 +705,8 @@ int nft_lex(void *, void *, void *);
 
 %type <stmt>			queue_stmt queue_stmt_alloc	queue_stmt_compat
 %destructor { stmt_free($$); }	queue_stmt queue_stmt_alloc	queue_stmt_compat
-%type <expr>			queue_stmt_expr_simple queue_stmt_expr reject_with_expr
-%destructor { expr_free($$); }	queue_stmt_expr_simple queue_stmt_expr reject_with_expr
+%type <expr>			queue_stmt_expr_simple queue_stmt_expr queue_expr reject_with_expr
+%destructor { expr_free($$); }	queue_stmt_expr_simple queue_stmt_expr queue_expr reject_with_expr
 %type <val>			queue_stmt_flags queue_stmt_flag
 %type <stmt>			dup_stmt
 %destructor { stmt_free($$); }	dup_stmt
@@ -3790,14 +3790,22 @@ queue_stmt_arg		:	QUEUENUM	queue_stmt_expr_simple
 			}
 			;
 
+queue_expr		:	variable_expr
+			|	integer_expr
+			;
+
 queue_stmt_expr_simple	:	integer_expr
-			|	range_rhs_expr
 			|	variable_expr
+			|	queue_expr	DASH	queue_expr
+			{
+				$$ = range_expr_alloc(&@$, $1, $3);
+			}
 			;
 
 queue_stmt_expr		:	numgen_expr
 			|	hash_expr
 			|	map_expr
+			|	queue_stmt_expr_simple
 			;
 
 queue_stmt_flags	:	queue_stmt_flag

@@ -589,8 +589,8 @@ for details.
 
 [verse]
 ____
-*queue* [*flags* 'QUEUE_FLAGS'] [*num* 'queue_number']
-*queue* [*flags* 'QUEUE_FLAGS'] [*num* 'queue_number_from' - 'queue_number_to']
+*queue* [*flags* 'QUEUE_FLAGS'] [*to* 'queue_number']
+*queue* [*flags* 'QUEUE_FLAGS'] [*to* 'queue_number_from' - 'queue_number_to']
 *queue* [*flags* 'QUEUE_FLAGS'] [*to* 'QUEUE_EXPRESSION' ]
 
 'QUEUE_FLAGS' := 'QUEUE_FLAG' [*,* 'QUEUE_FLAGS']
