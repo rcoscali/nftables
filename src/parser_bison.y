@@ -3792,6 +3792,7 @@ queue_stmt_arg		:	QUEUENUM	queue_stmt_expr_simple
 
 queue_stmt_expr_simple	:	integer_expr
 			|	range_rhs_expr
+			|	variable_expr
 			;
 
 queue_stmt_expr		:	numgen_expr
