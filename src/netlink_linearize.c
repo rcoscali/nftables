@@ -548,7 +548,8 @@ static void netlink_gen_relational(struct netlink_linearize_ctx *ctx,
 	case EXPR_PREFIX:
 		sreg = get_register(ctx, expr->left);
 		if (expr_basetype(expr->left)->type != TYPE_STRING &&
-		    (!expr->right->prefix_len ||
+		    (expr->right->byteorder != BYTEORDER_BIG_ENDIAN ||
+		     !expr->right->prefix_len ||
 		     expr->right->prefix_len % BITS_PER_BYTE)) {
 			len = div_round_up(expr->right->len, BITS_PER_BYTE);
 			netlink_gen_expr(ctx, expr->left, sreg);
