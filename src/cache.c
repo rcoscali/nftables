@@ -38,7 +38,7 @@ static unsigned int evaluate_cache_add(struct cmd *cmd, unsigned int flags)
 			 NFT_CACHE_CHAIN |
 			 NFT_CACHE_SET |
 			 NFT_CACHE_OBJECT |
-			 NFT_CACHE_SETELEM;
+			 NFT_CACHE_SETELEM_MAYBE;
 		break;
 	case CMD_OBJ_RULE:
 		flags |= NFT_CACHE_TABLE |
@@ -62,7 +62,7 @@ static unsigned int evaluate_cache_del(struct cmd *cmd, unsigned int flags)
 {
 	switch (cmd->obj) {
 	case CMD_OBJ_ELEMENTS:
-		flags |= NFT_CACHE_SETELEM;
+		flags |= NFT_CACHE_SETELEM_MAYBE;
 		break;
 	default:
 		break;
@@ -600,6 +600,18 @@ static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags)
 		}
 		if (flags & NFT_CACHE_SETELEM_BIT) {
 			list_for_each_entry(set, &table->set_cache.list, cache.list) {
+				ret = netlink_list_setelems(ctx, &set->handle,
+							    set);
+				if (ret < 0) {
+					ret = -1;
+					goto cache_fails;
+				}
+			}
+		} else if (flags & NFT_CACHE_SETELEM_MAYBE) {
+			list_for_each_entry(set, &table->set_cache.list, cache.list) {
+				if (!set_is_non_concat_range(set))
+					continue;
+
 				ret = netlink_list_setelems(ctx, &set->handle,
 							    set);
 				if (ret < 0) {
