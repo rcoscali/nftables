@@ -415,8 +415,7 @@ static int obj_cache_init(struct netlink_ctx *ctx, struct table *table,
 }
 
 static struct nftnl_obj_list *obj_cache_dump(struct netlink_ctx *ctx,
-					     const struct table *table,
-					     int *err)
+					     const struct table *table)
 {
 	struct nftnl_obj_list *obj_list;
 
@@ -424,12 +423,15 @@ static struct nftnl_obj_list *obj_cache_dump(struct netlink_ctx *ctx,
 				    table->handle.table.name, NULL,
 				    0, true, false);
 	if (!obj_list) {
-                if (errno == EINTR) {
-			*err = -1;
+                if (errno == EINTR)
 			return NULL;
-		}
-		*err = 0;
-		return NULL;
+
+		/* old kernels do not support this, provide an empty list. */
+		obj_list = nftnl_obj_list_alloc();
+		if (!obj_list)
+	                memory_allocation_error();
+
+		return obj_list;
 	}
 
 	return obj_list;
@@ -500,20 +502,22 @@ static int ft_cache_init(struct netlink_ctx *ctx, struct table *table,
 }
 
 static struct nftnl_flowtable_list *ft_cache_dump(struct netlink_ctx *ctx,
-						  const struct table *table,
-						  int *err)
+						  const struct table *table)
 {
 	struct nftnl_flowtable_list *ft_list;
 
 	ft_list = mnl_nft_flowtable_dump(ctx, table->handle.family,
 					 table->handle.table.name);
 	if (!ft_list) {
-                if (errno == EINTR) {
-			*err = -1;
+                if (errno == EINTR)
 			return NULL;
-		}
-		*err = 0;
-		return NULL;
+
+		/* old kernels do not support this, provide an empty list. */
+		ft_list = nftnl_flowtable_list_alloc();
+		if (!ft_list)
+	                memory_allocation_error();
+
+		return ft_list;
 	}
 
 	return ft_list;
@@ -628,7 +632,7 @@ static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags)
 			}
 		}
 		if (flags & NFT_CACHE_FLOWTABLE_BIT) {
-			ft_list = ft_cache_dump(ctx, table, &ret);
+			ft_list = ft_cache_dump(ctx, table);
 			if (!ft_list) {
 				ret = -1;
 				goto cache_fails;
@@ -643,7 +647,7 @@ static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags)
 			}
 		}
 		if (flags & NFT_CACHE_OBJECT_BIT) {
-			obj_list = obj_cache_dump(ctx, table, &ret);
+			obj_list = obj_cache_dump(ctx, table);
 			if (!obj_list) {
 				ret = -1;
 				goto cache_fails;
