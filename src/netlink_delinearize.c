@@ -1993,7 +1993,7 @@ static bool meta_may_dependency_kill(struct payload_dep_ctx *ctx,
 				     const struct expr *expr)
 {
 	struct expr *dep = ctx->pdep->expr;
-	uint16_t l3proto;
+	uint16_t l3proto, protocol;
 	uint8_t l4proto;
 
 	if (ctx->pbase != PROTO_BASE_NETWORK_HDR)
@@ -2005,7 +2005,22 @@ static bool meta_may_dependency_kill(struct payload_dep_ctx *ctx,
 	case NFPROTO_BRIDGE:
 		break;
 	default:
-		return true;
+		if (dep->left->etype != EXPR_META ||
+		    dep->right->etype != EXPR_VALUE)
+			return false;
+
+		if (dep->left->meta.key == NFT_META_PROTOCOL) {
+			protocol = mpz_get_uint16(dep->right->value);
+
+			if (family == NFPROTO_IPV4 &&
+			    protocol == ETH_P_IP)
+				return true;
+			else if (family == NFPROTO_IPV6 &&
+				 protocol == ETH_P_IPV6)
+				return true;
+		}
+
+		return false;
 	}
 
 	if (expr->left->meta.key != NFT_META_L4PROTO)
@@ -2015,7 +2030,8 @@ static bool meta_may_dependency_kill(struct payload_dep_ctx *ctx,
 
 	switch (dep->left->etype) {
 	case EXPR_META:
-		if (dep->left->meta.key != NFT_META_NFPROTO)
+		if (dep->left->meta.key != NFT_META_NFPROTO &&
+		    dep->left->meta.key != NFT_META_PROTOCOL)
 			return true;
 		break;
 	case EXPR_PAYLOAD:
