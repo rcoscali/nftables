@@ -1983,6 +1983,55 @@ static void payload_match_postprocess(struct rule_pp_ctx *ctx,
 	}
 }
 
+static uint8_t ether_type_to_nfproto(uint16_t l3proto)
+{
+	switch(l3proto) {
+	case ETH_P_IP:
+		return NFPROTO_IPV4;
+	case ETH_P_IPV6:
+		return NFPROTO_IPV6;
+	default:
+		break;
+	}
+
+	return NFPROTO_UNSPEC;
+}
+
+static bool __meta_dependency_may_kill(const struct expr *dep, uint8_t *nfproto)
+{
+	uint16_t l3proto;
+
+	switch (dep->left->etype) {
+	case EXPR_META:
+		switch (dep->left->meta.key) {
+		case NFT_META_NFPROTO:
+			*nfproto = mpz_get_uint8(dep->right->value);
+			break;
+		case NFT_META_PROTOCOL:
+			l3proto = mpz_get_uint16(dep->right->value);
+			*nfproto = ether_type_to_nfproto(l3proto);
+			break;
+		default:
+			return true;
+		}
+		break;
+	case EXPR_PAYLOAD:
+		if (dep->left->payload.base != PROTO_BASE_LL_HDR)
+			return true;
+
+		if (dep->left->dtype != &ethertype_type)
+			return true;
+
+		l3proto = mpz_get_uint16(dep->right->value);
+		*nfproto = ether_type_to_nfproto(l3proto);
+		break;
+	default:
+		return true;
+	}
+
+	return false;
+}
+
 /* We have seen a protocol key expression that restricts matching at the network
  * base, leave it in place since this is meaninful in bridge, inet and netdev
  * families. Exceptions are ICMP and ICMPv6 where this code assumes that can
@@ -1992,11 +2041,13 @@ static bool meta_may_dependency_kill(struct payload_dep_ctx *ctx,
 				     unsigned int family,
 				     const struct expr *expr)
 {
+	uint8_t l4proto, nfproto = NFPROTO_UNSPEC;
 	struct expr *dep = ctx->pdep->expr;
-	uint16_t l3proto, protocol;
-	uint8_t l4proto;
 
 	if (ctx->pbase != PROTO_BASE_NETWORK_HDR)
+		return true;
+
+	if (__meta_dependency_may_kill(dep, &nfproto))
 		return true;
 
 	switch (family) {
@@ -2005,53 +2056,18 @@ static bool meta_may_dependency_kill(struct payload_dep_ctx *ctx,
 	case NFPROTO_BRIDGE:
 		break;
 	default:
-		if (dep->left->etype != EXPR_META ||
-		    dep->right->etype != EXPR_VALUE)
+		if (family == NFPROTO_IPV4 &&
+		    nfproto != NFPROTO_IPV4)
+			return false;
+		else if (family == NFPROTO_IPV6 &&
+			 nfproto != NFPROTO_IPV6)
 			return false;
 
-		if (dep->left->meta.key == NFT_META_PROTOCOL) {
-			protocol = mpz_get_uint16(dep->right->value);
-
-			if (family == NFPROTO_IPV4 &&
-			    protocol == ETH_P_IP)
-				return true;
-			else if (family == NFPROTO_IPV6 &&
-				 protocol == ETH_P_IPV6)
-				return true;
-		}
-
-		return false;
+		return true;
 	}
 
 	if (expr->left->meta.key != NFT_META_L4PROTO)
 		return true;
-
-	l3proto = mpz_get_uint16(dep->right->value);
-
-	switch (dep->left->etype) {
-	case EXPR_META:
-		if (dep->left->meta.key != NFT_META_NFPROTO &&
-		    dep->left->meta.key != NFT_META_PROTOCOL)
-			return true;
-		break;
-	case EXPR_PAYLOAD:
-		if (dep->left->payload.base != PROTO_BASE_LL_HDR)
-			return true;
-
-		switch(l3proto) {
-		case ETH_P_IP:
-			l3proto = NFPROTO_IPV4;
-			break;
-		case ETH_P_IPV6:
-			l3proto = NFPROTO_IPV6;
-			break;
-		default:
-			break;
-		}
-		break;
-	default:
-		break;
-	}
 
 	l4proto = mpz_get_uint8(expr->right->value);
 
@@ -2063,8 +2079,8 @@ static bool meta_may_dependency_kill(struct payload_dep_ctx *ctx,
 		return false;
 	}
 
-	if ((l3proto == NFPROTO_IPV4 && l4proto == IPPROTO_ICMPV6) ||
-	    (l3proto == NFPROTO_IPV6 && l4proto == IPPROTO_ICMP))
+	if ((nfproto == NFPROTO_IPV4 && l4proto == IPPROTO_ICMPV6) ||
+	    (nfproto == NFPROTO_IPV6 && l4proto == IPPROTO_ICMP))
 		return false;
 
 	return true;
