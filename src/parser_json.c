@@ -44,7 +44,6 @@
 #define CTX_F_CONCAT	(1 << 8)	/* inside concat_expr */
 
 struct json_ctx {
-	struct input_descriptor indesc;
 	struct nft_ctx *nft;
 	struct list_head *msgs;
 	struct list_head *cmds;
@@ -107,11 +106,12 @@ static struct stmt *json_parse_stmt(struct json_ctx *ctx, json_t *root);
 /* parsing helpers */
 
 const struct location *int_loc = &internal_location;
+static struct input_descriptor json_indesc;
 
 static void json_lib_error(struct json_ctx *ctx, json_error_t *err)
 {
 	struct location loc = {
-		.indesc = &ctx->indesc,
+		.indesc = &json_indesc,
 		.line_offset = err->position - err->column,
 		.first_line = err->line,
 		.last_line = err->line,
@@ -3923,15 +3923,14 @@ int nft_parse_json_buffer(struct nft_ctx *nft, const char *buf,
 			  struct list_head *msgs, struct list_head *cmds)
 {
 	struct json_ctx ctx = {
-		.indesc = {
-			.type = INDESC_BUFFER,
-			.data = buf,
-		},
 		.nft = nft,
 		.msgs = msgs,
 		.cmds = cmds,
 	};
 	int ret;
+
+	json_indesc.type = INDESC_BUFFER;
+	json_indesc.data = buf;
 
 	parser_init(nft, nft->state, msgs, cmds, nft->top_scope);
 	nft->json_root = json_loads(buf, 0, NULL);
@@ -3951,16 +3950,15 @@ int nft_parse_json_filename(struct nft_ctx *nft, const char *filename,
 			    struct list_head *msgs, struct list_head *cmds)
 {
 	struct json_ctx ctx = {
-		.indesc = {
-			.type = INDESC_FILE,
-			.name = filename,
-		},
 		.nft = nft,
 		.msgs = msgs,
 		.cmds = cmds,
 	};
 	json_error_t err;
 	int ret;
+
+	json_indesc.type = INDESC_FILE;
+	json_indesc.name = filename;
 
 	parser_init(nft, nft->state, msgs, cmds, nft->top_scope);
 	nft->json_root = json_load_file(filename, 0, &err);
