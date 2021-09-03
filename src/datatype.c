@@ -911,6 +911,11 @@ void time_print(uint64_t ms, struct output_ctx *octx)
 {
 	uint64_t days, hours, minutes, seconds;
 
+	if (nft_output_seconds(octx)) {
+		nft_print(octx, "%" PRIu64 "s", ms / 1000);
+		return;
+	}
+
 	days = ms / 86400000;
 	ms %= 86400000;
 
