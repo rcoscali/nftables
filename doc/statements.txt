@@ -96,7 +96,7 @@ In the second form of invocation (if 'nflog_group' is specified), the Linux
 kernel will pass the packet to nfnetlink_log which will multicast the packet
 through a netlink socket to the specified multicast group. One or more userspace
 processes may subscribe to the group to receive the packets, see
-libnetfilter_queue documentation for details.
+libnetfilter_log documentation for details.
 
 In the third form of invocation (if level audit is specified), the Linux
 kernel writes a message into the audit buffer suitably formatted for reading
