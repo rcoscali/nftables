@@ -95,8 +95,9 @@ dmesg(1) or read in the syslog).
 In the second form of invocation (if 'nflog_group' is specified), the Linux
 kernel will pass the packet to nfnetlink_log which will multicast the packet
 through a netlink socket to the specified multicast group. One or more userspace
-processes may subscribe to the group to receive the packets, see
-libnetfilter_log documentation for details.
+processes may subscribe to the group to receive the packets, see man(8) ulogd
+for the Netfilter userspace log daemon and libnetfilter_log documentation for
+details in case you would like to develop a custom program to digest your logs.
 
 In the third form of invocation (if level audit is specified), the Linux
 kernel writes a message into the audit buffer suitably formatted for reading
