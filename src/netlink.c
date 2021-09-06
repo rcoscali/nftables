@@ -1048,48 +1048,54 @@ void alloc_setelem_cache(const struct expr *set, struct nftnl_set *nls)
 	}
 }
 
-static bool mpz_bitmask_is_prefix(mpz_t bitmask, uint32_t len)
+static bool range_expr_is_prefix(const struct expr *range, uint32_t *prefix_len)
 {
+	const struct expr *right = range->right;
+	const struct expr *left = range->left;
+	uint32_t len = left->len;
 	unsigned long n1, n2;
+	uint32_t plen;
+	mpz_t bitmask;
 
-        n1 = mpz_scan0(bitmask, 0);
-        if (n1 == ULONG_MAX)
-                return false;
+	mpz_init2(bitmask, left->len);
+	mpz_xor(bitmask, left->value, right->value);
 
-        n2 = mpz_scan1(bitmask, n1 + 1);
-        if (n2 < len)
-                return false;
+	n1 = mpz_scan0(bitmask, 0);
+	if (n1 == ULONG_MAX)
+		goto not_a_prefix;
 
-        return true;
-}
+	n2 = mpz_scan1(bitmask, n1 + 1);
+	if (n2 < len)
+		goto not_a_prefix;
 
-static uint32_t mpz_bitmask_to_prefix(mpz_t bitmask, uint32_t len)
-{
-	return len - mpz_scan0(bitmask, 0);
+	plen = len - n1;
+
+	if (mpz_scan1(left->value, 0) < len - plen)
+		goto not_a_prefix;
+
+	mpz_clear(bitmask);
+	*prefix_len = plen;
+
+	return true;
+
+not_a_prefix:
+	mpz_clear(bitmask);
+
+	return false;
 }
 
 struct expr *range_expr_to_prefix(struct expr *range)
 {
-	struct expr *left = range->left, *right = range->right, *prefix;
-	uint32_t len = left->len, prefix_len;
-	mpz_t bitmask;
+	struct expr *prefix;
+	uint32_t prefix_len;
 
-	mpz_init2(bitmask, len);
-	mpz_xor(bitmask, left->value, right->value);
-
-	if (mpz_bitmask_is_prefix(bitmask, len)) {
-		prefix_len = mpz_bitmask_to_prefix(bitmask, len);
-		if (mpz_scan1(left->value, 0) >= len - prefix_len) {
-			prefix = prefix_expr_alloc(&range->location,
-						   expr_get(left),
-						   prefix_len);
-			mpz_clear(bitmask);
-			expr_free(range);
-
-			return prefix;
-		}
+	if (range_expr_is_prefix(range, &prefix_len)) {
+		prefix = prefix_expr_alloc(&range->location,
+					   expr_get(range->left),
+					   prefix_len);
+		expr_free(range);
+		return prefix;
 	}
-	mpz_clear(bitmask);
 
 	return range;
 }

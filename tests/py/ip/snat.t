@@ -6,6 +6,8 @@ iifname "eth0" tcp dport 80-90 snat to 192.168.3.2;ok
 iifname "eth0" tcp dport != 80-90 snat to 192.168.3.2;ok
 iifname "eth0" tcp dport {80, 90, 23} snat to 192.168.3.2;ok
 iifname "eth0" tcp dport != {80, 90, 23} snat to 192.168.3.2;ok
+iifname "eth0" tcp dport 80-90 snat to 192.168.3.0-192.168.3.255;ok;iifname "eth0" tcp dport 80-90 snat to 192.168.3.0/24
+iifname "eth0" tcp dport 80-90 snat to 192.168.3.15-192.168.3.240;ok
 
 iifname "eth0" tcp dport != 23-34 snat to 192.168.3.2;ok
 
