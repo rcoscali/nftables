@@ -1079,12 +1079,15 @@ struct expr *range_expr_to_prefix(struct expr *range)
 
 	if (mpz_bitmask_is_prefix(bitmask, len)) {
 		prefix_len = mpz_bitmask_to_prefix(bitmask, len);
-		prefix = prefix_expr_alloc(&range->location, expr_get(left),
-					   prefix_len);
-		mpz_clear(bitmask);
-		expr_free(range);
+		if (mpz_scan1(left->value, 0) >= len - prefix_len) {
+			prefix = prefix_expr_alloc(&range->location,
+						   expr_get(left),
+						   prefix_len);
+			mpz_clear(bitmask);
+			expr_free(range);
 
-		return prefix;
+			return prefix;
+		}
 	}
 	mpz_clear(bitmask);
 
