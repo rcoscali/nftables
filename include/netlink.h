@@ -215,9 +215,6 @@ int netlink_events_trace_cb(const struct nlmsghdr *nlh, int type,
 
 enum nft_data_types dtype_map_to_kernel(const struct datatype *dtype);
 
-void expr_handler_init(void);
-void expr_handler_exit(void);
-
 void netlink_linearize_init(struct netlink_linearize_ctx *lctx,
 			    struct nftnl_rule *nlr);
 void netlink_linearize_fini(struct netlink_linearize_ctx *lctx);
