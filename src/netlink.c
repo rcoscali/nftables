@@ -1324,7 +1324,7 @@ key_end:
 		nftnl_set_elem_expr_foreach(nlse, set_elem_parse_expressions,
 					    &setelem_parse_ctx);
 	}
-	list_splice_tail(&setelem_parse_ctx.stmt_list, &expr->stmt_list);
+	list_splice_tail_init(&setelem_parse_ctx.stmt_list, &expr->stmt_list);
 
 	if (flags & NFT_SET_ELEM_INTERVAL_END) {
 		expr->flags |= EXPR_F_INTERVAL_END;
