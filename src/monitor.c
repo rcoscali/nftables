@@ -44,6 +44,7 @@ enum {
 	NFT_OF_EVENT_ADD,
 	NFT_OF_EVENT_INSERT,
 	NFT_OF_EVENT_DEL,
+	NFT_OF_EVENT_CREATE,
 };
 
 #define nft_mon_print(monh, ...) nft_print(&monh->ctx->nft->output, __VA_ARGS__)
@@ -140,7 +141,10 @@ static uint32_t netlink_msg2nftnl_of(uint32_t type, uint16_t flags)
 	case NFT_MSG_NEWSETELEM:
 	case NFT_MSG_NEWOBJ:
 	case NFT_MSG_NEWFLOWTABLE:
-		return NFT_OF_EVENT_ADD;
+		if (flags & NLM_F_EXCL)
+			return NFT_OF_EVENT_CREATE;
+		else
+			return NFT_OF_EVENT_ADD;
 	case NFT_MSG_DELTABLE:
 	case NFT_MSG_DELCHAIN:
 	case NFT_MSG_DELSET:
@@ -159,6 +163,8 @@ static const char *nftnl_of2cmd(uint32_t of)
 	switch (of) {
 	case NFT_OF_EVENT_ADD:
 		return "add";
+	case NFT_OF_EVENT_CREATE:
+		return "create";
 	case NFT_OF_EVENT_INSERT:
 		return "insert";
 	case NFT_OF_EVENT_DEL:
