@@ -43,3 +43,6 @@ ether type 8021ad vlan id 1 vlan type 8021q vlan id 2 vlan type ip ip protocol 6
 # illegal dependencies
 ether type ip vlan id 1;fail
 ether type ip vlan id 1 ip saddr 10.0.0.1;fail
+
+# mangling
+vlan id 1 vlan id set 2;ok

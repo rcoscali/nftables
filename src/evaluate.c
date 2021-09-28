@@ -2554,6 +2554,7 @@ static int stmt_evaluate_payload(struct eval_ctx *ctx, struct stmt *stmt)
 			 payload_byte_offset * BITS_PER_BYTE,
 			 payload_byte_size * BITS_PER_BYTE);
 
+	payload_bytes->payload.is_raw = 1;
 	payload_bytes->payload.desc	 = payload->payload.desc;
 	payload_bytes->byteorder	 = payload->byteorder;
 
