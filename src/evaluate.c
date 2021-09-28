@@ -3081,6 +3081,11 @@ static bool nat_evaluate_addr_has_th_expr(const struct expr *map)
 	list_for_each_entry(i, &concat->expressions, list) {
 		enum proto_bases base;
 
+		if (i->etype == EXPR_PAYLOAD &&
+		    i->payload.base == PROTO_BASE_TRANSPORT_HDR &&
+		    i->payload.desc != &proto_th)
+			return true;
+
 		if ((i->flags & EXPR_F_PROTOCOL) == 0)
 			continue;
 
@@ -3160,9 +3165,16 @@ static int stmt_evaluate_addr(struct eval_ctx *ctx, struct stmt *stmt,
 
 static int stmt_evaluate_nat_map(struct eval_ctx *ctx, struct stmt *stmt)
 {
+	struct proto_ctx *pctx = &ctx->pctx;
 	struct expr *one, *two, *data, *tmp;
 	const struct datatype *dtype;
 	int addr_type, err;
+
+	if (pctx->protocol[PROTO_BASE_TRANSPORT_HDR].desc == NULL &&
+	    !nat_evaluate_addr_has_th_expr(stmt->nat.addr))
+		return stmt_binary_error(ctx, stmt->nat.addr, stmt,
+					 "transport protocol mapping is only "
+					 "valid after transport protocol match");
 
 	switch (stmt->nat.family) {
 	case NFPROTO_IPV4:
