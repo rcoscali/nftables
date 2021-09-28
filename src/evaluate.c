@@ -3244,7 +3244,8 @@ static bool nat_concat_map(struct eval_ctx *ctx, struct stmt *stmt)
 		if (expr_evaluate(ctx, &stmt->nat.addr->mappings))
 			return false;
 
-		if (stmt->nat.addr->mappings->set->data->etype == EXPR_CONCAT) {
+		if (stmt->nat.addr->mappings->set->data->etype == EXPR_CONCAT ||
+		    stmt->nat.addr->mappings->set->data->dtype->subtypes) {
 			stmt->nat.type_flags |= STMT_NAT_F_CONCAT;
 			return true;
 		}
