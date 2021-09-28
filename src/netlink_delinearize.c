@@ -134,6 +134,50 @@ err:
 	return NULL;
 }
 
+static struct expr *netlink_parse_concat_key(struct netlink_parse_ctx *ctx,
+					       const struct location *loc,
+					       unsigned int reg,
+					       const struct expr *key)
+{
+	uint32_t type = key->dtype->type;
+	unsigned int n, len = key->len;
+	struct expr *concat, *expr;
+	unsigned int consumed;
+
+	concat = concat_expr_alloc(loc);
+	n = div_round_up(fls(type), TYPE_BITS);
+
+	while (len > 0) {
+		const struct datatype *i;
+
+		expr = netlink_get_register(ctx, loc, reg);
+		if (expr == NULL) {
+			netlink_error(ctx, loc,
+				      "Concat expression size mismatch");
+			goto err;
+		}
+
+		if (n > 0 && concat_subtype_id(type, --n)) {
+			i = concat_subtype_lookup(type, n);
+
+			expr_set_type(expr, i, i->byteorder);
+		}
+
+		compound_expr_add(concat, expr);
+
+		consumed = netlink_padded_len(expr->len);
+		assert(consumed > 0);
+		len -= consumed;
+		reg += netlink_register_space(expr->len);
+	}
+
+	return concat;
+
+err:
+	expr_free(concat);
+	return NULL;
+}
+
 static struct expr *netlink_parse_concat_data(struct netlink_parse_ctx *ctx,
 					      const struct location *loc,
 					      unsigned int reg,
@@ -1572,7 +1616,7 @@ static void netlink_parse_dynset(struct netlink_parse_ctx *ctx,
 
 	if (expr->len < set->key->len) {
 		expr_free(expr);
-		expr = netlink_parse_concat_expr(ctx, loc, sreg, set->key->len);
+		expr = netlink_parse_concat_key(ctx, loc, sreg, set->key);
 		if (expr == NULL)
 			return;
 	}
