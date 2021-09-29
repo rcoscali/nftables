@@ -127,6 +127,27 @@ static unsigned int evaluate_cache_rename(struct cmd *cmd, unsigned int flags)
 	return flags;
 }
 
+static unsigned int evaluate_cache_list(struct cmd *cmd, unsigned int flags)
+{
+	switch (cmd->obj) {
+	case CMD_OBJ_CHAINS:
+		flags |= NFT_CACHE_TABLE | NFT_CACHE_CHAIN;
+		break;
+	case CMD_OBJ_SETS:
+	case CMD_OBJ_MAPS:
+		flags |= NFT_CACHE_TABLE | NFT_CACHE_SET;
+		break;
+	case CMD_OBJ_FLOWTABLES:
+		flags |= NFT_CACHE_TABLE | NFT_CACHE_FLOWTABLE;
+		break;
+	default:
+		flags |= NFT_CACHE_FULL | NFT_CACHE_REFRESH;
+		break;
+	}
+
+	return flags;
+}
+
 unsigned int nft_cache_evaluate(struct nft_ctx *nft, struct list_head *cmds)
 {
 	unsigned int flags = NFT_CACHE_EMPTY;
@@ -160,8 +181,7 @@ unsigned int nft_cache_evaluate(struct nft_ctx *nft, struct list_head *cmds)
 			flags |= NFT_CACHE_TABLE;
 			break;
 		case CMD_LIST:
-		case CMD_EXPORT:
-			flags |= NFT_CACHE_FULL | NFT_CACHE_REFRESH;
+			flags |= evaluate_cache_list(cmd, flags);
 			break;
 		case CMD_MONITOR:
 			flags |= NFT_CACHE_FULL;
@@ -174,6 +194,7 @@ unsigned int nft_cache_evaluate(struct nft_ctx *nft, struct list_head *cmds)
 			break;
 		case CMD_DESCRIBE:
 		case CMD_IMPORT:
+		case CMD_EXPORT:
 			break;
 		default:
 			break;
