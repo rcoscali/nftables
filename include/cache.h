@@ -38,12 +38,18 @@ enum cache_level_flags {
 	NFT_CACHE_FLUSHED	= (1 << 31),
 };
 
+struct nft_cache_filter {
+	const char		*table;
+};
+
 struct nft_cache;
 enum cmd_ops;
 
-unsigned int nft_cache_evaluate(struct nft_ctx *nft, struct list_head *cmds);
+unsigned int nft_cache_evaluate(struct nft_ctx *nft, struct list_head *cmds,
+				struct nft_cache_filter *filter);
 int nft_cache_update(struct nft_ctx *ctx, enum cmd_ops cmd,
-		     struct list_head *msgs);
+		     struct list_head *msgs,
+		     const struct nft_cache_filter *filter);
 bool nft_cache_needs_update(struct nft_cache *cache);
 void nft_cache_release(struct nft_cache *cache);
 

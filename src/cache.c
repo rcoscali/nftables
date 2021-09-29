@@ -127,9 +127,16 @@ static unsigned int evaluate_cache_rename(struct cmd *cmd, unsigned int flags)
 	return flags;
 }
 
-static unsigned int evaluate_cache_list(struct cmd *cmd, unsigned int flags)
+static unsigned int evaluate_cache_list(struct cmd *cmd, unsigned int flags,
+					struct nft_cache_filter *filter)
 {
 	switch (cmd->obj) {
+	case CMD_OBJ_TABLE:
+		if (filter && cmd->handle.table.name)
+			filter->table = cmd->handle.table.name;
+
+		flags |= NFT_CACHE_FULL | NFT_CACHE_REFRESH;
+		break;
 	case CMD_OBJ_CHAINS:
 		flags |= NFT_CACHE_TABLE | NFT_CACHE_CHAIN;
 		break;
@@ -148,12 +155,16 @@ static unsigned int evaluate_cache_list(struct cmd *cmd, unsigned int flags)
 	return flags;
 }
 
-unsigned int nft_cache_evaluate(struct nft_ctx *nft, struct list_head *cmds)
+unsigned int nft_cache_evaluate(struct nft_ctx *nft, struct list_head *cmds,
+				struct nft_cache_filter *filter)
 {
 	unsigned int flags = NFT_CACHE_EMPTY;
 	struct cmd *cmd;
 
 	list_for_each_entry(cmd, cmds, list) {
+		if (filter->table && cmd->op != CMD_LIST)
+			memset(filter, 0, sizeof(*filter));
+
 		switch (cmd->op) {
 		case CMD_ADD:
 		case CMD_INSERT:
@@ -181,7 +192,7 @@ unsigned int nft_cache_evaluate(struct nft_ctx *nft, struct list_head *cmds)
 			flags |= NFT_CACHE_TABLE;
 			break;
 		case CMD_LIST:
-			flags |= evaluate_cache_list(cmd, flags);
+			flags |= evaluate_cache_list(cmd, flags, filter);
 			break;
 		case CMD_MONITOR:
 			flags |= NFT_CACHE_FULL;
@@ -582,7 +593,8 @@ struct flowtable *ft_cache_find(const struct table *table, const char *name)
 }
 
 static int cache_init_tables(struct netlink_ctx *ctx, struct handle *h,
-			     struct nft_cache *cache)
+			     struct nft_cache *cache,
+			     const struct nft_cache_filter *filter)
 {
 	struct table *table, *next;
 	int ret;
@@ -593,13 +605,20 @@ static int cache_init_tables(struct netlink_ctx *ctx, struct handle *h,
 
 	list_for_each_entry_safe(table, next, &ctx->list, list) {
 		list_del(&table->list);
+
+		if (filter && filter->table &&
+		    (strcmp(filter->table, table->handle.table.name))) {
+			table_free(table);
+			continue;
+		}
 		table_cache_add(table, cache);
 	}
 
 	return 0;
 }
 
-static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags)
+static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags,
+			      const struct nft_cache_filter *filter)
 {
 	struct nftnl_flowtable_list *ft_list = NULL;
 	struct nftnl_chain_list *chain_list = NULL;
@@ -721,7 +740,8 @@ cache_fails:
 	return ret;
 }
 
-static int nft_cache_init(struct netlink_ctx *ctx, unsigned int flags)
+static int nft_cache_init(struct netlink_ctx *ctx, unsigned int flags,
+			  const struct nft_cache_filter *filter)
 {
 	struct handle handle = {
 		.family = NFPROTO_UNSPEC,
@@ -732,10 +752,10 @@ static int nft_cache_init(struct netlink_ctx *ctx, unsigned int flags)
 		return 0;
 
 	/* assume NFT_CACHE_TABLE is always set. */
-	ret = cache_init_tables(ctx, &handle, &ctx->nft->cache);
+	ret = cache_init_tables(ctx, &handle, &ctx->nft->cache, filter);
 	if (ret < 0)
 		return ret;
-	ret = cache_init_objects(ctx, flags);
+	ret = cache_init_objects(ctx, flags, filter);
 	if (ret < 0)
 		return ret;
 
@@ -763,7 +783,8 @@ bool nft_cache_needs_update(struct nft_cache *cache)
 }
 
 int nft_cache_update(struct nft_ctx *nft, unsigned int flags,
-		     struct list_head *msgs)
+		     struct list_head *msgs,
+		     const struct nft_cache_filter *filter)
 {
 	struct netlink_ctx ctx = {
 		.list		= LIST_HEAD_INIT(ctx.list),
@@ -792,7 +813,7 @@ replay:
 		goto skip;
 	}
 
-	ret = nft_cache_init(&ctx, flags);
+	ret = nft_cache_init(&ctx, flags, filter);
 	if (ret < 0) {
 		if (errno == EINTR) {
 			nft_cache_release(cache);
