@@ -20,6 +20,16 @@
 static unsigned int evaluate_cache_add(struct cmd *cmd, unsigned int flags)
 {
 	switch (cmd->obj) {
+	case CMD_OBJ_TABLE:
+		if (!cmd->table)
+			break;
+
+		flags |= NFT_CACHE_TABLE |
+			 NFT_CACHE_CHAIN |
+			 NFT_CACHE_SET |
+			 NFT_CACHE_OBJECT |
+			 NFT_CACHE_FLOWTABLE;
+		break;
 	case CMD_OBJ_CHAIN:
 	case CMD_OBJ_SET:
 	case CMD_OBJ_COUNTER:
