@@ -370,13 +370,15 @@ static void set_print_declaration(const struct set *set,
 		nft_print(octx, "%s%s", opts->tab, opts->tab);
 
 	if (!list_empty(&set->stmt_list)) {
+		unsigned int flags = octx->flags;
+
 		octx->flags |= NFT_CTX_OUTPUT_STATELESS;
 		list_for_each_entry(stmt, &set->stmt_list, list) {
 			stmt_print(stmt, octx);
 			if (!list_is_last(&stmt->list, &set->stmt_list))
 				nft_print(octx, " ");
 		}
-		octx->flags &= ~NFT_CTX_OUTPUT_STATELESS;
+		octx->flags = flags;
 	}
 
 	if (!list_empty(&set->stmt_list))
