@@ -1811,13 +1811,12 @@ static void obj_print_data(const struct obj *obj,
 			nft_print(octx, " # handle %" PRIu64, obj->handle.handle.id);
 
 		obj_print_comment(obj, opts, octx);
-		nft_print(octx, "%s%s%s", opts->nl, opts->tab, opts->tab);
-		if (nft_output_stateless(octx)) {
-			nft_print(octx, "packets 0 bytes 0");
-			break;
-		}
-		nft_print(octx, "packets %" PRIu64 " bytes %" PRIu64 "%s",
-			  obj->counter.packets, obj->counter.bytes, opts->nl);
+		if (nft_output_stateless(octx))
+			nft_print(octx, "%s", opts->nl);
+		else
+			nft_print(octx, "%s%s%spackets %" PRIu64 " bytes %" PRIu64 "%s",
+				  opts->nl, opts->tab, opts->tab,
+				  obj->counter.packets, obj->counter.bytes, opts->nl);
 		break;
 	case NFT_OBJECT_QUOTA: {
 		const char *data_unit;
