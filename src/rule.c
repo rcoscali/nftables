@@ -366,11 +366,10 @@ static void set_print_declaration(const struct set *set,
 		nft_print(octx, "%s", opts->stmt_separator);
 	}
 
-	if (!list_empty(&set->stmt_list))
-		nft_print(octx, "%s%s", opts->tab, opts->tab);
-
 	if (!list_empty(&set->stmt_list)) {
 		unsigned int flags = octx->flags;
+
+		nft_print(octx, "%s%s", opts->tab, opts->tab);
 
 		octx->flags |= NFT_CTX_OUTPUT_STATELESS;
 		list_for_each_entry(stmt, &set->stmt_list, list) {
@@ -379,10 +378,9 @@ static void set_print_declaration(const struct set *set,
 				nft_print(octx, " ");
 		}
 		octx->flags = flags;
-	}
 
-	if (!list_empty(&set->stmt_list))
 		nft_print(octx, "%s", opts->stmt_separator);
+	}
 
 	if (set->automerge)
 		nft_print(octx, "%s%sauto-merge%s", opts->tab, opts->tab,
