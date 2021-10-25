@@ -69,7 +69,7 @@ AM_CONDITIONAL([BUILD_MINIGMP], [test "x$with_mini_gmp" = xyes])
 
 AC_ARG_WITH([cli], [AS_HELP_STRING([--without-cli],
             [disable interactive CLI (libreadline, editline or linenoise support)])],
-            [], [with_cli=readline])
+            [], [with_cli=editline])
 
 AS_IF([test "x$with_cli" = xreadline], [
 AC_CHECK_LIB([readline], [readline], ,
