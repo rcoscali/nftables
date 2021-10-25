@@ -377,7 +377,8 @@ static int set_cache_cb(struct nftnl_set *nls, void *arg)
 		return -1;
 
 	if (ctx->filter && ctx->filter->set &&
-	    (strcmp(ctx->filter->set, set->handle.set.name))) {
+	    (strcmp(ctx->filter->table, set->handle.table.name) ||
+	     strcmp(ctx->filter->set, set->handle.set.name))) {
 		set_free(set);
 		return 0;
 	}
