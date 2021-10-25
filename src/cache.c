@@ -146,6 +146,8 @@ static unsigned int evaluate_cache_list(struct nft_ctx *nft, struct cmd *cmd,
 		}
 		if (nft_output_terse(&nft->output))
 			flags |= (NFT_CACHE_FULL & ~NFT_CACHE_SETELEM);
+		else if (filter->table && filter->set)
+			flags |= NFT_CACHE_TABLE | NFT_CACHE_SET | NFT_CACHE_SETELEM;
 		else
 			flags |= NFT_CACHE_FULL;
 		break;
