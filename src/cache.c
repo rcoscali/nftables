@@ -136,7 +136,7 @@ static unsigned int evaluate_cache_list(struct nft_ctx *nft, struct cmd *cmd,
 		if (filter && cmd->handle.table.name)
 			filter->table = cmd->handle.table.name;
 
-		flags |= NFT_CACHE_FULL | NFT_CACHE_REFRESH;
+		flags |= NFT_CACHE_FULL;
 		break;
 	case CMD_OBJ_SET:
 	case CMD_OBJ_MAP:
@@ -145,9 +145,9 @@ static unsigned int evaluate_cache_list(struct nft_ctx *nft, struct cmd *cmd,
 			filter->set = cmd->handle.set.name;
 		}
 		if (nft_output_terse(&nft->output))
-			flags |= (NFT_CACHE_FULL & ~NFT_CACHE_SETELEM) | NFT_CACHE_REFRESH;
+			flags |= (NFT_CACHE_FULL & ~NFT_CACHE_SETELEM);
 		else
-			flags |= NFT_CACHE_FULL | NFT_CACHE_REFRESH;
+			flags |= NFT_CACHE_FULL;
 		break;
 	case CMD_OBJ_CHAINS:
 		flags |= NFT_CACHE_TABLE | NFT_CACHE_CHAIN;
@@ -161,13 +161,14 @@ static unsigned int evaluate_cache_list(struct nft_ctx *nft, struct cmd *cmd,
 		break;
 	case CMD_OBJ_RULESET:
 		if (nft_output_terse(&nft->output))
-			flags |= (NFT_CACHE_FULL & ~NFT_CACHE_SETELEM) | NFT_CACHE_REFRESH;
+			flags |= (NFT_CACHE_FULL & ~NFT_CACHE_SETELEM);
 		else
-			flags |= NFT_CACHE_FULL | NFT_CACHE_REFRESH;
+			flags |= NFT_CACHE_FULL;
 	default:
-		flags |= NFT_CACHE_FULL | NFT_CACHE_REFRESH;
+		flags |= NFT_CACHE_FULL;
 		break;
 	}
+	flags |= NFT_CACHE_REFRESH;
 
 	return flags;
 }
