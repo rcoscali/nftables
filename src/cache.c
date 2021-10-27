@@ -145,7 +145,7 @@ static unsigned int evaluate_cache_list(struct nft_ctx *nft, struct cmd *cmd,
 			filter->set = cmd->handle.set.name;
 		}
 		if (nft_output_terse(&nft->output))
-			flags |= (NFT_CACHE_FULL & ~NFT_CACHE_SETELEM);
+			flags |= (NFT_CACHE_FULL & ~NFT_CACHE_SETELEM_BIT);
 		else if (filter->table && filter->set)
 			flags |= NFT_CACHE_TABLE | NFT_CACHE_SET | NFT_CACHE_SETELEM;
 		else
@@ -163,7 +163,7 @@ static unsigned int evaluate_cache_list(struct nft_ctx *nft, struct cmd *cmd,
 		break;
 	case CMD_OBJ_RULESET:
 		if (nft_output_terse(&nft->output))
-			flags |= (NFT_CACHE_FULL & ~NFT_CACHE_SETELEM);
+			flags |= (NFT_CACHE_FULL & ~NFT_CACHE_SETELEM_BIT);
 		else
 			flags |= NFT_CACHE_FULL;
 		break;
