@@ -72,7 +72,7 @@ static uint32_t tcp_dflt_timeout[] = {
 
 static uint32_t udp_dflt_timeout[] = {
 	[NFTNL_CTTIMEOUT_UDP_UNREPLIED]		= 30,
-	[NFTNL_CTTIMEOUT_UDP_REPLIED]		= 180,
+	[NFTNL_CTTIMEOUT_UDP_REPLIED]		= 120,
 };
 
 struct timeout_protocol timeout_protocol[IPPROTO_MAX] = {

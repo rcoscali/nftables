@@ -77,6 +77,17 @@ per ct timeout comment field |
 string
 |=================
 
+tcp connection state names that can have a specific timeout value are:
+
+'close', 'close_wait', 'established', 'fin_wait', 'last_ack', 'retrans', 'syn_recv', 'syn_sent', 'time_wait' and 'unack'.
+
+You can use 'sysctl -a |grep net.netfilter.nf_conntrack_tcp_timeout_' to view and change the system-wide defaults.
+'ct timeout' allows for flow-specific settings, without changing the global timeouts.
+
+For example, tcp port 53 could have much lower settings than other traffic.
+
+udp state names that can have a specific timeout value are 'replied' and 'unreplied'.
+
 .defining and assigning ct timeout policy
 ----------------------------------
 table ip filter {
