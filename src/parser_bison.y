@@ -3268,6 +3268,11 @@ limit_rate_bytes	:	NUM     STRING
 				$$.rate = rate * $1;
 				$$.unit = unit;
 			}
+			|	limit_bytes SLASH time_unit
+			{
+				$$.rate = $1;
+				$$.unit = $3;
+			}
 			;
 
 limit_bytes		:	NUM	BYTES		{ $$ = $1; }
