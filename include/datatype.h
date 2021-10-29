@@ -309,6 +309,10 @@ extern struct error_record *rate_parse(const struct location *loc,
 extern struct error_record *data_unit_parse(const struct location *loc,
 					    const char *str, uint64_t *rate);
 
+struct limit_rate {
+	uint64_t rate, unit;
+};
+
 extern void expr_chain_export(const struct expr *e, char *chain);
 
 #endif /* NFTABLES_DATATYPE_H */
