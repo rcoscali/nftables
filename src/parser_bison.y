@@ -689,7 +689,7 @@ int nft_lex(void *, void *, void *);
 %type <val>			level_type log_flags log_flags_tcp log_flag_tcp
 %type <stmt>			limit_stmt quota_stmt connlimit_stmt
 %destructor { stmt_free($$); }	limit_stmt quota_stmt connlimit_stmt
-%type <val>			limit_burst_pkts limit_burst_bytes limit_mode time_unit quota_mode
+%type <val>			limit_burst_pkts limit_burst_bytes limit_mode limit_bytes time_unit quota_mode
 %type <stmt>			reject_stmt reject_stmt_alloc
 %destructor { stmt_free($$); }	reject_stmt reject_stmt_alloc
 %type <stmt>			nat_stmt nat_stmt_alloc masq_stmt masq_stmt_alloc redir_stmt redir_stmt_alloc
@@ -3251,19 +3251,22 @@ limit_burst_pkts	:	/* empty */			{ $$ = 5; }
 			;
 
 limit_burst_bytes	:	/* empty */			{ $$ = 5; }
-			|	BURST	NUM	BYTES		{ $$ = $2; }
-			|	BURST	NUM	STRING
+			|	BURST	limit_bytes		{ $$ = $2; }
+			;
+
+limit_bytes		:	NUM	BYTES		{ $$ = $1; }
+			|	NUM	STRING
 			{
 				struct error_record *erec;
 				uint64_t rate;
 
-				erec = data_unit_parse(&@$, $3, &rate);
-				xfree($3);
+				erec = data_unit_parse(&@$, $2, &rate);
+				xfree($2);
 				if (erec != NULL) {
 					erec_queue(erec, state->msgs);
 					YYERROR;
 				}
-				$$ = $2 * rate;
+				$$ = $1 * rate;
 			}
 			;
 
