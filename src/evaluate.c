@@ -2446,6 +2446,9 @@ static bool stmt_evaluate_payload_need_csum(const struct expr *payload)
 {
 	const struct proto_desc *desc;
 
+	if (payload->payload.base == PROTO_BASE_INNER_HDR)
+		return true;
+
 	desc = payload->payload.desc;
 
 	return desc && desc->checksum_key;

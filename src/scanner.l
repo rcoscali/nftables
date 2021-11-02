@@ -414,6 +414,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "ll"			{ return LL_HDR; }
 "nh"			{ return NETWORK_HDR; }
 "th"			{ return TRANSPORT_HDR; }
+"ih"			{ return INNER_HDR; }
 
 "bridge"		{ return BRIDGE; }
 
