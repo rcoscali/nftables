@@ -269,7 +269,7 @@ void payload_init_raw(struct expr *expr, enum proto_bases base,
 	expr->payload.base	= base;
 	expr->payload.offset	= offset;
 	expr->len		= len;
-	expr->dtype		= &integer_type;
+	expr->dtype		= &xinteger_type;
 
 	if (base != PROTO_BASE_TRANSPORT_HDR)
 		return;

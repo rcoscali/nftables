@@ -410,6 +410,22 @@ const struct datatype integer_type = {
 	.parse		= integer_type_parse,
 };
 
+static void xinteger_type_print(const struct expr *expr, struct output_ctx *octx)
+{
+	nft_gmp_print(octx, "0x%Zx", expr->value);
+}
+
+/* Alias of integer_type to print raw payload expressions in hexadecimal. */
+const struct datatype xinteger_type = {
+	.type		= TYPE_INTEGER,
+	.name		= "integer",
+	.desc		= "integer",
+	.basetype	= &integer_type,
+	.print		= xinteger_type_print,
+	.json		= integer_type_json,
+	.parse		= integer_type_parse,
+};
+
 static void string_type_print(const struct expr *expr, struct output_ctx *octx)
 {
 	unsigned int len = div_round_up(expr->len, BITS_PER_BYTE);
