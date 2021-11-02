@@ -3170,12 +3170,6 @@ static int stmt_evaluate_nat_map(struct eval_ctx *ctx, struct stmt *stmt)
 	const struct datatype *dtype;
 	int addr_type, err;
 
-	if (pctx->protocol[PROTO_BASE_TRANSPORT_HDR].desc == NULL &&
-	    !nat_evaluate_addr_has_th_expr(stmt->nat.addr))
-		return stmt_binary_error(ctx, stmt->nat.addr, stmt,
-					 "transport protocol mapping is only "
-					 "valid after transport protocol match");
-
 	switch (stmt->nat.family) {
 	case NFPROTO_IPV4:
 		addr_type = TYPE_IPADDR;
@@ -3191,6 +3185,13 @@ static int stmt_evaluate_nat_map(struct eval_ctx *ctx, struct stmt *stmt)
 	expr_set_context(&ctx->ectx, dtype, dtype->size);
 	if (expr_evaluate(ctx, &stmt->nat.addr))
 		return -1;
+
+	if (pctx->protocol[PROTO_BASE_TRANSPORT_HDR].desc == NULL &&
+	    !nat_evaluate_addr_has_th_expr(stmt->nat.addr)) {
+		return stmt_binary_error(ctx, stmt->nat.addr, stmt,
+					 "transport protocol mapping is only "
+					 "valid after transport protocol match");
+	}
 
 	if (stmt->nat.addr->etype != EXPR_MAP)
 		return 0;
