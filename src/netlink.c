@@ -100,8 +100,8 @@ struct nftnl_expr *alloc_nft_expr(const char *name)
 void __netlink_gen_data(const struct expr *expr,
 			struct nft_data_linearize *data, bool expand);
 
-static struct nftnl_set_elem *alloc_nftnl_setelem(const struct expr *set,
-						  const struct expr *expr)
+struct nftnl_set_elem *alloc_nftnl_setelem(const struct expr *set,
+					   const struct expr *expr)
 {
 	const struct expr *elem, *data;
 	struct nftnl_set_elem *nlse;

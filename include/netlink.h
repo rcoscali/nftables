@@ -72,6 +72,8 @@ struct netlink_ctx {
 
 extern struct nftnl_expr *alloc_nft_expr(const char *name);
 extern void alloc_setelem_cache(const struct expr *set, struct nftnl_set *nls);
+struct nftnl_set_elem *alloc_nftnl_setelem(const struct expr *set,
+					   const struct expr *expr);
 
 extern struct nftnl_table *netlink_table_alloc(const struct nlmsghdr *nlh);
 extern struct nftnl_chain *netlink_chain_alloc(const struct nlmsghdr *nlh);
