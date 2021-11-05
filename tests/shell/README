@@ -21,7 +21,7 @@ And generate missing dump files with:
 
 Before each test file invocation, `nft flush ruleset' will be called.
 Also, test file process environment will include the variable $NFT
-which contains the path to the nft binary being tested.
+which contains the nft command being tested.
 
 You can pass an arbitrary $NFT value as well:
  # NFT=/usr/local/sbin/nft ./run-tests.sh
