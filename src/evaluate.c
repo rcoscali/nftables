@@ -2187,7 +2187,16 @@ static int expr_evaluate_osf(struct eval_ctx *ctx, struct expr **expr)
 
 static int expr_evaluate_variable(struct eval_ctx *ctx, struct expr **exprp)
 {
-	struct expr *new = expr_clone((*exprp)->sym->expr);
+	struct symbol *sym = (*exprp)->sym;
+	struct expr *new;
+
+	/* If variable is reused from different locations in the ruleset, then
+	 * clone expression.
+	 */
+	if (sym->refcnt > 2)
+		new = expr_clone(sym->expr);
+	else
+		new = expr_get(sym->expr);
 
 	if (expr_evaluate(ctx, &new) < 0) {
 		expr_free(new);
