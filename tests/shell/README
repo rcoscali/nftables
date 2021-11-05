@@ -10,8 +10,11 @@ To run the test suite (as root):
  # ./run-tests.sh
 
 Test files are executable files matching the pattern <<name_N>>,
-where N is the expected return code of the executable. Since they
-are located with `find', test files can be put in any subdirectory.
+where N should be 0 in all new tests. All tests should return 0 on
+success.
+
+Since they are located with `find', test files can be put in any
+subdirectory.
 
 You can turn on a verbose execution by calling:
  # ./run-tests.sh -v
