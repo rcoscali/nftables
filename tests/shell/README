@@ -29,4 +29,7 @@ which contains the nft command being tested.
 You can pass an arbitrary $NFT value as well:
  # NFT=/usr/local/sbin/nft ./run-tests.sh
 
+Note that, to support usage such as NFT='valgrind nft', tests must
+invoke $NFT unquoted.
+
 By default, the tests are run with the nft binary at '../../src/nft'

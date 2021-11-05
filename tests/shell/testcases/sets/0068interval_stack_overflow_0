@@ -26,4 +26,4 @@ table inet test68_table {
 }
 EOF
 
-( ulimit -s 128 && "$NFT" -f "$ruleset_file" )
+( ulimit -s 128 && $NFT -f "$ruleset_file" )
