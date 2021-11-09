@@ -49,6 +49,7 @@ struct nft_filter_obj {
 
 struct nft_cache_filter {
 	struct {
+		uint32_t	family;
 		const char	*table;
 		const char	*set;
 	} list;

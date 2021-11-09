@@ -194,14 +194,16 @@ static unsigned int evaluate_cache_list(struct nft_ctx *nft, struct cmd *cmd,
 {
 	switch (cmd->obj) {
 	case CMD_OBJ_TABLE:
-		if (filter && cmd->handle.table.name)
+		if (filter && cmd->handle.table.name) {
+			filter->list.family = cmd->handle.family;
 			filter->list.table = cmd->handle.table.name;
-
+		}
 		flags |= NFT_CACHE_FULL;
 		break;
 	case CMD_OBJ_SET:
 	case CMD_OBJ_MAP:
 		if (filter && cmd->handle.table.name && cmd->handle.set.name) {
+			filter->list.family = cmd->handle.family;
 			filter->list.table = cmd->handle.table.name;
 			filter->list.set = cmd->handle.set.name;
 		}
@@ -439,7 +441,8 @@ static int set_cache_cb(struct nftnl_set *nls, void *arg)
 		return -1;
 
 	if (ctx->filter && ctx->filter->list.set &&
-	    (strcmp(ctx->filter->list.table, set->handle.table.name) ||
+	    (ctx->filter->list.family != set->handle.family ||
+	     strcmp(ctx->filter->list.table, set->handle.table.name) ||
 	     strcmp(ctx->filter->list.set, set->handle.set.name))) {
 		set_free(set);
 		return 0;
@@ -699,7 +702,8 @@ static int cache_init_tables(struct netlink_ctx *ctx, struct handle *h,
 		list_del(&table->list);
 
 		if (filter && filter->list.table &&
-		    (strcmp(filter->list.table, table->handle.table.name))) {
+		    (filter->list.family != table->handle.family ||
+		     strcmp(filter->list.table, table->handle.table.name))) {
 			table_free(table);
 			continue;
 		}
