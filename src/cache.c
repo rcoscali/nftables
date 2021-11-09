@@ -134,19 +134,19 @@ static unsigned int evaluate_cache_list(struct nft_ctx *nft, struct cmd *cmd,
 	switch (cmd->obj) {
 	case CMD_OBJ_TABLE:
 		if (filter && cmd->handle.table.name)
-			filter->table = cmd->handle.table.name;
+			filter->list.table = cmd->handle.table.name;
 
 		flags |= NFT_CACHE_FULL;
 		break;
 	case CMD_OBJ_SET:
 	case CMD_OBJ_MAP:
 		if (filter && cmd->handle.table.name && cmd->handle.set.name) {
-			filter->table = cmd->handle.table.name;
-			filter->set = cmd->handle.set.name;
+			filter->list.table = cmd->handle.table.name;
+			filter->list.set = cmd->handle.set.name;
 		}
 		if (nft_output_terse(&nft->output))
 			flags |= (NFT_CACHE_FULL & ~NFT_CACHE_SETELEM_BIT);
-		else if (filter->table && filter->set)
+		else if (filter->list.table && filter->list.set)
 			flags |= NFT_CACHE_TABLE | NFT_CACHE_SET | NFT_CACHE_SETELEM;
 		else
 			flags |= NFT_CACHE_FULL;
@@ -183,8 +183,8 @@ unsigned int nft_cache_evaluate(struct nft_ctx *nft, struct list_head *cmds,
 	struct cmd *cmd;
 
 	list_for_each_entry(cmd, cmds, list) {
-		if (filter->table && cmd->op != CMD_LIST)
-			memset(filter, 0, sizeof(*filter));
+		if (filter->list.table && cmd->op != CMD_LIST)
+			memset(&filter->list, 0, sizeof(filter->list));
 
 		switch (cmd->op) {
 		case CMD_ADD:
@@ -377,9 +377,9 @@ static int set_cache_cb(struct nftnl_set *nls, void *arg)
 	if (!set)
 		return -1;
 
-	if (ctx->filter && ctx->filter->set &&
-	    (strcmp(ctx->filter->table, set->handle.table.name) ||
-	     strcmp(ctx->filter->set, set->handle.set.name))) {
+	if (ctx->filter && ctx->filter->list.set &&
+	    (strcmp(ctx->filter->list.table, set->handle.table.name) ||
+	     strcmp(ctx->filter->list.set, set->handle.set.name))) {
 		set_free(set);
 		return 0;
 	}
@@ -637,8 +637,8 @@ static int cache_init_tables(struct netlink_ctx *ctx, struct handle *h,
 	list_for_each_entry_safe(table, next, &ctx->list, list) {
 		list_del(&table->list);
 
-		if (filter && filter->table &&
-		    (strcmp(filter->table, table->handle.table.name))) {
+		if (filter && filter->list.table &&
+		    (strcmp(filter->list.table, table->handle.table.name))) {
 			table_free(table);
 			continue;
 		}

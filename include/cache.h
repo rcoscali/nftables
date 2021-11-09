@@ -39,8 +39,10 @@ enum cache_level_flags {
 };
 
 struct nft_cache_filter {
-	const char		*table;
-	const char		*set;
+	struct {
+		const char	*table;
+		const char	*set;
+	} list;
 };
 
 struct nft_cache;
