@@ -459,13 +459,18 @@ static int nft_parse_bison_filename(struct nft_ctx *nft, const char *filename,
 static int nft_evaluate(struct nft_ctx *nft, struct list_head *msgs,
 			struct list_head *cmds)
 {
-	struct nft_cache_filter filter = {};
+	struct nft_cache_filter *filter;
 	unsigned int flags;
 	struct cmd *cmd;
 
-	flags = nft_cache_evaluate(nft, cmds, &filter);
-	if (nft_cache_update(nft, flags, msgs, &filter) < 0)
+	filter = nft_cache_filter_init();
+	flags = nft_cache_evaluate(nft, cmds, filter);
+	if (nft_cache_update(nft, flags, msgs, filter) < 0) {
+		nft_cache_filter_fini(filter);
 		return -1;
+	}
+
+	nft_cache_filter_fini(filter);
 
 	list_for_each_entry(cmd, cmds, list) {
 		struct eval_ctx ectx = {

@@ -96,13 +96,74 @@ static unsigned int evaluate_cache_get(struct cmd *cmd, unsigned int flags)
 	return flags;
 }
 
-static unsigned int evaluate_cache_flush(struct cmd *cmd, unsigned int flags)
+struct nft_cache_filter *nft_cache_filter_init(void)
+{
+	struct nft_cache_filter *filter;
+	int i;
+
+	filter = xzalloc(sizeof(struct nft_cache_filter));
+	memset(&filter->list, 0, sizeof(filter->list));
+	for (i = 0; i < NFT_CACHE_HSIZE; i++)
+		init_list_head(&filter->obj[i].head);
+
+	return filter;
+}
+
+void nft_cache_filter_fini(struct nft_cache_filter *filter)
+{
+	int i;
+
+	for (i = 0; i < NFT_CACHE_HSIZE; i++) {
+		struct nft_filter_obj *obj, *next;
+
+		list_for_each_entry_safe(obj, next, &filter->obj[i].head, list)
+			xfree(obj);
+	}
+	xfree(filter);
+}
+
+static void cache_filter_add(struct nft_cache_filter *filter,
+			     const struct cmd *cmd)
+{
+	struct nft_filter_obj *obj;
+	uint32_t hash;
+
+	obj = xmalloc(sizeof(struct nft_filter_obj));
+	obj->family = cmd->handle.family;
+	obj->table = cmd->handle.table.name;
+	obj->set = cmd->handle.set.name;
+
+	hash = djb_hash(cmd->handle.set.name) % NFT_CACHE_HSIZE;
+	list_add_tail(&obj->list, &filter->obj[hash].head);
+}
+
+static bool cache_filter_find(const struct nft_cache_filter *filter,
+			      const struct handle *handle)
+{
+	struct nft_filter_obj *obj;
+	uint32_t hash;
+
+	hash = djb_hash(handle->set.name) % NFT_CACHE_HSIZE;
+
+	list_for_each_entry(obj, &filter->obj[hash].head, list) {
+		if (obj->family == handle->family &&
+		    !strcmp(obj->table, handle->table.name) &&
+		    !strcmp(obj->set, handle->set.name))
+			return true;
+	}
+
+	return false;
+}
+
+static unsigned int evaluate_cache_flush(struct cmd *cmd, unsigned int flags,
+					 struct nft_cache_filter *filter)
 {
 	switch (cmd->obj) {
 	case CMD_OBJ_SET:
 	case CMD_OBJ_MAP:
 	case CMD_OBJ_METER:
 		flags |= NFT_CACHE_SET;
+		cache_filter_add(filter, cmd);
 		break;
 	case CMD_OBJ_RULESET:
 		flags |= NFT_CACHE_FLUSHED;
@@ -219,7 +280,7 @@ unsigned int nft_cache_evaluate(struct nft_ctx *nft, struct list_head *cmds,
 			flags |= NFT_CACHE_FULL;
 			break;
 		case CMD_FLUSH:
-			flags = evaluate_cache_flush(cmd, flags);
+			flags = evaluate_cache_flush(cmd, flags, filter);
 			break;
 		case CMD_RENAME:
 			flags = evaluate_cache_rename(cmd, flags);
@@ -685,6 +746,9 @@ static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags,
 		}
 		if (flags & NFT_CACHE_SETELEM_BIT) {
 			list_for_each_entry(set, &table->set_cache.list, cache.list) {
+				if (cache_filter_find(filter, &set->handle))
+					continue;
+
 				ret = netlink_list_setelems(ctx, &set->handle,
 							    set);
 				if (ret < 0) {
@@ -694,6 +758,9 @@ static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags,
 			}
 		} else if (flags & NFT_CACHE_SETELEM_MAYBE) {
 			list_for_each_entry(set, &table->set_cache.list, cache.list) {
+				if (cache_filter_find(filter, &set->handle))
+					continue;
+
 				if (!set_is_non_concat_range(set))
 					continue;
 

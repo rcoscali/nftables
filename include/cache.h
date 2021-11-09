@@ -38,11 +38,24 @@ enum cache_level_flags {
 	NFT_CACHE_FLUSHED	= (1 << 31),
 };
 
+struct nft_filter_obj {
+	struct list_head list;
+	uint32_t	family;
+	const char	*table;
+	const char	*set;
+};
+
+#define NFT_CACHE_HSIZE	8192
+
 struct nft_cache_filter {
 	struct {
 		const char	*table;
 		const char	*set;
 	} list;
+
+	struct {
+		struct list_head head;
+	} obj[NFT_CACHE_HSIZE];
 };
 
 struct nft_cache;
@@ -66,7 +79,8 @@ static inline uint32_t djb_hash(const char *key)
 	return hash;
 }
 
-#define NFT_CACHE_HSIZE 8192
+struct nft_cache_filter *nft_cache_filter_init(void);
+void nft_cache_filter_fini(struct nft_cache_filter *filter);
 
 struct table;
 struct chain;
