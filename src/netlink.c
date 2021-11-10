@@ -483,48 +483,6 @@ void netlink_dump_expr(const struct nftnl_expr *nle,
 	fprintf(fp, "\n");
 }
 
-static int list_rule_cb(struct nftnl_rule *nlr, void *arg)
-{
-	struct netlink_ctx *ctx = arg;
-	const struct handle *h = ctx->data;
-	struct rule *rule;
-	const char *table, *chain;
-	uint32_t family;
-
-	family = nftnl_rule_get_u32(nlr, NFTNL_RULE_FAMILY);
-	table  = nftnl_rule_get_str(nlr, NFTNL_RULE_TABLE);
-	chain  = nftnl_rule_get_str(nlr, NFTNL_RULE_CHAIN);
-
-	if (h->family != family ||
-	    strcmp(table, h->table.name) != 0 ||
-	    (h->chain.name && strcmp(chain, h->chain.name) != 0))
-		return 0;
-
-	netlink_dump_rule(nlr, ctx);
-	rule = netlink_delinearize_rule(ctx, nlr);
-	list_add_tail(&rule->list, &ctx->list);
-
-	return 0;
-}
-
-int netlink_list_rules(struct netlink_ctx *ctx, const struct handle *h)
-{
-	struct nftnl_rule_list *rule_cache;
-
-	rule_cache = mnl_nft_rule_dump(ctx, h->family);
-	if (rule_cache == NULL) {
-		if (errno == EINTR)
-			return -1;
-
-		return 0;
-	}
-
-	ctx->data = h;
-	nftnl_rule_list_foreach(rule_cache, list_rule_cb, ctx);
-	nftnl_rule_list_free(rule_cache);
-	return 0;
-}
-
 void netlink_dump_chain(const struct nftnl_chain *nlc, struct netlink_ctx *ctx)
 {
 	FILE *fp = ctx->nft->output.output_fp;

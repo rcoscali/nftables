@@ -51,6 +51,7 @@ struct nft_cache_filter {
 	struct {
 		uint32_t	family;
 		const char	*table;
+		const char	*chain;
 		const char	*set;
 	} list;
 
