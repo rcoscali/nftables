@@ -318,7 +318,6 @@ int nft_lex(void *, void *, void *);
 %token LL_HDR			"ll"
 %token NETWORK_HDR		"nh"
 %token TRANSPORT_HDR		"th"
-%token INNER_HDR		"ih"
 
 %token BRIDGE			"bridge"
 
@@ -5261,7 +5260,17 @@ payload_raw_expr	:	AT	payload_base_spec	COMMA	NUM	COMMA	NUM
 payload_base_spec	:	LL_HDR		{ $$ = PROTO_BASE_LL_HDR; }
 			|	NETWORK_HDR	{ $$ = PROTO_BASE_NETWORK_HDR; }
 			|	TRANSPORT_HDR	{ $$ = PROTO_BASE_TRANSPORT_HDR; }
-			|	INNER_HDR	{ $$ = PROTO_BASE_INNER_HDR; }
+			|	STRING
+			{
+				if (!strcmp($1, "ih")) {
+					$$ = PROTO_BASE_INNER_HDR;
+				} else {
+					erec_queue(error(&@1, "unknown raw payload base"), state->msgs);
+					xfree($1);
+					YYERROR;
+				}
+				xfree($1);
+			}
 			;
 
 eth_hdr_expr		:	ETHER	eth_hdr_field	close_scope_eth
