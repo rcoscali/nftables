@@ -533,8 +533,13 @@ static int netlink_events_obj_cb(const struct nlmsghdr *nlh, int type,
 
 static void rule_map_decompose_cb(struct set *s, void *data)
 {
-	if (set_is_interval(s->flags) && set_is_anonymous(s->flags))
+	if (!set_is_anonymous(s->flags))
+		return;
+
+	if (set_is_non_concat_range(s))
 		interval_map_decompose(s->init);
+	else if (set_is_interval(s->flags))
+		concat_range_aggregate(s->init);
 }
 
 static int netlink_events_rule_cb(const struct nlmsghdr *nlh, int type,
