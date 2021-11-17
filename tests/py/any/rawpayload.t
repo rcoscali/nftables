@@ -18,3 +18,5 @@ meta l4proto tcp @th,16,16 { 22, 23, 80};ok;tcp dport { 22, 23, 80}
 @ll,0,1 1;ok;@ll,0,8 & 0x80 == 0x80
 @ll,0,8 & 0x80 == 0x80;ok
 @ll,0,128 0xfedcba987654321001234567890abcde;ok
+
+@ih,32,32 0x14000000;ok

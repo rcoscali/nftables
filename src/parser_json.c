@@ -558,6 +558,8 @@ static struct expr *json_parse_payload_expr(struct json_ctx *ctx,
 			val = PROTO_BASE_NETWORK_HDR;
 		} else if (!strcmp(base, "th")) {
 			val = PROTO_BASE_TRANSPORT_HDR;
+		} else if (!strcmp(base, "ih")) {
+			val = PROTO_BASE_INNER_HDR;
 		} else {
 			json_error(ctx, "Invalid payload base '%s'.", base);
 			return NULL;
