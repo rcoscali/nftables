@@ -215,10 +215,10 @@ static unsigned int evaluate_cache_list(struct nft_ctx *nft, struct cmd *cmd,
 			filter->list.table = cmd->handle.table.name;
 			filter->list.set = cmd->handle.set.name;
 		}
-		if (nft_output_terse(&nft->output))
-			flags |= (NFT_CACHE_FULL & ~NFT_CACHE_SETELEM_BIT);
-		else if (filter->list.table && filter->list.set)
+		if (filter->list.table && filter->list.set)
 			flags |= NFT_CACHE_TABLE | NFT_CACHE_SET | NFT_CACHE_SETELEM;
+		else if (nft_output_terse(&nft->output))
+			flags |= NFT_CACHE_FULL | NFT_CACHE_TERSE;
 		else
 			flags |= NFT_CACHE_FULL;
 		break;
@@ -234,7 +234,7 @@ static unsigned int evaluate_cache_list(struct nft_ctx *nft, struct cmd *cmd,
 		break;
 	case CMD_OBJ_RULESET:
 		if (nft_output_terse(&nft->output))
-			flags |= (NFT_CACHE_FULL & ~NFT_CACHE_SETELEM_BIT);
+			flags |= NFT_CACHE_FULL | NFT_CACHE_TERSE;
 		else
 			flags |= NFT_CACHE_FULL;
 		break;
@@ -829,6 +829,9 @@ static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags,
 		if (flags & NFT_CACHE_SETELEM_BIT) {
 			list_for_each_entry(set, &table->set_cache.list, cache.list) {
 				if (cache_filter_find(filter, &set->handle))
+					continue;
+				if (!set_is_anonymous(set->flags) &&
+				    flags & NFT_CACHE_TERSE)
 					continue;
 
 				ret = netlink_list_setelems(ctx, &set->handle,
