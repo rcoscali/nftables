@@ -377,7 +377,7 @@ static int mnl_batch_extack_cb(const struct nlmsghdr *nlh, void *data)
 	return MNL_CB_ERROR;
 }
 
-#define NFT_MNL_ECHO_RCVBUFF_DEFAULT	(MNL_SOCKET_BUFFER_SIZE * 1024)
+#define NFT_MNL_ECHO_RCVBUFF_DEFAULT	(MNL_SOCKET_BUFFER_SIZE * 1024U)
 #define NFT_MNL_ACK_MAXSIZE		((sizeof(struct nlmsghdr) + \
 					  sizeof(struct nfgenmsg) + (1 << 16)) + \
 					  MNL_SOCKET_BUFFER_SIZE)
