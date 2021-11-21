@@ -153,3 +153,17 @@ inet
   [ immediate reg 1 0x00005005 ]
   [ exthdr write tcpopt reg 1 => 2b @ 2 + 2 ]
 
+# tcp option md5sig exists
+inet
+  [ exthdr load tcpopt 1b @ 19 + 0 present => reg 1 ]
+  [ cmp eq reg 1 0x00000001 ]
+
+# tcp option fastopen exists
+inet
+  [ exthdr load tcpopt 1b @ 34 + 0 present => reg 1 ]
+  [ cmp eq reg 1 0x00000001 ]
+
+# tcp option mptcp exists
+inet
+  [ exthdr load tcpopt 1b @ 30 + 0 present => reg 1 ]
+  [ cmp eq reg 1 0x00000001 ]

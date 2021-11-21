@@ -46,3 +46,7 @@ tcp option window exists;ok
 tcp option window missing;ok
 
 tcp option maxseg size set 1360;ok
+
+tcp option md5sig exists;ok
+tcp option fastopen exists;ok
+tcp option mptcp exists;ok

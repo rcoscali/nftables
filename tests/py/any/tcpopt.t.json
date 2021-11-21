@@ -487,3 +487,48 @@
         }
     }
 ]
+
+# tcp option md5sig exists
+[
+    {
+        "match": {
+            "left": {
+                "tcp option": {
+                    "name": "md5sig"
+                }
+            },
+            "op": "==",
+            "right": true
+        }
+    }
+]
+
+# tcp option fastopen exists
+[
+    {
+        "match": {
+            "left": {
+                "tcp option": {
+                    "name": "fastopen"
+                }
+            },
+            "op": "==",
+            "right": true
+        }
+    }
+]
+
+# tcp option mptcp exists
+[
+    {
+        "match": {
+            "left": {
+                "tcp option": {
+                    "name": "mptcp"
+                }
+            },
+            "op": "==",
+            "right": true
+        }
+    }
+]
