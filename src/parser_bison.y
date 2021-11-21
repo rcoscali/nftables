@@ -187,6 +187,10 @@ int nft_lex(void *, void *, void *);
 	struct position_spec	position_spec;
 	struct prio_spec	prio_spec;
 	struct limit_rate	limit_rate;
+	struct tcp_kind_field {
+		uint16_t kind; /* must allow > 255 for SACK1, 2.. hack */
+		uint8_t field;
+	} tcp_kind_field;
 }
 
 %token TOKEN_EOF 0		"end of file"
@@ -873,7 +877,10 @@ int nft_lex(void *, void *, void *);
 %type <expr>			tcp_hdr_expr
 %destructor { expr_free($$); }	tcp_hdr_expr
 %type <val>			tcp_hdr_field
-%type <val>			tcp_hdr_option_type tcp_hdr_option_field
+%type <val>			tcp_hdr_option_type
+%type <val>			tcp_hdr_option_sack
+%type <val>			tcpopt_field_maxseg	tcpopt_field_sack	 tcpopt_field_tsopt	tcpopt_field_window
+%type <tcp_kind_field>		tcp_hdr_option_kind_and_field
 
 %type <expr>			boolean_expr
 %destructor { expr_free($$); }	boolean_expr
@@ -5477,14 +5484,14 @@ tcp_hdr_expr		:	TCP	tcp_hdr_field
 			{
 				$$ = payload_expr_alloc(&@$, &proto_tcp, $2);
 			}
-			|	TCP	OPTION	tcp_hdr_option_type tcp_hdr_option_field
-			{
-				$$ = tcpopt_expr_alloc(&@$, $3, $4);
-			}
 			|	TCP	OPTION	tcp_hdr_option_type
 			{
 				$$ = tcpopt_expr_alloc(&@$, $3, TCPOPT_COMMON_KIND);
 				$$->exthdr.flags = NFT_EXTHDR_F_PRESENT;
+			}
+			|	TCP	OPTION	tcp_hdr_option_kind_and_field
+			{
+				$$ = tcpopt_expr_alloc(&@$, $3.kind, $3.field);
 			}
 			|	TCP	OPTION	AT tcp_hdr_option_type	COMMA	NUM	COMMA	NUM
 			{
@@ -5505,19 +5512,49 @@ tcp_hdr_field		:	SPORT		{ $$ = TCPHDR_SPORT; }
 			|	URGPTR		{ $$ = TCPHDR_URGPTR; }
 			;
 
-tcp_hdr_option_type	:	EOL		{ $$ = TCPOPT_KIND_EOL; }
-			|	NOP		{ $$ = TCPOPT_KIND_NOP; }
-			|	MSS  	  	{ $$ = TCPOPT_KIND_MAXSEG; }
-			|	WINDOW		{ $$ = TCPOPT_KIND_WINDOW; }
-			|	SACK_PERM	{ $$ = TCPOPT_KIND_SACK_PERMITTED; }
-			|	SACK		{ $$ = TCPOPT_KIND_SACK; }
+tcp_hdr_option_kind_and_field	:	MSS	tcpopt_field_maxseg
+				{
+					struct tcp_kind_field kind_field = { .kind = TCPOPT_KIND_MAXSEG, .field = $2 };
+					$$ = kind_field;
+				}
+				|	tcp_hdr_option_sack	tcpopt_field_sack
+				{
+					struct tcp_kind_field kind_field = { .kind = $1, .field = $2 };
+					$$ = kind_field;
+				}
+				|	WINDOW	tcpopt_field_window
+				{
+					struct tcp_kind_field kind_field = { .kind = TCPOPT_KIND_WINDOW, .field = $2 };
+					$$ = kind_field;
+				}
+				|	TIMESTAMP	tcpopt_field_tsopt
+				{
+					struct tcp_kind_field kind_field = { .kind = TCPOPT_KIND_TIMESTAMP, .field = $2 };
+					$$ = kind_field;
+				}
+				|	tcp_hdr_option_type	LENGTH
+				{
+					struct tcp_kind_field kind_field = { .kind = $1, .field = TCPOPT_COMMON_LENGTH };
+					$$ = kind_field;
+				}
+				;
+
+tcp_hdr_option_sack	:	SACK		{ $$ = TCPOPT_KIND_SACK; }
 			|	SACK0		{ $$ = TCPOPT_KIND_SACK; }
 			|	SACK1		{ $$ = TCPOPT_KIND_SACK1; }
 			|	SACK2		{ $$ = TCPOPT_KIND_SACK2; }
 			|	SACK3		{ $$ = TCPOPT_KIND_SACK3; }
-			|	ECHO		{ $$ = TCPOPT_KIND_ECHO; }
-			|	TIMESTAMP	{ $$ = TCPOPT_KIND_TIMESTAMP; }
-			|	NUM		{
+			;
+
+tcp_hdr_option_type	:	ECHO			{ $$ = TCPOPT_KIND_ECHO; }
+			|	EOL			{ $$ = TCPOPT_KIND_EOL; }
+			|	MSS			{ $$ = TCPOPT_KIND_MAXSEG; }
+			|	NOP			{ $$ = TCPOPT_KIND_NOP; }
+			|	SACK_PERM		{ $$ = TCPOPT_KIND_SACK_PERMITTED; }
+			|	TIMESTAMP		{ $$ = TCPOPT_KIND_TIMESTAMP; }
+			|	WINDOW			{ $$ = TCPOPT_KIND_WINDOW; }
+			|	tcp_hdr_option_sack	{ $$ = $1; }
+			|	NUM			{
 				if ($1 > 255) {
 					erec_queue(error(&@1, "value too large"), state->msgs);
 					YYERROR;
@@ -5526,13 +5563,18 @@ tcp_hdr_option_type	:	EOL		{ $$ = TCPOPT_KIND_EOL; }
 			}
 			;
 
-tcp_hdr_option_field	:	LENGTH		{ $$ = TCPOPT_COMMON_LENGTH; }
-			|	SIZE		{ $$ = TCPOPT_MAXSEG_SIZE; }
-			|	COUNT		{ $$ = TCPOPT_WINDOW_COUNT; }
-			|	LEFT		{ $$ = TCPOPT_SACK_LEFT; }
+tcpopt_field_sack	: 	LEFT		{ $$ = TCPOPT_SACK_LEFT; }
 			|	RIGHT		{ $$ = TCPOPT_SACK_RIGHT; }
-			|	TSVAL		{ $$ = TCPOPT_TS_TSVAL; }
+			;
+
+tcpopt_field_window	:	COUNT           { $$ = TCPOPT_WINDOW_COUNT; }
+			;
+
+tcpopt_field_tsopt	:	TSVAL           { $$ = TCPOPT_TS_TSVAL; }
 			|	TSECR		{ $$ = TCPOPT_TS_TSECR; }
+			;
+
+tcpopt_field_maxseg	:	SIZE		{ $$ = TCPOPT_MAXSEG_SIZE; }
 			;
 
 dccp_hdr_expr		:	DCCP	dccp_hdr_field
