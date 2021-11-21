@@ -412,7 +412,6 @@ int nft_lex(void *, void *, void *);
 %token SACK3			"sack3"
 %token SACK_PERM		"sack-permitted"
 %token TIMESTAMP		"timestamp"
-%token KIND			"kind"
 %token COUNT			"count"
 %token LEFT			"left"
 %token RIGHT			"right"
@@ -5526,8 +5525,7 @@ tcp_hdr_option_type	:	EOL		{ $$ = TCPOPT_KIND_EOL; }
 			}
 			;
 
-tcp_hdr_option_field	:	KIND		{ $$ = TCPOPT_COMMON_KIND; }
-			|	LENGTH		{ $$ = TCPOPT_COMMON_LENGTH; }
+tcp_hdr_option_field	:	LENGTH		{ $$ = TCPOPT_COMMON_LENGTH; }
 			|	SIZE		{ $$ = TCPOPT_MAXSEG_SIZE; }
 			|	COUNT		{ $$ = TCPOPT_WINDOW_COUNT; }
 			|	LEFT		{ $$ = TCPOPT_SACK_LEFT; }

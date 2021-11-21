@@ -481,7 +481,6 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "timestamp"		{ return TIMESTAMP; }
 "time"			{ return TIME; }
 
-"kind"			{ return KIND; }
 "count"			{ return COUNT; }
 "left"			{ return LEFT; }
 "right"			{ return RIGHT; }
