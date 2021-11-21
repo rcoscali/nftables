@@ -225,6 +225,7 @@ void tcpopt_init_raw(struct expr *expr, uint8_t type, unsigned int off,
 	expr->exthdr.flags = flags;
 	expr->exthdr.offset = off;
 	expr->exthdr.op = NFT_EXTHDR_OP_TCPOPT;
+	expr->exthdr.tmpl = &tcpopt_unknown_template;
 
 	if (flags & NFT_EXTHDR_F_PRESENT)
 		datatype_set(expr, &boolean_type);
@@ -252,14 +253,12 @@ void tcpopt_init_raw(struct expr *expr, uint8_t type, unsigned int off,
 	}
 }
 
-bool tcpopt_find_template(struct expr *expr, const struct expr *mask,
-			  unsigned int *shift)
+bool tcpopt_find_template(struct expr *expr, unsigned int offset, unsigned int len)
 {
 	if (expr->exthdr.tmpl != &tcpopt_unknown_template)
 		return false;
 
-	tcpopt_init_raw(expr, expr->exthdr.desc->type, expr->exthdr.offset,
-			expr->len, 0);
+	tcpopt_init_raw(expr, expr->exthdr.desc->type, offset, len, 0);
 
 	if (expr->exthdr.tmpl == &tcpopt_unknown_template)
 		return false;

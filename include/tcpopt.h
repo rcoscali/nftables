@@ -12,8 +12,8 @@ extern void tcpopt_init_raw(struct expr *expr, uint8_t type,
 			    unsigned int offset, unsigned int len,
 			    uint32_t flags);
 
-extern bool tcpopt_find_template(struct expr *expr, const struct expr *mask,
-				 unsigned int *shift);
+extern bool tcpopt_find_template(struct expr *expr, unsigned int offset,
+				 unsigned int len);
 
 /* TCP option numbers used on wire */
 enum tcpopt_kind {

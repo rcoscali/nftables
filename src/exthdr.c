@@ -348,16 +348,7 @@ static unsigned int mask_length(const struct expr *mask)
 bool exthdr_find_template(struct expr *expr, const struct expr *mask, unsigned int *shift)
 {
 	unsigned int off, mask_offset, mask_len;
-
-	if (expr->exthdr.op != NFT_EXTHDR_OP_IPV4 &&
-	    expr->exthdr.tmpl != &exthdr_unknown_template)
-		return false;
-
-	/* In case we are handling tcp options instead of the default ipv6
-	 * extension headers.
-	 */
-	if (expr->exthdr.op == NFT_EXTHDR_OP_TCPOPT)
-		return tcpopt_find_template(expr, mask, shift);
+	bool found;
 
 	mask_offset = mpz_scan1(mask->value, 0);
 	mask_len = mask_length(mask);
@@ -366,24 +357,31 @@ bool exthdr_find_template(struct expr *expr, const struct expr *mask, unsigned i
 	off += round_up(mask->len, BITS_PER_BYTE) - mask_len;
 
 	/* Handle ip options after the offset and mask have been calculated. */
-	if (expr->exthdr.op == NFT_EXTHDR_OP_IPV4) {
-		if (ipopt_find_template(expr, off, mask_len - mask_offset)) {
-			*shift = mask_offset;
-			return true;
-		} else {
+	switch (expr->exthdr.op) {
+	case NFT_EXTHDR_OP_IPV4:
+		found = ipopt_find_template(expr, off, mask_len - mask_offset);
+		break;
+	case NFT_EXTHDR_OP_TCPOPT:
+		found = tcpopt_find_template(expr, off, mask_len - mask_offset);
+		break;
+	case NFT_EXTHDR_OP_IPV6:
+		exthdr_init_raw(expr, expr->exthdr.desc->type,
+				off, mask_len - mask_offset, expr->exthdr.op, 0);
+
+		/* still failed to find a template... Bug. */
+		if (expr->exthdr.tmpl == &exthdr_unknown_template)
 			return false;
-		}
+		found = true;
+		break;
+	default:
+		found = false;
+		break;
 	}
 
-	exthdr_init_raw(expr, expr->exthdr.desc->type,
-			off, mask_len - mask_offset, expr->exthdr.op, 0);
+	if (found)
+		*shift = mask_offset;
 
-	/* still failed to find a template... Bug. */
-	if (expr->exthdr.tmpl == &exthdr_unknown_template)
-		return false;
-
-	*shift = mask_offset;
-	return true;
+	return found;
 }
 
 #define HDR_TEMPLATE(__name, __dtype, __type, __member)			\
