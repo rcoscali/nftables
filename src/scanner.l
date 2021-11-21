@@ -206,6 +206,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_QUOTA
 %s SCANSTATE_SCTP
 %s SCANSTATE_SECMARK
+%s SCANSTATE_TCP
 %s SCANSTATE_VLAN
 %s SCANSTATE_CMD_LIST
 %s SCANSTATE_EXPR_FIB
@@ -465,10 +466,9 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"value"			{ return VALUE; }
 }
 
+<SCANSTATE_TCP>{
 "echo"			{ return ECHO; }
 "eol"			{ return EOL; }
-"maxseg"		{ return MSS; }
-"mss"			{ return MSS; }
 "nop"			{ return NOP; }
 "noop"			{ return NOP; }
 "sack"			{ return SACK; }
@@ -476,9 +476,6 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "sack1"			{ return SACK1; }
 "sack2"			{ return SACK2; }
 "sack3"			{ return SACK3; }
-"sack-permitted"	{ return SACK_PERM; }
-"sack-perm"		{ return SACK_PERM; }
-"timestamp"		{ return TIMESTAMP; }
 "time"			{ return TIME; }
 
 "count"			{ return COUNT; }
@@ -486,6 +483,12 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "right"			{ return RIGHT; }
 "tsval"			{ return TSVAL; }
 "tsecr"			{ return TSECR; }
+}
+"maxseg"		{ return MSS; }
+"mss"			{ return MSS; }
+"sack-permitted"	{ return SACK_PERM; }
+"sack-perm"		{ return SACK_PERM; }
+"timestamp"		{ return TIMESTAMP; }
 
 "icmp"			{ return ICMP; }
 "code"			{ return CODE; }
@@ -524,7 +527,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "dport"			{ return DPORT; }
 "port"			{ return PORT; }
 
-"tcp"			{ return TCP; }
+"tcp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_TCP); return TCP; }
 "ackseq"		{ return ACKSEQ; }
 "doff"			{ return DOFF; }
 "window"		{ return WINDOW; }
@@ -560,6 +563,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"asconf"		{ return ASCONF; }
 
 	"tsn"			{ return TSN; }
+	"sack"			{ return SACK; }
 	"stream"		{ return STREAM; }
 	"ssn"			{ return SSN; }
 	"ppid"			{ return PPID; }
@@ -641,6 +645,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"label"			{ return LABEL; }
 	"state"			{ return STATE; }
 	"status"		{ return STATUS; }
+	"count"			{ return COUNT; }
 }
 
 "numgen"		{ scanner_push_start_cond(yyscanner, SCANSTATE_EXPR_NUMGEN); return NUMGEN; }

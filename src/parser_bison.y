@@ -929,6 +929,7 @@ close_scope_list	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CMD_LIST); }
 close_scope_limit	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_LIMIT); };
 close_scope_numgen	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_NUMGEN); };
 close_scope_quota	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_QUOTA); };
+close_scope_tcp		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_TCP); }
 close_scope_queue	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_QUEUE); };
 close_scope_rt		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_RT); };
 close_scope_sctp	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_SCTP); };
@@ -3109,7 +3110,7 @@ level_type		:	string
 			}
 			;
 
-log_flags		:	TCP	log_flags_tcp
+log_flags		:	TCP	log_flags_tcp	close_scope_tcp
 			{
 				$$ = $2;
 			}
@@ -3360,7 +3361,7 @@ reject_opts		:       /* empty */
 				$<stmt>0->reject.expr = $3;
 				datatype_set($<stmt>0->reject.expr, &icmpx_code_type);
 			}
-			|	WITH	TCP	RESET
+			|	WITH	TCP	close_scope_tcp RESET
 			{
 				$<stmt>0->reject.type = NFT_REJECT_TCP_RST;
 			}
@@ -4460,7 +4461,7 @@ ct_cmd_type		:	HELPERS		{ $$ = CMD_OBJ_CT_HELPERS; }
 			|	EXPECTATION	{ $$ = CMD_OBJ_CT_EXPECT; }
 			;
 
-ct_l4protoname		:	TCP	{ $$ = IPPROTO_TCP; }
+ct_l4protoname		:	TCP	close_scope_tcp	{ $$ = IPPROTO_TCP; }
 			|	UDP	{ $$ = IPPROTO_UDP; }
 			;
 
@@ -4734,7 +4735,7 @@ primary_rhs_expr	:	symbol_expr		{ $$ = $1; }
 			|	integer_expr		{ $$ = $1; }
 			|	boolean_expr		{ $$ = $1; }
 			|	keyword_expr		{ $$ = $1; }
-			|	TCP
+			|	TCP	close_scope_tcp
 			{
 				uint8_t data = IPPROTO_TCP;
 				$$ = constant_expr_alloc(&@$, &inet_protocol_type,
@@ -5241,7 +5242,7 @@ payload_expr		:	payload_raw_expr
 			|	comp_hdr_expr
 			|	udp_hdr_expr
 			|	udplite_hdr_expr
-			|	tcp_hdr_expr
+			|	tcp_hdr_expr	close_scope_tcp
 			|	dccp_hdr_expr
 			|	sctp_hdr_expr
 			|	th_hdr_expr
