@@ -25,6 +25,9 @@ enum tcpopt_kind {
 	TCPOPT_KIND_SACK = 5,
 	TCPOPT_KIND_TIMESTAMP = 8,
 	TCPOPT_KIND_ECHO = 8,
+	TCPOPT_KIND_MD5SIG = 19,
+	TCPOPT_KIND_MPTCP = 30,
+	TCPOPT_KIND_FASTOPEN = 34,
 	__TCPOPT_KIND_MAX,
 
 	/* extra oob info, internal to nft */
@@ -69,6 +72,11 @@ enum tcpopt_hdr_field_sack {
 	TCPOPT_SACK_RIGHT2,
 	TCPOPT_SACK_LEFT3,
 	TCPOPT_SACK_RIGHT3,
+};
+
+enum tcpopt_hdr_mptcp_common {
+	TCPOPT_MPTCP_KIND,
+	TCPOPT_MPTCP_LENGTH,
 };
 
 extern const struct exthdr_desc *tcpopt_protocols[__TCPOPT_KIND_MAX];

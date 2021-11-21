@@ -469,6 +469,9 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 <SCANSTATE_TCP>{
 "echo"			{ return ECHO; }
 "eol"			{ return EOL; }
+"fastopen"		{ return FASTOPEN; }
+"mptcp"			{ return MPTCP; }
+"md5sig"		{ return MD5SIG; }
 "nop"			{ return NOP; }
 "noop"			{ return NOP; }
 "sack"			{ return SACK; }

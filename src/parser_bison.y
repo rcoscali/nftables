@@ -408,6 +408,7 @@ int nft_lex(void *, void *, void *);
 %token OPTION			"option"
 %token ECHO			"echo"
 %token EOL			"eol"
+%token MPTCP			"mptcp"
 %token NOP			"nop"
 %token SACK			"sack"
 %token SACK0			"sack0"
@@ -415,6 +416,8 @@ int nft_lex(void *, void *, void *);
 %token SACK2			"sack2"
 %token SACK3			"sack3"
 %token SACK_PERM		"sack-permitted"
+%token FASTOPEN			"fastopen"
+%token MD5SIG			"md5sig"
 %token TIMESTAMP		"timestamp"
 %token COUNT			"count"
 %token LEFT			"left"
@@ -5548,11 +5551,14 @@ tcp_hdr_option_sack	:	SACK		{ $$ = TCPOPT_KIND_SACK; }
 
 tcp_hdr_option_type	:	ECHO			{ $$ = TCPOPT_KIND_ECHO; }
 			|	EOL			{ $$ = TCPOPT_KIND_EOL; }
+			|	FASTOPEN		{ $$ = TCPOPT_KIND_FASTOPEN; }
+			|	MD5SIG			{ $$ = TCPOPT_KIND_MD5SIG; }
+			|	MPTCP			{ $$ = TCPOPT_KIND_MPTCP; }
 			|	MSS			{ $$ = TCPOPT_KIND_MAXSEG; }
 			|	NOP			{ $$ = TCPOPT_KIND_NOP; }
 			|	SACK_PERM		{ $$ = TCPOPT_KIND_SACK_PERMITTED; }
-			|	TIMESTAMP		{ $$ = TCPOPT_KIND_TIMESTAMP; }
-			|	WINDOW			{ $$ = TCPOPT_KIND_WINDOW; }
+			|       TIMESTAMP               { $$ = TCPOPT_KIND_TIMESTAMP; }
+			|       WINDOW                  { $$ = TCPOPT_KIND_WINDOW; }
 			|	tcp_hdr_option_sack	{ $$ = $1; }
 			|	NUM			{
 				if ($1 > 255) {
