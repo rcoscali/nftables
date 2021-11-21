@@ -424,6 +424,7 @@ int nft_lex(void *, void *, void *);
 %token RIGHT			"right"
 %token TSVAL			"tsval"
 %token TSECR			"tsecr"
+%token SUBTYPE			"subtype"
 
 %token DCCP			"dccp"
 
@@ -882,7 +883,7 @@ int nft_lex(void *, void *, void *);
 %type <val>			tcp_hdr_field
 %type <val>			tcp_hdr_option_type
 %type <val>			tcp_hdr_option_sack
-%type <val>			tcpopt_field_maxseg	tcpopt_field_sack	 tcpopt_field_tsopt	tcpopt_field_window
+%type <val>			tcpopt_field_maxseg	tcpopt_field_mptcp	tcpopt_field_sack	 tcpopt_field_tsopt	tcpopt_field_window
 %type <tcp_kind_field>		tcp_hdr_option_kind_and_field
 
 %type <expr>			boolean_expr
@@ -5540,6 +5541,11 @@ tcp_hdr_option_kind_and_field	:	MSS	tcpopt_field_maxseg
 					struct tcp_kind_field kind_field = { .kind = $1, .field = TCPOPT_COMMON_LENGTH };
 					$$ = kind_field;
 				}
+				|	MPTCP	tcpopt_field_mptcp
+				{
+					struct tcp_kind_field kind_field = { .kind = TCPOPT_KIND_MPTCP, .field = $2 };
+					$$ = kind_field;
+				}
 				;
 
 tcp_hdr_option_sack	:	SACK		{ $$ = TCPOPT_KIND_SACK; }
@@ -5581,6 +5587,9 @@ tcpopt_field_tsopt	:	TSVAL           { $$ = TCPOPT_TS_TSVAL; }
 			;
 
 tcpopt_field_maxseg	:	SIZE		{ $$ = TCPOPT_MAXSEG_SIZE; }
+			;
+
+tcpopt_field_mptcp	:	SUBTYPE		{ $$ = TCPOPT_MPTCP_SUBTYPE; }
 			;
 
 dccp_hdr_expr		:	DCCP	dccp_hdr_field

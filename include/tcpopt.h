@@ -77,6 +77,7 @@ enum tcpopt_hdr_field_sack {
 enum tcpopt_hdr_mptcp_common {
 	TCPOPT_MPTCP_KIND,
 	TCPOPT_MPTCP_LENGTH,
+	TCPOPT_MPTCP_SUBTYPE,
 };
 
 extern const struct exthdr_desc *tcpopt_protocols[__TCPOPT_KIND_MAX];

@@ -472,6 +472,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "fastopen"		{ return FASTOPEN; }
 "mptcp"			{ return MPTCP; }
 "md5sig"		{ return MD5SIG; }
+"subtype"		{ return SUBTYPE; }
 "nop"			{ return NOP; }
 "noop"			{ return NOP; }
 "sack"			{ return SACK; }

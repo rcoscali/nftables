@@ -116,6 +116,7 @@ static const struct exthdr_desc tcpopt_mptcp = {
 	.templates	= {
 		[TCPOPT_MPTCP_KIND]	= PHT("kind",   0,   8),
 		[TCPOPT_MPTCP_LENGTH]	= PHT("length", 8,  8),
+		[TCPOPT_MPTCP_SUBTYPE]  = PHT("subtype", 16, 4),
 	},
 };
 #undef PHT
