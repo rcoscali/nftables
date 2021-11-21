@@ -532,3 +532,56 @@
         }
     }
 ]
+
+# tcp option mptcp subtype 0
+[
+    {
+        "match": {
+            "left": {
+                "tcp option": {
+                    "field": "subtype",
+                    "name": "mptcp"
+                }
+            },
+            "op": "==",
+            "right": 0
+        }
+    }
+]
+
+# tcp option mptcp subtype 1
+[
+    {
+        "match": {
+            "left": {
+                "tcp option": {
+                    "field": "subtype",
+                    "name": "mptcp"
+                }
+            },
+            "op": "==",
+            "right": 1
+        }
+    }
+]
+
+# tcp option mptcp subtype { 0, 2}
+[
+    {
+        "match": {
+            "left": {
+                "tcp option": {
+                    "field": "subtype",
+                    "name": "mptcp"
+                }
+            },
+            "op": "==",
+            "right": {
+                "set": [
+                    0,
+                    2
+                ]
+            }
+        }
+   }
+]

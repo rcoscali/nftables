@@ -50,3 +50,7 @@ tcp option maxseg size set 1360;ok
 tcp option md5sig exists;ok
 tcp option fastopen exists;ok
 tcp option mptcp exists;ok
+
+tcp option mptcp subtype 0;ok
+tcp option mptcp subtype 1;ok
+tcp option mptcp subtype { 0, 2};ok
