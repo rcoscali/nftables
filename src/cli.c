@@ -26,7 +26,6 @@
 #include <readline/history.h>
 #elif defined(HAVE_LIBEDIT)
 #include <editline/readline.h>
-#include <editline/history.h>
 #else
 #include <linenoise.h>
 #endif
