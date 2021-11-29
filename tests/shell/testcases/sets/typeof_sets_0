@@ -20,6 +20,11 @@ EXPECTED="table inet t {
 		elements = { 2, 3, 103 }
 	}
 
+	set s4 {
+		typeof frag frag-off
+		elements = { 1, 1024 }
+	}
+
 	chain c1 {
 		osf name @s1 accept
 	}

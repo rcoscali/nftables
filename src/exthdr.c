@@ -165,9 +165,7 @@ static struct expr *exthdr_expr_parse_udata(const struct nftnl_udata *attr)
 static unsigned int expr_exthdr_type(const struct exthdr_desc *desc,
 				     const struct proto_hdr_template *tmpl)
 {
-	unsigned int offset = (unsigned int)(tmpl - &desc->templates[0]);
-
-	return offset / sizeof(*tmpl);
+	return (unsigned int)(tmpl - &desc->templates[0]);
 }
 
 static int exthdr_expr_build_udata(struct nftnl_udata_buf *udbuf,
