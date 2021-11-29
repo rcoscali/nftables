@@ -906,10 +906,12 @@ err_free:
 }
 
 struct nftnl_chain_list *mnl_nft_chain_dump(struct netlink_ctx *ctx,
-					    int family)
+					    int family, const char *table,
+					    const char *chain)
 {
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nftnl_chain_list *nlc_list;
+	struct nftnl_chain *nlc = NULL;
 	struct nlmsghdr *nlh;
 	int ret;
 
@@ -917,11 +919,24 @@ struct nftnl_chain_list *mnl_nft_chain_dump(struct netlink_ctx *ctx,
 	if (nlc_list == NULL)
 		memory_allocation_error();
 
+	if (table && chain) {
+		nlc = nftnl_chain_alloc();
+		if (!nlc)
+			memory_allocation_error();
+
+		nftnl_chain_set_str(nlc, NFTNL_CHAIN_TABLE, table);
+		nftnl_chain_set_str(nlc, NFTNL_CHAIN_NAME, chain);
+	}
+
 	nlh = nftnl_nlmsg_build_hdr(buf, NFT_MSG_GETCHAIN, family,
-				    NLM_F_DUMP, ctx->seqnum);
+				    nlc ? NLM_F_ACK : NLM_F_DUMP, ctx->seqnum);
+	if (nlc) {
+		nftnl_chain_nlmsg_build_payload(nlh, nlc);
+		nftnl_chain_free(nlc);
+	}
 
 	ret = nft_mnl_talk(ctx, nlh, nlh->nlmsg_len, chain_cb, nlc_list);
-	if (ret < 0)
+	if (ret < 0 && errno != ENOENT)
 		goto err;
 
 	return nlc_list;

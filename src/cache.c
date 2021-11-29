@@ -342,31 +342,23 @@ struct table *table_cache_find(const struct cache *cache,
 struct chain_cache_dump_ctx {
 	struct netlink_ctx	*nlctx;
 	struct table		*table;
-	const struct nft_cache_filter *filter;
 };
 
 static int chain_cache_cb(struct nftnl_chain *nlc, void *arg)
 {
 	struct chain_cache_dump_ctx *ctx = arg;
-	const struct nft_cache_filter *filter = ctx->filter;
 	const char *chain_name, *table_name;
 	uint32_t hash, family;
 	struct chain *chain;
 
 	table_name = nftnl_chain_get_str(nlc, NFTNL_CHAIN_TABLE);
-	chain_name = nftnl_chain_get_str(nlc, NFTNL_CHAIN_NAME);
 	family = nftnl_chain_get_u32(nlc, NFTNL_CHAIN_FAMILY);
 
-	if (strcmp(table_name, ctx->table->handle.table.name) ||
-	    family != ctx->table->handle.family)
+	if (family != ctx->table->handle.family ||
+	    strcmp(table_name, ctx->table->handle.table.name))
 		return 0;
 
-	if (filter && filter->list.table && filter->list.chain &&
-	    (filter->list.family != family ||
-	     strcmp(filter->list.table, table_name) ||
-	     strcmp(filter->list.chain, chain_name)))
-		return 0;
-
+	chain_name = nftnl_chain_get_str(nlc, NFTNL_CHAIN_NAME);
 	hash = djb_hash(chain_name) % NFT_CACHE_HSIZE;
 	chain = netlink_delinearize_chain(ctx->nlctx, nlc);
 
@@ -383,25 +375,33 @@ static int chain_cache_cb(struct nftnl_chain *nlc, void *arg)
 }
 
 static int chain_cache_init(struct netlink_ctx *ctx, struct table *table,
-			    struct nftnl_chain_list *chain_list,
-			    const struct nft_cache_filter *filter)
+			    struct nftnl_chain_list *chain_list)
 {
 	struct chain_cache_dump_ctx dump_ctx = {
 		.nlctx	= ctx,
 		.table	= table,
-		.filter	= filter,
 	};
 	nftnl_chain_list_foreach(chain_list, chain_cache_cb, &dump_ctx);
 
 	return 0;
 }
 
-static struct nftnl_chain_list *chain_cache_dump(struct netlink_ctx *ctx,
-						 int *err)
+static struct nftnl_chain_list *
+chain_cache_dump(struct netlink_ctx *ctx,
+		 const struct nft_cache_filter *filter, int *err)
 {
 	struct nftnl_chain_list *chain_list;
+	const char *table = NULL;
+	const char *chain = NULL;
+	int family = NFPROTO_UNSPEC;
 
-	chain_list = mnl_nft_chain_dump(ctx, AF_UNSPEC);
+	if (filter && filter->list.table && filter->list.chain) {
+		family = filter->list.family;
+		table = filter->list.table;
+		chain = filter->list.chain;
+	}
+
+	chain_list = mnl_nft_chain_dump(ctx, family, table, chain);
 	if (chain_list == NULL) {
 		if (errno == EINTR) {
 			*err = -1;
@@ -781,7 +781,7 @@ static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags,
 	int ret = 0;
 
 	if (flags & NFT_CACHE_CHAIN_BIT) {
-		chain_list = chain_cache_dump(ctx, &ret);
+		chain_list = chain_cache_dump(ctx, filter, &ret);
 		if (!chain_list)
 			return -1;
 	}
@@ -834,7 +834,7 @@ static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags,
 			}
 		}
 		if (flags & NFT_CACHE_CHAIN_BIT) {
-			ret = chain_cache_init(ctx, table, chain_list, filter);
+			ret = chain_cache_init(ctx, table, chain_list);
 			if (ret < 0) {
 				ret = -1;
 				goto cache_fails;

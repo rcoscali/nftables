@@ -43,7 +43,8 @@ int mnl_nft_chain_rename(struct netlink_ctx *ctx, const struct cmd *cmd,
 			 const struct chain *chain);
 
 struct nftnl_chain_list *mnl_nft_chain_dump(struct netlink_ctx *ctx,
-					    int family);
+					    int family, const char *table,
+					    const char *chain);
 
 int mnl_nft_table_add(struct netlink_ctx *ctx, struct cmd *cmd,
 		      unsigned int flags);
