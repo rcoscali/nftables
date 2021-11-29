@@ -50,7 +50,7 @@ int mnl_nft_table_add(struct netlink_ctx *ctx, struct cmd *cmd,
 int mnl_nft_table_del(struct netlink_ctx *ctx, struct cmd *cmd);
 
 struct nftnl_table_list *mnl_nft_table_dump(struct netlink_ctx *ctx,
-					    int family);
+					    int family, const char *table);
 
 int mnl_nft_set_add(struct netlink_ctx *ctx, struct cmd *cmd,
 		    unsigned int flags);

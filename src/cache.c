@@ -772,19 +772,12 @@ static int cache_init_tables(struct netlink_ctx *ctx, struct handle *h,
 	struct table *table, *next;
 	int ret;
 
-	ret = netlink_list_tables(ctx, h);
+	ret = netlink_list_tables(ctx, h, filter);
 	if (ret < 0)
 		return -1;
 
 	list_for_each_entry_safe(table, next, &ctx->list, list) {
 		list_del(&table->list);
-
-		if (filter && filter->list.table &&
-		    (filter->list.family != table->handle.family ||
-		     strcmp(filter->list.table, table->handle.table.name))) {
-			table_free(table);
-			continue;
-		}
 		table_cache_add(table, cache);
 	}
 

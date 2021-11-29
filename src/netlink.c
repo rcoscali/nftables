@@ -664,11 +664,19 @@ static int list_table_cb(struct nftnl_table *nlt, void *arg)
 	return 0;
 }
 
-int netlink_list_tables(struct netlink_ctx *ctx, const struct handle *h)
+int netlink_list_tables(struct netlink_ctx *ctx, const struct handle *h,
+			const struct nft_cache_filter *filter)
 {
 	struct nftnl_table_list *table_cache;
+	uint32_t family = h->family;
+	const char *table = NULL;
 
-	table_cache = mnl_nft_table_dump(ctx, h->family);
+	if (filter) {
+		family = filter->list.family;
+		table = filter->list.table;
+	}
+
+	table_cache = mnl_nft_table_dump(ctx, family, table);
 	if (table_cache == NULL) {
 		if (errno == EINTR)
 			return -1;

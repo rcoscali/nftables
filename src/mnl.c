@@ -1016,10 +1016,12 @@ err_free:
 }
 
 struct nftnl_table_list *mnl_nft_table_dump(struct netlink_ctx *ctx,
-					    int family)
+					    int family, const char *table)
 {
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nftnl_table_list *nlt_list;
+	struct nftnl_table *nlt = NULL;
+	int flags = NLM_F_DUMP;
 	struct nlmsghdr *nlh;
 	int ret;
 
@@ -1027,11 +1029,25 @@ struct nftnl_table_list *mnl_nft_table_dump(struct netlink_ctx *ctx,
 	if (nlt_list == NULL)
 		return NULL;
 
+	if (table) {
+		nlt = nftnl_table_alloc();
+		if (!nlt)
+			memory_allocation_error();
+
+		nftnl_table_set_u32(nlt, NFTNL_TABLE_FAMILY, family);
+		nftnl_table_set_str(nlt, NFTNL_TABLE_NAME, table);
+		flags = NLM_F_ACK;
+	}
+
 	nlh = nftnl_nlmsg_build_hdr(buf, NFT_MSG_GETTABLE, family,
-				    NLM_F_DUMP, ctx->seqnum);
+				    flags, ctx->seqnum);
+	if (nlt) {
+		nftnl_table_nlmsg_build_payload(nlh, nlt);
+		nftnl_table_free(nlt);
+	}
 
 	ret = nft_mnl_talk(ctx, nlh, nlh->nlmsg_len, table_cb, nlt_list);
-	if (ret < 0)
+	if (ret < 0 && errno != ENOENT)
 		goto err;
 
 	return nlt_list;
