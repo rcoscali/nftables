@@ -653,13 +653,26 @@ err_free:
 	return MNL_CB_OK;
 }
 
-struct nftnl_rule_list *mnl_nft_rule_dump(struct netlink_ctx *ctx,
-					  int family)
+struct nftnl_rule_list *mnl_nft_rule_dump(struct netlink_ctx *ctx, int family,
+					  const struct nft_cache_filter *filter)
 {
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nftnl_rule_list *nlr_list;
+	struct nftnl_rule *nlr = NULL;
 	struct nlmsghdr *nlh;
 	int ret;
+
+	if (filter && filter->list.table) {
+		nlr = nftnl_rule_alloc();
+		if (!nlr)
+			memory_allocation_error();
+
+		nftnl_rule_set_str(nlr, NFTNL_RULE_TABLE,
+				   filter->list.table);
+		if (filter->list.chain)
+			nftnl_rule_set_str(nlr, NFTNL_RULE_CHAIN,
+					   filter->list.chain);
+	}
 
 	nlr_list = nftnl_rule_list_alloc();
 	if (nlr_list == NULL)
@@ -667,6 +680,10 @@ struct nftnl_rule_list *mnl_nft_rule_dump(struct netlink_ctx *ctx,
 
 	nlh = nftnl_nlmsg_build_hdr(buf, NFT_MSG_GETRULE, family,
 				    NLM_F_DUMP, ctx->seqnum);
+	if (nlr) {
+		nftnl_rule_nlmsg_build_payload(nlh, nlr);
+		nftnl_rule_free(nlr);
+	}
 
 	ret = nft_mnl_talk(ctx, nlh, nlh->nlmsg_len, rule_cb, nlr_list);
 	if (ret < 0)

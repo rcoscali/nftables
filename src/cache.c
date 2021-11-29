@@ -441,16 +441,9 @@ struct chain *chain_cache_find(const struct table *table, const char *name)
 	return NULL;
 }
 
-struct rule_cache_dump_ctx {
-	struct netlink_ctx	*nlctx;
-	const struct nft_cache_filter *filter;
-};
-
 static int list_rule_cb(struct nftnl_rule *nlr, void *data)
 {
-	struct rule_cache_dump_ctx *rule_ctx = data;
-	const struct nft_cache_filter *filter = rule_ctx->filter;
-	struct netlink_ctx *ctx = rule_ctx->nlctx;
+	struct netlink_ctx *ctx = data;
 	const struct handle *h = ctx->data;
 	const char *table, *chain;
 	struct rule *rule;
@@ -465,12 +458,6 @@ static int list_rule_cb(struct nftnl_rule *nlr, void *data)
 	    (h->chain.name && strcmp(chain, h->chain.name) != 0))
 		return 0;
 
-	if (filter && filter->list.table && filter->list.chain &&
-	    (filter->list.family != family ||
-	     strcmp(filter->list.table, table) ||
-	     strcmp(filter->list.chain, chain)))
-		return 0;
-
 	netlink_dump_rule(nlr, ctx);
 	rule = netlink_delinearize_rule(ctx, nlr);
 	list_add_tail(&rule->list, &ctx->list);
@@ -481,13 +468,9 @@ static int list_rule_cb(struct nftnl_rule *nlr, void *data)
 static int rule_cache_init(struct netlink_ctx *ctx, const struct handle *h,
 			   const struct nft_cache_filter *filter)
 {
-	struct rule_cache_dump_ctx rule_ctx = {
-		.nlctx = ctx,
-		.filter = filter,
-	};
 	struct nftnl_rule_list *rule_cache;
 
-	rule_cache = mnl_nft_rule_dump(ctx, h->family);
+	rule_cache = mnl_nft_rule_dump(ctx, h->family, filter);
 	if (rule_cache == NULL) {
 		if (errno == EINTR)
 			return -1;
@@ -496,7 +479,7 @@ static int rule_cache_init(struct netlink_ctx *ctx, const struct handle *h,
 	}
 
 	ctx->data = h;
-	nftnl_rule_list_foreach(rule_cache, list_rule_cb, &rule_ctx);
+	nftnl_rule_list_foreach(rule_cache, list_rule_cb, ctx);
 	nftnl_rule_list_free(rule_cache);
 	return 0;
 }
