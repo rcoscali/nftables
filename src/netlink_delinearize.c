@@ -2313,20 +2313,20 @@ static void map_binop_postprocess(struct rule_pp_ctx *ctx, struct expr *expr)
 static void relational_binop_postprocess(struct rule_pp_ctx *ctx,
 					 struct expr **exprp)
 {
-	struct expr *expr = *exprp, *binop = expr->left, *value = expr->right;
+	struct expr *expr = *exprp, *binop = expr->left, *right = expr->right;
 
 	if (binop->op == OP_AND && (expr->op == OP_NEQ || expr->op == OP_EQ) &&
-	    value->dtype->basetype &&
-	    value->dtype->basetype->type == TYPE_BITMASK) {
-		switch (value->etype) {
+	    right->dtype->basetype &&
+	    right->dtype->basetype->type == TYPE_BITMASK) {
+		switch (right->etype) {
 		case EXPR_VALUE:
-			if (!mpz_cmp_ui(value->value, 0)) {
+			if (!mpz_cmp_ui(right->value, 0)) {
 				/* Flag comparison: data & flags != 0
 				 *
 				 * Split the flags into a list of flag values and convert the
 				 * op to OP_EQ.
 				 */
-				expr_free(value);
+				expr_free(right);
 
 				expr->left  = expr_get(binop->left);
 				expr->right = binop_tree_to_list(NULL, binop->right);
@@ -2342,8 +2342,8 @@ static void relational_binop_postprocess(struct rule_pp_ctx *ctx,
 				}
 				expr_free(binop);
 			} else if (binop->right->etype == EXPR_VALUE &&
-				   value->etype == EXPR_VALUE &&
-				   !mpz_cmp(value->value, binop->right->value)) {
+				   right->etype == EXPR_VALUE &&
+				   !mpz_cmp(right->value, binop->right->value)) {
 				/* Skip flag / flag representation for:
 				 * data & flag == flag
 				 * data & flag != flag
@@ -2353,7 +2353,7 @@ static void relational_binop_postprocess(struct rule_pp_ctx *ctx,
 				*exprp = flagcmp_expr_alloc(&expr->location, expr->op,
 							    expr_get(binop->left),
 							    binop_tree_to_list(NULL, binop->right),
-							    expr_get(value));
+							    expr_get(right));
 				expr_free(expr);
 			}
 			break;
@@ -2361,7 +2361,7 @@ static void relational_binop_postprocess(struct rule_pp_ctx *ctx,
 			*exprp = flagcmp_expr_alloc(&expr->location, expr->op,
 						    expr_get(binop->left),
 						    binop_tree_to_list(NULL, binop->right),
-						    binop_tree_to_list(NULL, value));
+						    binop_tree_to_list(NULL, right));
 			expr_free(expr);
 			break;
 		default:
@@ -2372,9 +2372,9 @@ static void relational_binop_postprocess(struct rule_pp_ctx *ctx,
 		   expr_mask_is_prefix(binop->right)) {
 		expr->left = expr_get(binop->left);
 		expr->right = prefix_expr_alloc(&expr->location,
-						expr_get(value),
+						expr_get(right),
 						expr_mask_to_prefix(binop->right));
-		expr_free(value);
+		expr_free(right);
 		expr_free(binop);
 	} else if (binop->op == OP_AND &&
 		   binop->right->etype == EXPR_VALUE) {
