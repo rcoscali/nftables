@@ -54,6 +54,7 @@ struct nft_cache_filter {
 		const char	*table;
 		const char	*chain;
 		const char	*set;
+		const char	*ft;
 	} list;
 
 	struct {

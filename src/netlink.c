@@ -1721,7 +1721,8 @@ int netlink_list_flowtables(struct netlink_ctx *ctx, const struct handle *h)
 	struct nftnl_flowtable_list *flowtable_cache;
 	int err;
 
-	flowtable_cache = mnl_nft_flowtable_dump(ctx, h->family, h->table.name);
+	flowtable_cache = mnl_nft_flowtable_dump(ctx, h->family,
+						 h->table.name, NULL);
 	if (flowtable_cache == NULL) {
 		if (errno == EINTR)
 			return -1;

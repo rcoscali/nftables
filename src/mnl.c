@@ -1826,11 +1826,13 @@ err_free:
 }
 
 struct nftnl_flowtable_list *
-mnl_nft_flowtable_dump(struct netlink_ctx *ctx, int family, const char *table)
+mnl_nft_flowtable_dump(struct netlink_ctx *ctx, int family,
+		       const char *table, const char *ft)
 {
 	struct nftnl_flowtable_list *nln_list;
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nftnl_flowtable *n;
+	int flags = NLM_F_DUMP;
 	struct nlmsghdr *nlh;
 	int ret;
 
@@ -1838,10 +1840,14 @@ mnl_nft_flowtable_dump(struct netlink_ctx *ctx, int family, const char *table)
 	if (n == NULL)
 		memory_allocation_error();
 
-	nlh = nftnl_nlmsg_build_hdr(buf, NFT_MSG_GETFLOWTABLE, family,
-				    NLM_F_DUMP, ctx->seqnum);
 	if (table != NULL)
 		nftnl_flowtable_set_str(n, NFTNL_FLOWTABLE_TABLE, table);
+	if (ft) {
+		nftnl_flowtable_set_str(n, NFTNL_FLOWTABLE_NAME, ft);
+		flags = NLM_F_ACK;
+	}
+	nlh = nftnl_nlmsg_build_hdr(buf, NFT_MSG_GETFLOWTABLE, family,
+				    flags, ctx->seqnum);
 	nftnl_flowtable_nlmsg_build_payload(nlh, n);
 	nftnl_flowtable_free(n);
 
@@ -1850,7 +1856,7 @@ mnl_nft_flowtable_dump(struct netlink_ctx *ctx, int family, const char *table)
 		memory_allocation_error();
 
 	ret = nft_mnl_talk(ctx, nlh, nlh->nlmsg_len, flowtable_cb, nln_list);
-	if (ret < 0)
+	if (ret < 0 && errno != ENOENT)
 		goto err;
 
 	return nln_list;

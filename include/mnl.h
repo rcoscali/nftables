@@ -77,7 +77,8 @@ int mnl_nft_obj_add(struct netlink_ctx *ctx, struct cmd *cmd,
 int mnl_nft_obj_del(struct netlink_ctx *ctx, struct cmd *cmd, int type);
 
 struct nftnl_flowtable_list *
-mnl_nft_flowtable_dump(struct netlink_ctx *ctx, int family, const char *table);
+mnl_nft_flowtable_dump(struct netlink_ctx *ctx, int family,
+		       const char *table, const char *ft);
 
 int mnl_nft_flowtable_add(struct netlink_ctx *ctx, struct cmd *cmd,
 			  unsigned int flags);
