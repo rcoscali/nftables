@@ -2223,8 +2223,8 @@ static void binop_adjust_one(const struct expr *binop, struct expr *value,
 	}
 }
 
-static void __binop_adjust(const struct expr *binop, struct expr *right,
-			   unsigned int shift)
+static void binop_adjust(const struct expr *binop, struct expr *right,
+			 unsigned int shift)
 {
 	struct expr *i;
 
@@ -2243,7 +2243,7 @@ static void __binop_adjust(const struct expr *binop, struct expr *right,
 				binop_adjust_one(binop, i->key->right, shift);
 				break;
 			case EXPR_SET_ELEM:
-				__binop_adjust(binop, i->key->key, shift);
+				binop_adjust(binop, i->key->key, shift);
 				break;
 			default:
 				BUG("unknown expression type %s\n", expr_name(i->key));
@@ -2260,22 +2260,22 @@ static void __binop_adjust(const struct expr *binop, struct expr *right,
 	}
 }
 
-static void binop_adjust(struct expr *expr, unsigned int shift)
+static void binop_postprocess(struct rule_pp_ctx *ctx, struct expr *expr,
+			      struct expr **expr_binop)
 {
-	__binop_adjust(expr->left, expr->right, shift);
-}
-
-static void binop_postprocess(struct rule_pp_ctx *ctx, struct expr *expr)
-{
-	struct expr *binop = expr->left;
+	struct expr *binop = *expr_binop;
 	struct expr *left = binop->left;
 	struct expr *mask = binop->right;
 	unsigned int shift;
+
+	assert(binop->etype == EXPR_BINOP);
 
 	if ((left->etype == EXPR_PAYLOAD &&
 	    payload_expr_trim(left, mask, &ctx->pctx, &shift)) ||
 	    (left->etype == EXPR_EXTHDR &&
 	     exthdr_find_template(left, mask, &shift))) {
+		struct expr *right = NULL;
+
 		/* mask is implicit, binop needs to be removed.
 		 *
 		 * Fix all values of the expression according to the mask
@@ -2285,16 +2285,28 @@ static void binop_postprocess(struct rule_pp_ctx *ctx, struct expr *expr)
 		 * Finally, convert the expression to 1) by replacing
 		 * the binop with the binop payload/exthdr expression.
 		 */
-		binop_adjust(expr, shift);
+		switch (expr->etype) {
+		case EXPR_BINOP:
+		case EXPR_RELATIONAL:
+			right = expr->right;
+			binop_adjust(binop, right, shift);
+			break;
+		case EXPR_MAP:
+			right = expr->mappings;
+			binop_adjust(binop, right, shift);
+			break;
+		default:
+			break;
+		}
 
-		assert(expr->left->etype == EXPR_BINOP);
 		assert(binop->left == left);
-		expr->left = expr_get(left);
+		*expr_binop = expr_get(left);
 		expr_free(binop);
+
 		if (left->etype == EXPR_PAYLOAD)
 			payload_match_postprocess(ctx, expr, left);
-		else if (left->etype == EXPR_EXTHDR)
-			expr_set_type(expr->right, left->dtype, left->byteorder);
+		else if (left->etype == EXPR_EXTHDR && right)
+			expr_set_type(right, left->dtype, left->byteorder);
 	}
 }
 
@@ -2307,7 +2319,7 @@ static void map_binop_postprocess(struct rule_pp_ctx *ctx, struct expr *expr)
 
 	if (binop->left->etype == EXPR_PAYLOAD &&
 	    binop->right->etype == EXPR_VALUE)
-		binop_postprocess(ctx, expr);
+		binop_postprocess(ctx, expr, &expr->map);
 }
 
 static void relational_binop_postprocess(struct rule_pp_ctx *ctx,
@@ -2401,7 +2413,7 @@ static void relational_binop_postprocess(struct rule_pp_ctx *ctx,
 		 * payload_expr_trim will figure out if the mask is needed to match
 		 * templates.
 		 */
-		binop_postprocess(ctx, expr);
+		binop_postprocess(ctx, expr, &expr->left);
 	}
 }
 
@@ -2754,7 +2766,7 @@ static void stmt_payload_binop_pp(struct rule_pp_ctx *ctx, struct expr *binop)
 
 	assert(payload->etype == EXPR_PAYLOAD);
 	if (payload_expr_trim(payload, mask, &ctx->pctx, &shift)) {
-		__binop_adjust(binop, mask, shift);
+		binop_adjust(binop, mask, shift);
 		payload_expr_complete(payload, &ctx->pctx);
 		expr_set_type(mask, payload->dtype,
 			      payload->byteorder);
@@ -2849,7 +2861,7 @@ static void stmt_payload_binop_postprocess(struct rule_pp_ctx *ctx)
 		mpz_set(mask->value, bitmask);
 		mpz_clear(bitmask);
 
-		binop_postprocess(ctx, expr);
+		binop_postprocess(ctx, expr, &expr->left);
 		if (!payload_is_known(payload)) {
 			mpz_set(mask->value, tmp);
 			mpz_clear(tmp);
