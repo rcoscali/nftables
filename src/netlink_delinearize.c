@@ -2300,7 +2300,7 @@ static void binop_postprocess(struct rule_pp_ctx *ctx, struct expr *expr)
 
 static void map_binop_postprocess(struct rule_pp_ctx *ctx, struct expr *expr)
 {
-	struct expr *binop = expr->left;
+	struct expr *binop = expr->map;
 
 	if (binop->op != OP_AND)
 		return;
