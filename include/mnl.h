@@ -58,7 +58,7 @@ int mnl_nft_set_add(struct netlink_ctx *ctx, struct cmd *cmd,
 int mnl_nft_set_del(struct netlink_ctx *ctx, struct cmd *cmd);
 
 struct nftnl_set_list *mnl_nft_set_dump(struct netlink_ctx *ctx, int family,
-					const char *table);
+					const char *table, const char *set);
 
 int mnl_nft_setelem_add(struct netlink_ctx *ctx, const struct set *set,
 			const struct expr *expr, unsigned int flags);
