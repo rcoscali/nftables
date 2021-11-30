@@ -811,6 +811,9 @@ void payload_expr_complete(struct expr *expr, const struct proto_ctx *ctx)
 		    tmpl->len    != expr->len)
 			continue;
 
+		if (tmpl->meta_key && i == 0)
+			continue;
+
 		if (tmpl->icmp_dep && ctx->th_dep.icmp.type &&
 		    ctx->th_dep.icmp.type != icmp_dep_to_type(tmpl->icmp_dep))
 			continue;
