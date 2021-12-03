@@ -34,6 +34,17 @@ table inet t {
 		elements = { 1, 4 }
 	}
 
+	set s8 {
+		typeof ip version
+		elements = { 4, 6 }
+	}
+
+	set s9 {
+		typeof ip hdrlength
+		elements = { 0, 1, 2, 3, 4,
+			     15 }
+	}
+
 	chain c1 {
 		osf name @s1 accept
 	}
@@ -52,5 +63,9 @@ table inet t {
 
 	chain c7 {
 		sctp chunk init num-inbound-streams @s7 accept
+	}
+
+	chain c9 {
+		ip hdrlength @s9 accept
 	}
 }
