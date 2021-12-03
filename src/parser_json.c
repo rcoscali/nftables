@@ -689,7 +689,7 @@ static struct expr *json_parse_ip_option_expr(struct json_ctx *ctx,
 
 	if (json_unpack(root, "{s:s}", "field", &field)) {
 		expr = ipopt_expr_alloc(int_loc, descval,
-					 IPOPT_FIELD_TYPE, 0);
+					 IPOPT_FIELD_TYPE);
 		expr->exthdr.flags = NFT_EXTHDR_F_PRESENT;
 
 		return expr;
@@ -698,7 +698,7 @@ static struct expr *json_parse_ip_option_expr(struct json_ctx *ctx,
 		json_error(ctx, "Unknown ip option field '%s'.", field);
 		return NULL;
 	}
-	return ipopt_expr_alloc(int_loc, descval, fieldval, 0);
+	return ipopt_expr_alloc(int_loc, descval, fieldval);
 }
 
 static int json_parse_sctp_chunk_field(const struct exthdr_desc *desc,
