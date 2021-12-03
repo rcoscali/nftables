@@ -2414,6 +2414,13 @@ static void relational_binop_postprocess(struct rule_pp_ctx *ctx,
 		 * templates.
 		 */
 		binop_postprocess(ctx, expr, &expr->left);
+	} else if (binop->op == OP_RSHIFT && binop->left->op == OP_AND &&
+		   binop->right->etype == EXPR_VALUE && binop->left->right->etype == EXPR_VALUE) {
+		/* Handle 'ip version @s4' and similar, i.e. set lookups where the lhs needs
+		 * fixups to mask out unwanted bits AND a shift.
+		 */
+
+		binop_postprocess(ctx, binop, &binop->left);
 	}
 }
 
