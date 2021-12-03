@@ -2322,6 +2322,20 @@ static void map_binop_postprocess(struct rule_pp_ctx *ctx, struct expr *expr)
 		binop_postprocess(ctx, expr, &expr->map);
 }
 
+static bool is_shift_by_zero(const struct expr *binop)
+{
+	struct expr *rhs;
+
+	if (binop->op != OP_RSHIFT && binop->op != OP_LSHIFT)
+		return false;
+
+	rhs = binop->right;
+	if (rhs->etype != EXPR_VALUE || rhs->len > 64)
+		return false;
+
+	return mpz_get_uint64(rhs->value) == 0;
+}
+
 static void relational_binop_postprocess(struct rule_pp_ctx *ctx,
 					 struct expr **exprp)
 {
@@ -2421,6 +2435,13 @@ static void relational_binop_postprocess(struct rule_pp_ctx *ctx,
 		 */
 
 		binop_postprocess(ctx, binop, &binop->left);
+		if (is_shift_by_zero(binop)) {
+			struct expr *lhs = binop->left;
+
+			expr_get(lhs);
+			expr_free(binop);
+			expr->left = lhs;
+		}
 	}
 }
 
