@@ -115,7 +115,8 @@ static void exthdr_expr_clone(struct expr *new, const struct expr *expr)
 
 #define NFTNL_UDATA_EXTHDR_DESC 0
 #define NFTNL_UDATA_EXTHDR_TYPE 1
-#define NFTNL_UDATA_EXTHDR_MAX 2
+#define NFTNL_UDATA_EXTHDR_OP	2
+#define NFTNL_UDATA_EXTHDR_MAX 3
 
 static int exthdr_parse_udata(const struct nftnl_udata *attr, void *data)
 {
@@ -126,6 +127,7 @@ static int exthdr_parse_udata(const struct nftnl_udata *attr, void *data)
 	switch (type) {
 	case NFTNL_UDATA_EXTHDR_DESC:
 	case NFTNL_UDATA_EXTHDR_TYPE:
+	case NFTNL_UDATA_EXTHDR_OP:
 		if (len != sizeof(uint32_t))
 			return -1;
 		break;
@@ -140,6 +142,7 @@ static int exthdr_parse_udata(const struct nftnl_udata *attr, void *data)
 static struct expr *exthdr_expr_parse_udata(const struct nftnl_udata *attr)
 {
 	const struct nftnl_udata *ud[NFTNL_UDATA_EXTHDR_MAX + 1] = {};
+	enum nft_exthdr_op op = NFT_EXTHDR_OP_IPV6;
 	const struct exthdr_desc *desc;
 	unsigned int type;
 	uint32_t desc_id;
@@ -154,14 +157,31 @@ static struct expr *exthdr_expr_parse_udata(const struct nftnl_udata *attr)
 	    !ud[NFTNL_UDATA_EXTHDR_TYPE])
 		return NULL;
 
-	desc_id = nftnl_udata_get_u32(ud[NFTNL_UDATA_EXTHDR_DESC]);
-	desc = exthdr_find_desc(desc_id);
-	if (!desc)
-		return NULL;
+	if (ud[NFTNL_UDATA_EXTHDR_OP])
+		op = nftnl_udata_get_u32(ud[NFTNL_UDATA_EXTHDR_OP]);
 
+	desc_id = nftnl_udata_get_u32(ud[NFTNL_UDATA_EXTHDR_DESC]);
 	type = nftnl_udata_get_u32(ud[NFTNL_UDATA_EXTHDR_TYPE]);
 
-	return exthdr_expr_alloc(&internal_location, desc, type);
+	switch (op) {
+	case NFT_EXTHDR_OP_IPV6:
+		desc = exthdr_find_desc(desc_id);
+
+		return exthdr_expr_alloc(&internal_location, desc, type);
+	case NFT_EXTHDR_OP_TCPOPT:
+		return tcpopt_expr_alloc(&internal_location,
+					 desc_id, type);
+	case NFT_EXTHDR_OP_IPV4:
+		return ipopt_expr_alloc(&internal_location,
+					 desc_id, type);
+	case NFT_EXTHDR_OP_SCTP:
+		return sctp_chunk_expr_alloc(&internal_location,
+					     desc_id, type);
+	case __NFT_EXTHDR_OP_MAX:
+		return NULL;
+	}
+
+	return NULL;
 }
 
 static unsigned int expr_exthdr_type(const struct exthdr_desc *desc,
@@ -176,9 +196,22 @@ static int exthdr_expr_build_udata(struct nftnl_udata_buf *udbuf,
 	const struct proto_hdr_template *tmpl = expr->exthdr.tmpl;
 	const struct exthdr_desc *desc = expr->exthdr.desc;
 	unsigned int type = expr_exthdr_type(desc, tmpl);
+	enum nft_exthdr_op op = expr->exthdr.op;
 
-	nftnl_udata_put_u32(udbuf, NFTNL_UDATA_EXTHDR_DESC, desc->id);
 	nftnl_udata_put_u32(udbuf, NFTNL_UDATA_EXTHDR_TYPE, type);
+	switch (op) {
+	case NFT_EXTHDR_OP_IPV6:
+		nftnl_udata_put_u32(udbuf, NFTNL_UDATA_EXTHDR_DESC, desc->id);
+		break;
+	case NFT_EXTHDR_OP_TCPOPT:
+	case NFT_EXTHDR_OP_IPV4:
+	case NFT_EXTHDR_OP_SCTP:
+		nftnl_udata_put_u32(udbuf, NFTNL_UDATA_EXTHDR_OP, op);
+		nftnl_udata_put_u32(udbuf, NFTNL_UDATA_EXTHDR_DESC, expr->exthdr.raw_type);
+		break;
+	default:
+		return -1;
+	}
 
 	return 0;
 }
