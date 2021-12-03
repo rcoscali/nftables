@@ -5332,6 +5332,10 @@ ip_hdr_expr		:	IP	ip_hdr_field	close_scope_ip
 			|	IP	OPTION	ip_option_type ip_option_field	close_scope_ip
 			{
 				$$ = ipopt_expr_alloc(&@$, $3, $4);
+				if (!$$) {
+					erec_queue(error(&@1, "unknown ip option type/field"), state->msgs);
+					YYERROR;
+				}
 			}
 			|	IP	OPTION	ip_option_type close_scope_ip
 			{

@@ -78,6 +78,9 @@ struct expr *ipopt_expr_alloc(const struct location *loc, uint8_t type,
 	if (!tmpl)
 		return NULL;
 
+	if (!tmpl->len)
+		return NULL;
+
 	expr = expr_alloc(loc, EXPR_EXTHDR, tmpl->dtype,
 			  BYTEORDER_BIG_ENDIAN, tmpl->len);
 	expr->exthdr.desc   = desc;
