@@ -59,7 +59,7 @@ void __noreturn __netlink_abi_error(const char *file, int line,
 {
 	fprintf(stderr, "E: Contact urgently your Linux kernel vendor. "
 		"Netlink ABI is broken: %s:%d %s\n", file, line, reason);
-	exit(NFT_EXIT_FAILURE);
+	abort();
 }
 
 int netlink_io_error(struct netlink_ctx *ctx, const struct location *loc,
