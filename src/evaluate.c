@@ -2751,19 +2751,22 @@ static int stmt_evaluate_reject_inet_family(struct eval_ctx *ctx,
 		protocol = proto_find_num(base, desc);
 		switch (protocol) {
 		case NFPROTO_IPV4:
+		case __constant_htons(ETH_P_IP):
 			if (stmt->reject.family == NFPROTO_IPV4)
 				break;
 			return stmt_binary_error(ctx, stmt->reject.expr,
 				  &ctx->pctx.protocol[PROTO_BASE_NETWORK_HDR],
 				  "conflicting protocols specified: ip vs ip6");
 		case NFPROTO_IPV6:
+		case __constant_htons(ETH_P_IPV6):
 			if (stmt->reject.family == NFPROTO_IPV6)
 				break;
 			return stmt_binary_error(ctx, stmt->reject.expr,
 				  &ctx->pctx.protocol[PROTO_BASE_NETWORK_HDR],
 				  "conflicting protocols specified: ip vs ip6");
 		default:
-			BUG("unsupported family");
+			return stmt_error(ctx, stmt,
+				  "cannot infer ICMP reject variant to use: explicit value required.\n");
 		}
 		break;
 	}
@@ -2923,10 +2926,12 @@ static int stmt_evaluate_reject_default(struct eval_ctx *ctx,
 		protocol = proto_find_num(base, desc);
 		switch (protocol) {
 		case NFPROTO_IPV4:
+		case __constant_htons(ETH_P_IP):
 			stmt->reject.family = NFPROTO_IPV4;
 			stmt->reject.icmp_code = ICMP_PORT_UNREACH;
 			break;
 		case NFPROTO_IPV6:
+		case __constant_htons(ETH_P_IPV6):
 			stmt->reject.family = NFPROTO_IPV6;
 			stmt->reject.icmp_code = ICMP6_DST_UNREACH_NOPORT;
 			break;
