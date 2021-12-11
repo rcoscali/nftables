@@ -59,7 +59,8 @@ proto_find_upper(const struct proto_desc *base, unsigned int num)
 {
 	unsigned int i;
 
-	for (i = 0; i < array_size(base->protocols); i++) {
+	for (i = 0; i < array_size(base->protocols) && base->protocols[i].desc;
+	     i++) {
 		if (base->protocols[i].num == num)
 			return base->protocols[i].desc;
 	}
@@ -77,7 +78,8 @@ int proto_find_num(const struct proto_desc *base,
 {
 	unsigned int i;
 
-	for (i = 0; i < array_size(base->protocols); i++) {
+	for (i = 0; i < array_size(base->protocols) && base->protocols[i].desc;
+	     i++) {
 		if (base->protocols[i].desc == desc)
 			return base->protocols[i].num;
 	}
@@ -105,7 +107,9 @@ int proto_dev_type(const struct proto_desc *desc, uint16_t *res)
 			*res = dev_proto_desc[i].type;
 			return 0;
 		}
-		for (j = 0; j < array_size(base->protocols); j++) {
+		for (j = 0; j < array_size(base->protocols) &&
+			     base->protocols[j].desc;
+		     j++) {
 			if (base->protocols[j].desc == desc) {
 				*res = dev_proto_desc[i].type;
 				return 0;
