@@ -599,7 +599,7 @@ static int expr_evaluate_exthdr(struct eval_ctx *ctx, struct expr **exprp)
 
 /* dependency supersede.
  *
- * 'inet' is a 'phony' l2 dependency used by NFPROTO_INET to fulfill network
+ * 'inet' is a 'phony' l2 dependency used by NFPROTO_INET to fulfil network
  * header dependency, i.e. ensure that 'ip saddr 1.2.3.4' only sees ip headers.
  *
  * If a match expression that depends on a particular L2 header, e.g. ethernet,
@@ -611,7 +611,7 @@ static int expr_evaluate_exthdr(struct eval_ctx *ctx, struct expr **exprp)
  * Example: inet filter in ip saddr 1.2.3.4 ether saddr a:b:c:d:e:f
  *
  * ip saddr adds meta dependency on ipv4 packets
- * ether saddr adds another dependeny on ethernet frames.
+ * ether saddr adds another dependency on ethernet frames.
  */
 static int meta_iiftype_gen_dependency(struct eval_ctx *ctx,
 				       struct expr *payload, struct stmt **res)
