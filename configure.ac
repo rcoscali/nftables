@@ -9,7 +9,7 @@ AM_INIT_AUTOMAKE([-Wall foreign subdir-objects
 dnl kernel style compile messages
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 AC_ARG_ENABLE([debug],
 	      AS_HELP_STRING([--disable-debug], [Disable debugging symbols]),
@@ -26,7 +26,7 @@ AC_PROG_CC
 AC_PROG_MKDIR_P
 AC_PROG_INSTALL
 AC_PROG_SED
-AM_PROG_LEX
+AC_PROG_LEX([noyywrap])
 AC_PROG_YACC
 
 if test -z "$ac_cv_prog_YACC" -a ! -f "${srcdir}/src/parser_bison.c"
@@ -43,11 +43,9 @@ then
 fi
 
 AM_PROG_AR
-AM_PROG_LIBTOOL
-LT_INIT
+LT_INIT([disable-static])
 AM_PROG_CC_C_O
 AC_EXEEXT
-AC_DISABLE_STATIC
 CHECK_GCC_FVISIBILITY
 
 AS_IF([test "x$enable_man_doc" = "xyes"], [
