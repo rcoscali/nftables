@@ -2,8 +2,6 @@ include $(top_srcdir)/Make_global.am
 
 sbin_PROGRAMS = nft
 
-CLEANFILES = scanner.c parser_bison.c
-
 AM_CPPFLAGS = -I$(top_srcdir)/include
 AM_CPPFLAGS += -DDEFAULT_INCLUDE_PATH="\"${sysconfdir}\"" \
 		${LIBMNL_CFLAGS} ${LIBNFTNL_CFLAGS}
