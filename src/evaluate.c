@@ -3448,6 +3448,11 @@ static int stmt_evaluate_chain(struct eval_ctx *ctx, struct stmt *stmt)
 	return 0;
 }
 
+static int stmt_evaluate_optstrip(struct eval_ctx *ctx, struct stmt *stmt)
+{
+	return expr_evaluate(ctx, &stmt->optstrip.expr);
+}
+
 static int stmt_evaluate_dup(struct eval_ctx *ctx, struct stmt *stmt)
 {
 	int err;
@@ -3857,6 +3862,8 @@ int stmt_evaluate(struct eval_ctx *ctx, struct stmt *stmt)
 		return stmt_evaluate_synproxy(ctx, stmt);
 	case STMT_CHAIN:
 		return stmt_evaluate_chain(ctx, stmt);
+	case STMT_OPTSTRIP:
+		return stmt_evaluate_optstrip(ctx, stmt);
 	default:
 		BUG("unknown statement type %s\n", stmt->ops->name);
 	}

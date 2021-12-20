@@ -1578,6 +1578,12 @@ json_t *synproxy_stmt_json(const struct stmt *stmt, struct output_ctx *octx)
 	return json_pack("{s:o}", "synproxy", root);
 }
 
+json_t *optstrip_stmt_json(const struct stmt *stmt, struct output_ctx *octx)
+{
+	return json_pack("{s:o}", "reset",
+			 expr_print_json(stmt->optstrip.expr, octx));
+}
+
 static json_t *table_print_json_full(struct netlink_ctx *ctx,
 				     struct table *table)
 {

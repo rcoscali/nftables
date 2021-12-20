@@ -886,6 +886,9 @@ int nft_lex(void *, void *, void *);
 %type <val>			tcpopt_field_maxseg	tcpopt_field_mptcp	tcpopt_field_sack	 tcpopt_field_tsopt	tcpopt_field_window
 %type <tcp_kind_field>		tcp_hdr_option_kind_and_field
 
+%type <stmt>			optstrip_stmt
+%destructor { stmt_free($$); }	optstrip_stmt
+
 %type <expr>			boolean_expr
 %destructor { expr_free($$); }	boolean_expr
 %type <val8>			boolean_keys
@@ -2828,6 +2831,7 @@ stmt			:	verdict_stmt
 			|	map_stmt
 			|	synproxy_stmt
 			|	chain_stmt
+			|	optstrip_stmt
 			;
 
 chain_stmt_type		:	JUMP	{ $$ = NFT_JUMP; }
@@ -5513,6 +5517,13 @@ tcp_hdr_expr		:	TCP	tcp_hdr_field
 			{
 				$$ = tcpopt_expr_alloc(&@$, $4, 0);
 				tcpopt_init_raw($$, $4, $6, $8, 0);
+			}
+			;
+
+optstrip_stmt		:	RESET	TCP	OPTION	tcp_hdr_option_type	close_scope_tcp
+			{
+				$$ = optstrip_stmt_alloc(&@$, tcpopt_expr_alloc(&@$,
+										$4, TCPOPT_COMMON_KIND));
 			}
 			;
 

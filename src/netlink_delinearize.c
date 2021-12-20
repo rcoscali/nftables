@@ -697,6 +697,10 @@ static void netlink_parse_exthdr(struct netlink_parse_ctx *ctx,
 
 		stmt = exthdr_stmt_alloc(loc, expr, val);
 		rule_stmt_append(ctx->rule, stmt);
+	} else {
+		struct stmt *stmt = optstrip_stmt_alloc(loc, expr);
+
+		rule_stmt_append(ctx->rule, stmt);
 	}
 }
 
