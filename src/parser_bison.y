@@ -2151,7 +2151,14 @@ flowtable_list_expr	:	flowtable_expr_member
 			|	flowtable_list_expr	COMMA	opt_newline
 			;
 
-flowtable_expr_member	:	STRING
+flowtable_expr_member	:	QUOTED_STRING
+			{
+				$$ = constant_expr_alloc(&@$, &string_type,
+							 BYTEORDER_HOST_ENDIAN,
+							 strlen($1) * BITS_PER_BYTE, $1);
+				xfree($1);
+			}
+			|	STRING
 			{
 				$$ = constant_expr_alloc(&@$, &string_type,
 							 BYTEORDER_HOST_ENDIAN,
