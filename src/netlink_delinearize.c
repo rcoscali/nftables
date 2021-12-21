@@ -2079,14 +2079,10 @@ static bool meta_may_dependency_kill(struct payload_dep_ctx *ctx,
 	case NFPROTO_NETDEV:
 	case NFPROTO_BRIDGE:
 		break;
+	case NFPROTO_IPV4:
+	case NFPROTO_IPV6:
+		return family == nfproto;
 	default:
-		if (family == NFPROTO_IPV4 &&
-		    nfproto != NFPROTO_IPV4)
-			return false;
-		else if (family == NFPROTO_IPV6 &&
-			 nfproto != NFPROTO_IPV6)
-			return false;
-
 		return true;
 	}
 

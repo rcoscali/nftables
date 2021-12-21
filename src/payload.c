@@ -733,13 +733,17 @@ static bool payload_may_dependency_kill(struct payload_dep_ctx *ctx,
 		break;
 	}
 
-	if (expr->payload.base == PROTO_BASE_TRANSPORT_HDR &&
-	    dep->left->payload.base == PROTO_BASE_TRANSPORT_HDR) {
-		if (dep->left->payload.desc == &proto_icmp)
-			return payload_may_dependency_kill_icmp(ctx, expr);
-		if (dep->left->payload.desc == &proto_icmp6)
-			return payload_may_dependency_kill_icmp(ctx, expr);
-	}
+	if (expr->payload.base != PROTO_BASE_TRANSPORT_HDR)
+		return true;
+
+	if (dep->left->payload.base != PROTO_BASE_TRANSPORT_HDR)
+		return true;
+
+	if (dep->left->payload.desc == &proto_icmp)
+		return payload_may_dependency_kill_icmp(ctx, expr);
+
+	if (dep->left->payload.desc == &proto_icmp6)
+		return payload_may_dependency_kill_icmp(ctx, expr);
 
 	return true;
 }
