@@ -1868,7 +1868,6 @@ static void trace_gen_stmts(struct list_head *stmts,
 	const void *hdr;
 	uint32_t hlen;
 	unsigned int n;
-	bool stacked;
 
 	if (!nftnl_trace_is_set(nlt, attr))
 		return;
@@ -1923,6 +1922,8 @@ restart:
 	n = 0;
 next:
 	list_for_each_entry(stmt, &unordered, list) {
+		enum proto_bases b = base;
+
 		rel = stmt->expr;
 		lhs = rel->left;
 
@@ -1935,17 +1936,18 @@ next:
 		list_move_tail(&stmt->list, stmts);
 		n++;
 
-		stacked = payload_is_stacked(desc, rel);
+		if (payload_is_stacked(desc, rel))
+			b--;
 
 		if (lhs->flags & EXPR_F_PROTOCOL &&
 		    pctx->pbase == PROTO_BASE_INVALID) {
-			payload_dependency_store(pctx, stmt, base - stacked);
+			payload_dependency_store(pctx, stmt, b);
 		} else {
 			/* Don't strip 'icmp type' from payload dump. */
 			if (pctx->icmp_type == 0)
 				payload_dependency_kill(pctx, lhs, ctx->family);
 			if (lhs->flags & EXPR_F_PROTOCOL)
-				payload_dependency_store(pctx, stmt, base - stacked);
+				payload_dependency_store(pctx, stmt, b);
 		}
 
 		goto next;

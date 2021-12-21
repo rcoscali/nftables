@@ -1867,7 +1867,6 @@ static void payload_match_expand(struct rule_pp_ctx *ctx,
 	struct stmt *nstmt;
 	struct expr *nexpr = NULL;
 	enum proto_bases base = left->payload.base;
-	bool stacked;
 
 	payload_expr_expand(&list, left, &ctx->pctx);
 
@@ -1893,7 +1892,8 @@ static void payload_match_expand(struct rule_pp_ctx *ctx,
 		assert(left->payload.base);
 		assert(base == left->payload.base);
 
-		stacked = payload_is_stacked(ctx->pctx.protocol[base].desc, nexpr);
+		if (payload_is_stacked(ctx->pctx.protocol[base].desc, nexpr))
+			base--;
 
 		/* Remember the first payload protocol expression to
 		 * kill it later on if made redundant by a higher layer
@@ -1902,12 +1902,12 @@ static void payload_match_expand(struct rule_pp_ctx *ctx,
 		if (ctx->pdctx.pbase == PROTO_BASE_INVALID &&
 		    expr->op == OP_EQ &&
 		    left->flags & EXPR_F_PROTOCOL) {
-			payload_dependency_store(&ctx->pdctx, nstmt, base - stacked);
+			payload_dependency_store(&ctx->pdctx, nstmt, base);
 		} else {
 			payload_dependency_kill(&ctx->pdctx, nexpr->left,
 						ctx->pctx.family);
 			if (expr->op == OP_EQ && left->flags & EXPR_F_PROTOCOL)
-				payload_dependency_store(&ctx->pdctx, nstmt, base - stacked);
+				payload_dependency_store(&ctx->pdctx, nstmt, base);
 		}
 	}
 	list_del(&ctx->stmt->list);
