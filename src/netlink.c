@@ -1939,16 +1939,11 @@ next:
 		if (payload_is_stacked(desc, rel))
 			b--;
 
-		if (lhs->flags & EXPR_F_PROTOCOL &&
-		    pctx->pbase == PROTO_BASE_INVALID) {
+		/* Don't strip 'icmp type' from payload dump. */
+		if (pctx->icmp_type == 0)
+			payload_dependency_kill(pctx, lhs, ctx->family);
+		if (lhs->flags & EXPR_F_PROTOCOL)
 			payload_dependency_store(pctx, stmt, b);
-		} else {
-			/* Don't strip 'icmp type' from payload dump. */
-			if (pctx->icmp_type == 0)
-				payload_dependency_kill(pctx, lhs, ctx->family);
-			if (lhs->flags & EXPR_F_PROTOCOL)
-				payload_dependency_store(pctx, stmt, b);
-		}
 
 		goto next;
 	}

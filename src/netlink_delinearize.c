@@ -1899,16 +1899,10 @@ static void payload_match_expand(struct rule_pp_ctx *ctx,
 		 * kill it later on if made redundant by a higher layer
 		 * payload expression.
 		 */
-		if (ctx->pdctx.pbase == PROTO_BASE_INVALID &&
-		    expr->op == OP_EQ &&
-		    left->flags & EXPR_F_PROTOCOL) {
+		payload_dependency_kill(&ctx->pdctx, nexpr->left,
+					ctx->pctx.family);
+		if (expr->op == OP_EQ && left->flags & EXPR_F_PROTOCOL)
 			payload_dependency_store(&ctx->pdctx, nstmt, base);
-		} else {
-			payload_dependency_kill(&ctx->pdctx, nexpr->left,
-						ctx->pctx.family);
-			if (expr->op == OP_EQ && left->flags & EXPR_F_PROTOCOL)
-				payload_dependency_store(&ctx->pdctx, nstmt, base);
-		}
 	}
 	list_del(&ctx->stmt->list);
 	stmt_free(ctx->stmt);
@@ -2125,10 +2119,7 @@ static void ct_meta_common_postprocess(struct rule_pp_ctx *ctx,
 
 		relational_expr_pctx_update(&ctx->pctx, expr);
 
-		if (ctx->pdctx.pbase == PROTO_BASE_INVALID &&
-		    left->flags & EXPR_F_PROTOCOL) {
-			payload_dependency_store(&ctx->pdctx, ctx->stmt, base);
-		} else if (ctx->pdctx.pbase < PROTO_BASE_TRANSPORT_HDR) {
+		if (ctx->pdctx.pbase < PROTO_BASE_TRANSPORT_HDR) {
 			if (payload_dependency_exists(&ctx->pdctx, base) &&
 			    meta_may_dependency_kill(&ctx->pdctx,
 						     ctx->pctx.family, expr))
