@@ -2057,7 +2057,7 @@ static bool __meta_dependency_may_kill(const struct expr *dep, uint8_t *nfproto)
 }
 
 /* We have seen a protocol key expression that restricts matching at the network
- * base, leave it in place since this is meaninful in bridge, inet and netdev
+ * base, leave it in place since this is meaningful in bridge, inet and netdev
  * families. Exceptions are ICMP and ICMPv6 where this code assumes that can
  * only happen with IPv4 and IPv6.
  */
