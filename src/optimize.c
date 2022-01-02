@@ -413,6 +413,61 @@ static void merge_stmts_vmap(const struct optimize_ctx *ctx,
 	stmt_free(verdict_a);
 }
 
+static void merge_concat_stmts_vmap(const struct optimize_ctx *ctx,
+				    uint32_t from, uint32_t to,
+				    const struct merge *merge)
+{
+	struct stmt *orig_stmt = ctx->stmt_matrix[from][merge->stmt[0]];
+	struct expr *concat_a, *concat_b, *expr, *set;
+	struct stmt *stmt, *stmt_a, *stmt_b, *verdict;
+	uint32_t i, j;
+	int k;
+
+	k = stmt_verdict_find(ctx);
+	assert(k >= 0);
+
+	/* build concatenation of selectors, eg. ifname . ip daddr . tcp dport */
+	concat_a = concat_expr_alloc(&internal_location);
+	for (i = 0; i < merge->num_stmts; i++) {
+		stmt_a = ctx->stmt_matrix[from][merge->stmt[i]];
+		compound_expr_add(concat_a, expr_get(stmt_a->expr->left));
+	}
+
+	/* build set data contenation, eg. { eth0 . 1.1.1.1 . 22 : accept } */
+	set = set_expr_alloc(&internal_location, NULL);
+	set->set_flags |= NFT_SET_ANONYMOUS;
+
+	for (i = from; i <= to; i++) {
+		concat_b = concat_expr_alloc(&internal_location);
+		for (j = 0; j < merge->num_stmts; j++) {
+			stmt_b = ctx->stmt_matrix[i][merge->stmt[j]];
+			expr = stmt_b->expr->right;
+			compound_expr_add(concat_b, expr_get(expr));
+		}
+		verdict = ctx->stmt_matrix[i][k];
+		build_verdict_map(concat_b, verdict, set);
+		expr_free(concat_b);
+	}
+
+	expr = map_expr_alloc(&internal_location, concat_a, set);
+	stmt = verdict_stmt_alloc(&internal_location, expr);
+
+	remove_counter(ctx, from);
+	list_add(&stmt->list, &orig_stmt->list);
+	list_del(&orig_stmt->list);
+	stmt_free(orig_stmt);
+
+	for (i = 1; i < merge->num_stmts; i++) {
+		stmt_a = ctx->stmt_matrix[from][merge->stmt[i]];
+		list_del(&stmt_a->list);
+		stmt_free(stmt_a);
+	}
+
+	verdict = ctx->stmt_matrix[from][k];
+	list_del(&verdict->list);
+	stmt_free(verdict);
+}
+
 static bool stmt_verdict_cmp(const struct optimize_ctx *ctx,
 			     uint32_t from, uint32_t to)
 {
@@ -483,7 +538,7 @@ static void merge_rules(const struct optimize_ctx *ctx,
 		if (same_verdict)
 			merge_concat_stmts(ctx, from, to, merge);
 		else
-			return;
+			merge_concat_stmts_vmap(ctx, from, to, merge);
 	} else {
 		if (same_verdict)
 			merge_stmts(ctx, from, to, merge);
