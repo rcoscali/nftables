@@ -123,6 +123,7 @@ struct nft_ctx {
 	bool			check;
 	struct nft_cache	cache;
 	uint32_t		flags;
+	uint32_t		optimize_flags;
 	struct parser_state	*state;
 	void			*scanner;
 	struct scope		*top_scope;
@@ -223,6 +224,8 @@ int nft_print(struct output_ctx *octx, const char *fmt, ...)
 	__attribute__((format(printf, 2, 3)));
 int nft_gmp_print(struct output_ctx *octx, const char *fmt, ...)
 	__attribute__((format(printf, 2, 0)));
+
+int nft_optimize(struct nft_ctx *nft, struct list_head *cmds);
 
 #define __NFT_OUTPUT_NOTSUPP	UINT_MAX
 

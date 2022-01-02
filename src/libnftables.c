@@ -395,6 +395,18 @@ void nft_ctx_set_dry_run(struct nft_ctx *ctx, bool dry)
 	ctx->check = dry;
 }
 
+EXPORT_SYMBOL(nft_ctx_get_optimize);
+uint32_t nft_ctx_get_optimize(struct nft_ctx *ctx)
+{
+	return ctx->optimize_flags;
+}
+
+EXPORT_SYMBOL(nft_ctx_set_optimize);
+void nft_ctx_set_optimize(struct nft_ctx *ctx, uint32_t flags)
+{
+	ctx->optimize_flags = flags;
+}
+
 EXPORT_SYMBOL(nft_ctx_output_get_flags);
 unsigned int nft_ctx_output_get_flags(struct nft_ctx *ctx)
 {
@@ -626,8 +638,7 @@ retry:
 	return rc;
 }
 
-EXPORT_SYMBOL(nft_run_cmd_from_filename);
-int nft_run_cmd_from_filename(struct nft_ctx *nft, const char *filename)
+static int __nft_run_cmd_from_filename(struct nft_ctx *nft, const char *filename)
 {
 	struct cmd *cmd, *next;
 	int rc, parser_rc;
@@ -638,13 +649,6 @@ int nft_run_cmd_from_filename(struct nft_ctx *nft, const char *filename)
 	if (rc < 0)
 		goto err;
 
-	if (!strcmp(filename, "-"))
-		filename = "/dev/stdin";
-
-	if (!strcmp(filename, "/dev/stdin") &&
-	    !nft_output_json(&nft->output))
-		nft->stdin_buf = stdin_to_buffer();
-
 	rc = -EINVAL;
 	if (nft_output_json(&nft->output))
 		rc = nft_parse_json_filename(nft, filename, &msgs, &cmds);
@@ -652,6 +656,9 @@ int nft_run_cmd_from_filename(struct nft_ctx *nft, const char *filename)
 		rc = nft_parse_bison_filename(nft, filename, &msgs, &cmds);
 
 	parser_rc = rc;
+
+	if (nft->optimize_flags)
+		nft_optimize(nft, &cmds);
 
 	rc = nft_evaluate(nft, &msgs, &cmds);
 	if (rc < 0)
@@ -694,7 +701,51 @@ err:
 	if (rc)
 		nft_cache_release(&nft->cache);
 
+	return rc;
+}
+
+static int nft_run_optimized_file(struct nft_ctx *nft, const char *filename)
+{
+	uint32_t optimize_flags;
+	bool check;
+	int ret;
+
+	check = nft->check;
+	nft->check = true;
+	optimize_flags = nft->optimize_flags;
+	nft->optimize_flags = 0;
+
+	/* First check the original ruleset loads fine as is. */
+	ret = __nft_run_cmd_from_filename(nft, filename);
+	if (ret < 0)
+		return ret;
+
+	nft->check = check;
+	nft->optimize_flags = optimize_flags;
+
+	return __nft_run_cmd_from_filename(nft, filename);
+}
+
+EXPORT_SYMBOL(nft_run_cmd_from_filename);
+int nft_run_cmd_from_filename(struct nft_ctx *nft, const char *filename)
+{
+	int ret;
+
+	if (!strcmp(filename, "-"))
+		filename = "/dev/stdin";
+
+	if (!strcmp(filename, "/dev/stdin") &&
+	    !nft_output_json(&nft->output))
+		nft->stdin_buf = stdin_to_buffer();
+
+	if (nft->optimize_flags) {
+		ret = nft_run_optimized_file(nft, filename);
+		xfree(nft->stdin_buf);
+		return ret;
+	}
+
+	ret = __nft_run_cmd_from_filename(nft, filename);
 	xfree(nft->stdin_buf);
 
-	return rc;
+	return ret;
 }

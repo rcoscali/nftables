@@ -62,6 +62,11 @@ understanding of their meaning. You can get information about options by running
 *--check*::
 	Check commands validity without actually applying the changes.
 
+*-o*::
+*--optimize*::
+	Optimize your ruleset. You can combine this option with '-c' to inspect
+        the proposed optimizations.
+
 .Ruleset list output formatting that modify the output of the list ruleset command:
 
 *-a*::
