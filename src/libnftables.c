@@ -424,13 +424,14 @@ static const struct input_descriptor indesc_cmdline = {
 };
 
 static int nft_parse_bison_buffer(struct nft_ctx *nft, const char *buf,
-				  struct list_head *msgs, struct list_head *cmds)
+				  struct list_head *msgs, struct list_head *cmds,
+				  const struct input_descriptor *indesc)
 {
 	int ret;
 
 	parser_init(nft, nft->state, msgs, cmds, nft->top_scope);
 	nft->scanner = scanner_init(nft->state);
-	scanner_push_buffer(nft->scanner, &indesc_cmdline, buf);
+	scanner_push_buffer(nft->scanner, indesc, buf);
 
 	ret = nft_parse(nft, nft->scanner, nft->state);
 	if (ret != 0 || nft->state->nerrs > 0)
@@ -439,10 +440,41 @@ static int nft_parse_bison_buffer(struct nft_ctx *nft, const char *buf,
 	return 0;
 }
 
+static char *stdin_to_buffer(void)
+{
+	unsigned int bufsiz = 16384, consumed = 0;
+	int numbytes;
+	char *buf;
+
+	buf = xmalloc(bufsiz);
+
+	numbytes = read(STDIN_FILENO, buf, bufsiz);
+	while (numbytes > 0) {
+		consumed += numbytes;
+		if (consumed == bufsiz) {
+			bufsiz *= 2;
+			buf = realloc(buf, bufsiz);
+		}
+		numbytes = read(STDIN_FILENO, buf + consumed, bufsiz - consumed);
+	}
+	buf[consumed] = '\0';
+
+	return buf;
+}
+
+static const struct input_descriptor indesc_stdin = {
+	.type	= INDESC_STDIN,
+	.name	= "/dev/stdin",
+};
+
 static int nft_parse_bison_filename(struct nft_ctx *nft, const char *filename,
 				    struct list_head *msgs, struct list_head *cmds)
 {
 	int ret;
+
+	if (nft->stdin_buf)
+		return nft_parse_bison_buffer(nft, nft->stdin_buf, msgs, cmds,
+					      &indesc_stdin);
 
 	parser_init(nft, nft->state, msgs, cmds, nft->top_scope);
 	nft->scanner = scanner_init(nft->state);
@@ -510,7 +542,8 @@ int nft_run_cmd_from_buffer(struct nft_ctx *nft, const char *buf)
 	if (nft_output_json(&nft->output))
 		rc = nft_parse_json_buffer(nft, nlbuf, &msgs, &cmds);
 	if (rc == -EINVAL)
-		rc = nft_parse_bison_buffer(nft, nlbuf, &msgs, &cmds);
+		rc = nft_parse_bison_buffer(nft, nlbuf, &msgs, &cmds,
+					    &indesc_cmdline);
 
 	parser_rc = rc;
 
@@ -578,7 +611,7 @@ retry:
 	}
 	snprintf(buf + offset, bufsize - offset, "\n");
 
-	rc = nft_parse_bison_buffer(ctx, buf, msgs, &cmds);
+	rc = nft_parse_bison_buffer(ctx, buf, msgs, &cmds, &indesc_cmdline);
 
 	assert(list_empty(&cmds));
 	/* Stash the buffer that contains the variable definitions and zap the
@@ -607,6 +640,10 @@ int nft_run_cmd_from_filename(struct nft_ctx *nft, const char *filename)
 
 	if (!strcmp(filename, "-"))
 		filename = "/dev/stdin";
+
+	if (!strcmp(filename, "/dev/stdin") &&
+	    !nft_output_json(&nft->output))
+		nft->stdin_buf = stdin_to_buffer();
 
 	rc = -EINVAL;
 	if (nft_output_json(&nft->output))
@@ -656,5 +693,8 @@ err:
 		json_print_echo(nft);
 	if (rc)
 		nft_cache_release(&nft->cache);
+
+	xfree(nft->stdin_buf);
+
 	return rc;
 }

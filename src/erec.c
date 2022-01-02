@@ -101,10 +101,11 @@ void print_location(FILE *f, const struct input_descriptor *indesc,
 			iloc = &tmp->location;
 		}
 	}
-	if (indesc->name != NULL)
+	if (indesc->type != INDESC_BUFFER && indesc->name) {
 		fprintf(f, "%s:%u:%u-%u: ", indesc->name,
 			loc->first_line, loc->first_column,
 			loc->last_column);
+	}
 }
 
 const char *line_location(const struct input_descriptor *indesc,
@@ -143,6 +144,11 @@ void erec_print(struct output_ctx *octx, const struct error_record *erec,
 	case INDESC_BUFFER:
 	case INDESC_CLI:
 		line = indesc->data;
+		*strchrnul(line, '\n') = '\0';
+		break;
+	case INDESC_STDIN:
+		line = indesc->data;
+		line += loc->line_offset;
 		*strchrnul(line, '\n') = '\0';
 		break;
 	case INDESC_FILE:

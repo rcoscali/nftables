@@ -1032,7 +1032,7 @@ void scanner_push_buffer(void *scanner, const struct input_descriptor *indesc,
 	new_indesc = xzalloc(sizeof(struct input_descriptor));
 	memcpy(new_indesc, indesc, sizeof(*new_indesc));
 	new_indesc->data = buffer;
-	new_indesc->name = NULL;
+	new_indesc->name = xstrdup(indesc->name);
 	scanner_push_indesc(state, new_indesc);
 
 	b = yy_scan_string(buffer, scanner);

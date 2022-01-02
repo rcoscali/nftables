@@ -128,6 +128,7 @@ struct nft_ctx {
 	struct scope		*top_scope;
 	void			*json_root;
 	json_t			*json_echo;
+	const char		*stdin_buf;
 };
 
 enum nftables_exit_codes {
@@ -175,6 +176,7 @@ enum input_descriptor_types {
 	INDESC_FILE,
 	INDESC_CLI,
 	INDESC_NETLINK,
+	INDESC_STDIN,
 };
 
 /**
