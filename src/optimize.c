@@ -271,6 +271,48 @@ static void merge_stmts(const struct optimize_ctx *ctx,
 	stmt_a->expr->right = set;
 }
 
+static void merge_concat_stmts(const struct optimize_ctx *ctx,
+			       uint32_t from, uint32_t to,
+			       const struct merge *merge)
+{
+	struct expr *concat, *elem, *set;
+	struct stmt *stmt, *stmt_a;
+	uint32_t i, k;
+
+	stmt = ctx->stmt_matrix[from][merge->stmt[0]];
+	/* build concatenation of selectors, eg. ifname . ip daddr . tcp dport */
+	concat = concat_expr_alloc(&internal_location);
+
+	for (k = 0; k < merge->num_stmts; k++) {
+		stmt_a = ctx->stmt_matrix[from][merge->stmt[k]];
+		compound_expr_add(concat, expr_get(stmt_a->expr->left));
+	}
+	expr_free(stmt->expr->left);
+	stmt->expr->left = concat;
+
+	/* build set data contenation, eg. { eth0 . 1.1.1.1 . 22 } */
+	set = set_expr_alloc(&internal_location, NULL);
+	set->set_flags |= NFT_SET_ANONYMOUS;
+
+	for (i = from; i <= to; i++) {
+		concat = concat_expr_alloc(&internal_location);
+		for (k = 0; k < merge->num_stmts; k++) {
+			stmt_a = ctx->stmt_matrix[i][merge->stmt[k]];
+			compound_expr_add(concat, expr_get(stmt_a->expr->right));
+		}
+		elem = set_elem_expr_alloc(&internal_location, concat);
+		compound_expr_add(set, elem);
+	}
+	expr_free(stmt->expr->right);
+	stmt->expr->right = set;
+
+	for (k = 1; k < merge->num_stmts; k++) {
+		stmt_a = ctx->stmt_matrix[from][merge->stmt[k]];
+		list_del(&stmt_a->list);
+		stmt_free(stmt_a);
+	}
+}
+
 static void rule_optimize_print(struct output_ctx *octx,
 				const struct rule *rule)
 {
@@ -312,7 +354,7 @@ static void merge_rules(const struct optimize_ctx *ctx,
 	uint32_t i;
 
 	if (merge->num_stmts > 1) {
-		return;
+		merge_concat_stmts(ctx, from, to, merge);
 	} else {
 		merge_stmts(ctx, from, to, merge);
 	}
