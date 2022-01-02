@@ -300,8 +300,7 @@ struct expr *verdict_expr_alloc(const struct location *loc,
 
 static void symbol_expr_print(const struct expr *expr, struct output_ctx *octx)
 {
-	nft_print(octx, "%s%s", expr->scope != NULL ? "$" : "",
-		  expr->identifier);
+	nft_print(octx, "%s", expr->identifier);
 }
 
 static void symbol_expr_clone(struct expr *new, const struct expr *expr)
