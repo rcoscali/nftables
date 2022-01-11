@@ -3621,6 +3621,7 @@ static int stmt_evaluate_log(struct eval_ctx *ctx, struct stmt *stmt)
 
 static int stmt_evaluate_set(struct eval_ctx *ctx, struct stmt *stmt)
 {
+	struct set *this_set;
 	struct stmt *this;
 
 	expr_set_context(&ctx->ectx, NULL, 0);
@@ -3650,6 +3651,15 @@ static int stmt_evaluate_set(struct eval_ctx *ctx, struct stmt *stmt)
 					  "statement must be stateful");
 	}
 
+	this_set = stmt->set.set->set;
+
+	/* Make sure EVAL flag is set on set definition so that kernel
+	 * picks a set that allows updates from the packet path.
+	 *
+	 * Alternatively we could error out in case 'flags dynamic' was
+	 * not given, but we can repair this here.
+	 */
+	this_set->flags |= NFT_SET_EVAL;
 	return 0;
 }
 
