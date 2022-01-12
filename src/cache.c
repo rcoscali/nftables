@@ -474,7 +474,7 @@ static int list_rule_cb(struct nftnl_rule *nlr, void *data)
 	return 0;
 }
 
-static int rule_cache_init(struct netlink_ctx *ctx, const struct handle *h,
+static int rule_cache_dump(struct netlink_ctx *ctx, const struct handle *h,
 			   const struct nft_cache_filter *filter)
 {
 	struct nftnl_rule_list *rule_cache;
@@ -811,6 +811,29 @@ static int cache_init_tables(struct netlink_ctx *ctx, struct handle *h,
 	return 0;
 }
 
+static int rule_init_cache(struct netlink_ctx *ctx, struct table *table,
+			   const struct nft_cache_filter *filter)
+{
+	struct rule *rule, *nrule;
+	struct chain *chain;
+	int ret;
+
+	ret = rule_cache_dump(ctx, &table->handle, filter);
+
+	list_for_each_entry_safe(rule, nrule, &ctx->list, list) {
+		chain = chain_cache_find(table, rule->handle.chain.name);
+		if (!chain)
+			chain = chain_binding_lookup(table,
+						     rule->handle.chain.name);
+		if (!chain)
+			return -1;
+
+		list_move_tail(&rule->list, &chain->rules);
+	}
+
+	return ret;
+}
+
 static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags,
 			      const struct nft_cache_filter *filter)
 {
@@ -818,9 +841,7 @@ static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags,
 	struct nftnl_chain_list *chain_list = NULL;
 	struct nftnl_set_list *set_list = NULL;
 	struct nftnl_obj_list *obj_list;
-	struct rule *rule, *nrule;
 	struct table *table;
-	struct chain *chain;
 	struct set *set;
 	int ret = 0;
 
@@ -902,19 +923,7 @@ static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags,
 		}
 
 		if (flags & NFT_CACHE_RULE_BIT) {
-			ret = rule_cache_init(ctx, &table->handle, filter);
-			list_for_each_entry_safe(rule, nrule, &ctx->list, list) {
-				chain = chain_cache_find(table, rule->handle.chain.name);
-				if (!chain)
-					chain = chain_binding_lookup(table,
-							rule->handle.chain.name);
-				if (!chain) {
-					ret = -1;
-					goto cache_fails;
-				}
-
-				list_move_tail(&rule->list, &chain->rules);
-			}
+			ret = rule_init_cache(ctx, table, filter);
 			if (ret < 0)
 				goto cache_fails;
 		}
