@@ -478,8 +478,15 @@ static int rule_cache_init(struct netlink_ctx *ctx, const struct handle *h,
 			   const struct nft_cache_filter *filter)
 {
 	struct nftnl_rule_list *rule_cache;
+	const char *table;
+	const char *chain;
 
-	rule_cache = mnl_nft_rule_dump(ctx, h->family, filter);
+	if (filter) {
+		table = filter->list.table;
+		chain = filter->list.chain;
+	}
+
+	rule_cache = mnl_nft_rule_dump(ctx, h->family, table, chain);
 	if (rule_cache == NULL) {
 		if (errno == EINTR)
 			return -1;

@@ -654,7 +654,7 @@ err_free:
 }
 
 struct nftnl_rule_list *mnl_nft_rule_dump(struct netlink_ctx *ctx, int family,
-					  const struct nft_cache_filter *filter)
+					  const char *table, const char *chain)
 {
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nftnl_rule_list *nlr_list;
@@ -662,16 +662,14 @@ struct nftnl_rule_list *mnl_nft_rule_dump(struct netlink_ctx *ctx, int family,
 	struct nlmsghdr *nlh;
 	int ret;
 
-	if (filter && filter->list.table) {
+	if (table) {
 		nlr = nftnl_rule_alloc();
 		if (!nlr)
 			memory_allocation_error();
 
-		nftnl_rule_set_str(nlr, NFTNL_RULE_TABLE,
-				   filter->list.table);
-		if (filter->list.chain)
-			nftnl_rule_set_str(nlr, NFTNL_RULE_CHAIN,
-					   filter->list.chain);
+		nftnl_rule_set_str(nlr, NFTNL_RULE_TABLE, table);
+		if (chain)
+			nftnl_rule_set_str(nlr, NFTNL_RULE_CHAIN, chain);
 	}
 
 	nlr_list = nftnl_rule_list_alloc();
