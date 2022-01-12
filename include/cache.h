@@ -134,4 +134,7 @@ struct nft_cache {
 	uint32_t		flags;
 };
 
+void nft_chain_cache_update(struct netlink_ctx *ctx, struct table *table,
+			    const char *chain);
+
 #endif /* _NFT_CACHE_H_ */

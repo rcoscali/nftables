@@ -218,6 +218,13 @@ static void netlink_parse_chain_verdict(struct netlink_parse_ctx *ctx,
 
 	expr_chain_export(expr->chain, chain_name);
 	chain = chain_binding_lookup(ctx->table, chain_name);
+
+	/* Special case: 'nft list chain x y' needs to pull in implicit chains */
+	if (!chain && !strncmp(chain_name, "__chain", strlen("__chain"))) {
+		nft_chain_cache_update(ctx->nlctx, ctx->table, chain_name);
+		chain = chain_binding_lookup(ctx->table, chain_name);
+	}
+
 	if (chain) {
 		ctx->stmt = chain_stmt_alloc(loc, chain, verdict);
 		expr_free(expr);
@@ -3128,6 +3135,7 @@ struct rule *netlink_delinearize_rule(struct netlink_ctx *ctx,
 	memset(&_ctx, 0, sizeof(_ctx));
 	_ctx.msgs = ctx->msgs;
 	_ctx.debug_mask = ctx->nft->debug_mask;
+	_ctx.nlctx = ctx;
 
 	memset(&h, 0, sizeof(h));
 	h.family = nftnl_rule_get_u32(nlr, NFTNL_RULE_FAMILY);

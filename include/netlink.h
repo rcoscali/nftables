@@ -39,6 +39,7 @@ struct netlink_parse_ctx {
 	struct stmt		*stmt;
 	struct expr		*registers[MAX_REGS + 1];
 	unsigned int		debug_mask;
+	struct netlink_ctx	*nlctx;
 };
 
 struct rule_pp_ctx {

@@ -423,6 +423,21 @@ chain_cache_dump(struct netlink_ctx *ctx,
 	return chain_list;
 }
 
+void nft_chain_cache_update(struct netlink_ctx *ctx, struct table *table,
+			    const char *chain)
+{
+	struct nftnl_chain_list *chain_list;
+
+	chain_list = mnl_nft_chain_dump(ctx, table->handle.family,
+					table->handle.table.name, chain);
+	if (!chain_list)
+		return;
+
+	chain_cache_init(ctx, table, chain_list);
+
+	nftnl_chain_list_free(chain_list);
+}
+
 void chain_cache_add(struct chain *chain, struct table *table)
 {
 	uint32_t hash;
@@ -834,6 +849,22 @@ static int rule_init_cache(struct netlink_ctx *ctx, struct table *table,
 	return ret;
 }
 
+static int implicit_chain_cache(struct netlink_ctx *ctx, struct table *table,
+				const char *chain_name)
+{
+	struct nft_cache_filter filter;
+	struct chain *chain;
+	int ret = 0;
+
+	list_for_each_entry(chain, &table->chain_bindings, cache.list) {
+		filter.list.table = table->handle.table.name;
+		filter.list.chain = chain->handle.chain.name;
+		ret = rule_init_cache(ctx, table, &filter);
+	}
+
+	return ret;
+}
+
 static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags,
 			      const struct nft_cache_filter *filter)
 {
@@ -926,6 +957,12 @@ static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags,
 			ret = rule_init_cache(ctx, table, filter);
 			if (ret < 0)
 				goto cache_fails;
+
+			if (filter && filter->list.table && filter->list.chain) {
+				ret = implicit_chain_cache(ctx, table, filter->list.chain);
+				if (ret < 0)
+					goto cache_fails;
+			}
 		}
 	}
 
