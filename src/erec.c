@@ -111,7 +111,7 @@ void print_location(FILE *f, const struct input_descriptor *indesc,
 const char *line_location(const struct input_descriptor *indesc,
 			  const struct location *loc, char *buf, size_t bufsiz)
 {
-	const char *line;
+	const char *line = NULL;
 	FILE *f;
 
 	f = fopen(indesc->name, "r");

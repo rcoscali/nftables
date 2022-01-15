@@ -493,8 +493,8 @@ static int rule_cache_dump(struct netlink_ctx *ctx, const struct handle *h,
 			   const struct nft_cache_filter *filter)
 {
 	struct nftnl_rule_list *rule_cache;
-	const char *table;
-	const char *chain;
+	const char *table = NULL;
+	const char *chain = NULL;
 
 	if (filter) {
 		table = filter->list.table;

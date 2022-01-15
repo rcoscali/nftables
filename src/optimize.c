@@ -496,7 +496,7 @@ static void rule_optimize_print(struct output_ctx *octx,
 {
 	const struct location *loc = &rule->location;
 	const struct input_descriptor *indesc = loc->indesc;
-	const char *line;
+	const char *line = "";
 	char buf[1024];
 
 	switch (indesc->type) {
