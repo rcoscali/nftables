@@ -631,6 +631,27 @@ bool payload_dependency_exists(const struct payload_dep_ctx *ctx,
 	       (ctx->pbase == base || (base == PROTO_BASE_TRANSPORT_HDR && ctx->pbase == base + 1));
 }
 
+/**
+ * payload_dependency_get - return a payload dependency if available
+ * @ctx: payload dependency context
+ * @base: payload protocol base
+ *
+ * If we have seen a protocol key payload expression for this base, we return
+ * it.
+ */
+struct expr *payload_dependency_get(struct payload_dep_ctx *ctx,
+				    enum proto_bases base)
+{
+	if (ctx->pbase == base)
+		return ctx->pdep->expr;
+
+	if (base == PROTO_BASE_TRANSPORT_HDR &&
+	    ctx->pbase == PROTO_BASE_INNER_HDR)
+		return ctx->pdep->expr;
+
+	return NULL;
+}
+
 void payload_dependency_release(struct payload_dep_ctx *ctx)
 {
 	list_del(&ctx->pdep->list);
@@ -661,7 +682,7 @@ static uint8_t icmp_dep_to_type(enum icmp_hdr_field_type t)
 
 static bool payload_may_dependency_kill_icmp(struct payload_dep_ctx *ctx, struct expr *expr)
 {
-	const struct expr *dep = ctx->pdep->expr;
+	const struct expr *dep = payload_dependency_get(ctx, expr->payload.base);
 	uint8_t icmp_type;
 
 	icmp_type = expr->payload.tmpl->icmp_dep;
@@ -678,9 +699,11 @@ static bool payload_may_dependency_kill_icmp(struct payload_dep_ctx *ctx, struct
 
 static bool payload_may_dependency_kill_ll(struct payload_dep_ctx *ctx, struct expr *expr)
 {
-	const struct expr *dep = ctx->pdep->expr;
+	const struct expr *dep = payload_dependency_get(ctx, expr->payload.base);
 
-	/* Never remove a 'vlan type 0x...' expression, they are never added implicitly */
+	/* Never remove a 'vlan type 0x...' expression, they are never added
+	 * implicitly
+	 */
 	if (dep->left->payload.desc == &proto_vlan)
 		return false;
 
@@ -697,7 +720,7 @@ static bool payload_may_dependency_kill_ll(struct payload_dep_ctx *ctx, struct e
 static bool payload_may_dependency_kill(struct payload_dep_ctx *ctx,
 					unsigned int family, struct expr *expr)
 {
-	struct expr *dep = ctx->pdep->expr;
+	struct expr *dep = payload_dependency_get(ctx, expr->payload.base);
 
 	/* Protocol key payload expression at network base such as 'ip6 nexthdr'
 	 * need to be left in place since it implicitly restricts matching to

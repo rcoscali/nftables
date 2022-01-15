@@ -2067,9 +2067,9 @@ static bool meta_may_dependency_kill(struct payload_dep_ctx *ctx,
 				     const struct expr *expr)
 {
 	uint8_t l4proto, nfproto = NFPROTO_UNSPEC;
-	struct expr *dep = ctx->pdep->expr;
+	struct expr *dep = payload_dependency_get(ctx, PROTO_BASE_NETWORK_HDR);
 
-	if (ctx->pbase != PROTO_BASE_NETWORK_HDR)
+	if (!dep)
 		return true;
 
 	if (__meta_dependency_may_kill(dep, &nfproto))
