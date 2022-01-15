@@ -610,8 +610,7 @@ void payload_dependency_store(struct payload_dep_ctx *ctx,
 	if (ignore_dep)
 		return;
 
-	ctx->pdep  = stmt;
-	ctx->pbase = base + 1;
+	ctx->pdeps[base + 1] = stmt;
 }
 
 /**
@@ -626,9 +625,11 @@ void payload_dependency_store(struct payload_dep_ctx *ctx,
 bool payload_dependency_exists(const struct payload_dep_ctx *ctx,
 			       enum proto_bases base)
 {
-	return ctx->pbase != PROTO_BASE_INVALID &&
-	       ctx->pdep != NULL &&
-	       (ctx->pbase == base || (base == PROTO_BASE_TRANSPORT_HDR && ctx->pbase == base + 1));
+	if (ctx->pdeps[base])
+		return true;
+
+	return	base == PROTO_BASE_TRANSPORT_HDR &&
+		ctx->pdeps[PROTO_BASE_INNER_HDR];
 }
 
 /**
@@ -642,25 +643,35 @@ bool payload_dependency_exists(const struct payload_dep_ctx *ctx,
 struct expr *payload_dependency_get(struct payload_dep_ctx *ctx,
 				    enum proto_bases base)
 {
-	if (ctx->pbase == base)
-		return ctx->pdep->expr;
+	if (ctx->pdeps[base])
+		return ctx->pdeps[base]->expr;
 
 	if (base == PROTO_BASE_TRANSPORT_HDR &&
-	    ctx->pbase == PROTO_BASE_INNER_HDR)
-		return ctx->pdep->expr;
+	    ctx->pdeps[PROTO_BASE_INNER_HDR])
+		return ctx->pdeps[PROTO_BASE_INNER_HDR]->expr;
 
 	return NULL;
 }
 
-void payload_dependency_release(struct payload_dep_ctx *ctx)
+static void __payload_dependency_release(struct payload_dep_ctx *ctx,
+					 enum proto_bases base)
 {
-	list_del(&ctx->pdep->list);
-	stmt_free(ctx->pdep);
+	list_del(&ctx->pdeps[base]->list);
+	stmt_free(ctx->pdeps[base]);
 
-	ctx->pbase = PROTO_BASE_INVALID;
-	if (ctx->pdep == ctx->prev)
+	if (ctx->pdeps[base] == ctx->prev)
 		ctx->prev = NULL;
-	ctx->pdep  = NULL;
+	ctx->pdeps[base] = NULL;
+}
+
+void payload_dependency_release(struct payload_dep_ctx *ctx,
+				enum proto_bases base)
+{
+	if (ctx->pdeps[base])
+		__payload_dependency_release(ctx, base);
+	else if (base == PROTO_BASE_TRANSPORT_HDR &&
+		 ctx->pdeps[PROTO_BASE_INNER_HDR])
+		__payload_dependency_release(ctx, PROTO_BASE_INNER_HDR);
 }
 
 static uint8_t icmp_dep_to_type(enum icmp_hdr_field_type t)
@@ -786,7 +797,7 @@ void payload_dependency_kill(struct payload_dep_ctx *ctx, struct expr *expr,
 {
 	if (payload_dependency_exists(ctx, expr->payload.base) &&
 	    payload_may_dependency_kill(ctx, family, expr))
-		payload_dependency_release(ctx);
+		payload_dependency_release(ctx, expr->payload.base);
 }
 
 void exthdr_dependency_kill(struct payload_dep_ctx *ctx, struct expr *expr,
@@ -795,15 +806,15 @@ void exthdr_dependency_kill(struct payload_dep_ctx *ctx, struct expr *expr,
 	switch (expr->exthdr.op) {
 	case NFT_EXTHDR_OP_TCPOPT:
 		if (payload_dependency_exists(ctx, PROTO_BASE_TRANSPORT_HDR))
-			payload_dependency_release(ctx);
+			payload_dependency_release(ctx, PROTO_BASE_TRANSPORT_HDR);
 		break;
 	case NFT_EXTHDR_OP_IPV6:
 		if (payload_dependency_exists(ctx, PROTO_BASE_NETWORK_HDR))
-			payload_dependency_release(ctx);
+			payload_dependency_release(ctx, PROTO_BASE_NETWORK_HDR);
 		break;
 	case NFT_EXTHDR_OP_IPV4:
 		if (payload_dependency_exists(ctx, PROTO_BASE_NETWORK_HDR))
-			payload_dependency_release(ctx);
+			payload_dependency_release(ctx, PROTO_BASE_NETWORK_HDR);
 		break;
 	default:
 		break;

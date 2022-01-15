@@ -2126,11 +2126,12 @@ static void ct_meta_common_postprocess(struct rule_pp_ctx *ctx,
 
 		relational_expr_pctx_update(&ctx->pctx, expr);
 
-		if (ctx->pdctx.pbase < PROTO_BASE_TRANSPORT_HDR) {
+		if (base < PROTO_BASE_TRANSPORT_HDR) {
 			if (payload_dependency_exists(&ctx->pdctx, base) &&
 			    meta_may_dependency_kill(&ctx->pdctx,
 						     ctx->pctx.family, expr))
-				payload_dependency_release(&ctx->pdctx);
+				payload_dependency_release(&ctx->pdctx, base);
+
 			if (left->flags & EXPR_F_PROTOCOL)
 				payload_dependency_store(&ctx->pdctx, ctx->stmt, base);
 		}
@@ -2660,7 +2661,8 @@ static void stmt_reject_postprocess(struct rule_pp_ctx *rctx)
 		if (stmt->reject.type == NFT_REJECT_TCP_RST &&
 		    payload_dependency_exists(&rctx->pdctx,
 					      PROTO_BASE_TRANSPORT_HDR))
-			payload_dependency_release(&rctx->pdctx);
+			payload_dependency_release(&rctx->pdctx,
+						   PROTO_BASE_TRANSPORT_HDR);
 		break;
 	case NFPROTO_IPV6:
 		stmt->reject.family = rctx->pctx.family;
@@ -2668,7 +2670,8 @@ static void stmt_reject_postprocess(struct rule_pp_ctx *rctx)
 		if (stmt->reject.type == NFT_REJECT_TCP_RST &&
 		    payload_dependency_exists(&rctx->pdctx,
 					      PROTO_BASE_TRANSPORT_HDR))
-			payload_dependency_release(&rctx->pdctx);
+			payload_dependency_release(&rctx->pdctx,
+						   PROTO_BASE_TRANSPORT_HDR);
 		break;
 	case NFPROTO_INET:
 	case NFPROTO_BRIDGE:
@@ -2702,7 +2705,8 @@ static void stmt_reject_postprocess(struct rule_pp_ctx *rctx)
 		}
 
 		if (payload_dependency_exists(&rctx->pdctx, PROTO_BASE_NETWORK_HDR))
-			payload_dependency_release(&rctx->pdctx);
+			payload_dependency_release(&rctx->pdctx,
+						   PROTO_BASE_NETWORK_HDR);
 		break;
 	default:
 		break;
