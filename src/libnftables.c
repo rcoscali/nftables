@@ -128,9 +128,7 @@ int nft_ctx_add_var(struct nft_ctx *ctx, const char *var)
 	if (!separator)
 		return -1;
 
-	tmp = realloc(ctx->vars, (pcount + 1) * sizeof(struct nft_vars));
-	if (!tmp)
-		return -1;
+	tmp = xrealloc(ctx->vars, (pcount + 1) * sizeof(struct nft_vars));
 
 	*separator = '\0';
 	value = separator + 1;
@@ -162,9 +160,7 @@ int nft_ctx_add_include_path(struct nft_ctx *ctx, const char *path)
 	char **tmp;
 	int pcount = ctx->num_include_paths;
 
-	tmp = realloc(ctx->include_paths, (pcount + 1) * sizeof(char *));
-	if (!tmp)
-		return -1;
+	tmp = xrealloc(ctx->include_paths, (pcount + 1) * sizeof(char *));
 
 	ctx->include_paths = tmp;
 
@@ -465,7 +461,7 @@ static char *stdin_to_buffer(void)
 		consumed += numbytes;
 		if (consumed == bufsiz) {
 			bufsiz *= 2;
-			buf = realloc(buf, bufsiz);
+			buf = xrealloc(buf, bufsiz);
 		}
 		numbytes = read(STDIN_FILENO, buf + consumed, bufsiz - consumed);
 	}
