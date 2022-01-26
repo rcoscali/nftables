@@ -40,6 +40,10 @@ static bool __expr_cmp(const struct expr *expr_a, const struct expr *expr_b)
 
 	switch (expr_a->etype) {
 	case EXPR_PAYLOAD:
+		if (expr_a->payload.base != expr_b->payload.base)
+			return false;
+		if (expr_a->payload.offset != expr_b->payload.offset)
+			return false;
 		if (expr_a->payload.desc != expr_b->payload.desc)
 			return false;
 		if (expr_a->payload.tmpl != expr_b->payload.tmpl)
