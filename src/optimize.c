@@ -33,6 +33,57 @@ struct optimize_ctx {
 	uint32_t num_rules;
 };
 
+static bool __expr_cmp(const struct expr *expr_a, const struct expr *expr_b)
+{
+	if (expr_a->etype != expr_b->etype)
+		return false;
+
+	switch (expr_a->etype) {
+	case EXPR_PAYLOAD:
+		if (expr_a->payload.desc != expr_b->payload.desc)
+			return false;
+		if (expr_a->payload.tmpl != expr_b->payload.tmpl)
+			return false;
+		break;
+	case EXPR_EXTHDR:
+		if (expr_a->exthdr.desc != expr_b->exthdr.desc)
+			return false;
+		if (expr_a->exthdr.tmpl != expr_b->exthdr.tmpl)
+			return false;
+		break;
+	case EXPR_META:
+		if (expr_a->meta.key != expr_b->meta.key)
+			return false;
+		if (expr_a->meta.base != expr_b->meta.base)
+			return false;
+		break;
+	case EXPR_CT:
+		if (expr_a->ct.key != expr_b->ct.key)
+			return false;
+		if (expr_a->ct.base != expr_b->ct.base)
+			return false;
+		if (expr_a->ct.direction != expr_b->ct.direction)
+			return false;
+		if (expr_a->ct.nfproto != expr_b->ct.nfproto)
+			return false;
+		break;
+	case EXPR_RT:
+		if (expr_a->rt.key != expr_b->rt.key)
+			return false;
+		break;
+	case EXPR_SOCKET:
+		if (expr_a->socket.key != expr_b->socket.key)
+			return false;
+		if (expr_a->socket.level != expr_b->socket.level)
+			return false;
+		break;
+	default:
+		return false;
+	}
+
+	return true;
+}
+
 static bool __stmt_type_eq(const struct stmt *stmt_a, const struct stmt *stmt_b)
 {
 	struct expr *expr_a, *expr_b;
@@ -45,52 +96,7 @@ static bool __stmt_type_eq(const struct stmt *stmt_a, const struct stmt *stmt_b)
 		expr_a = stmt_a->expr;
 		expr_b = stmt_b->expr;
 
-		if (expr_a->left->etype != expr_b->left->etype)
-			return false;
-
-		switch (expr_a->left->etype) {
-		case EXPR_PAYLOAD:
-			if (expr_a->left->payload.desc != expr_b->left->payload.desc)
-				return false;
-			if (expr_a->left->payload.tmpl != expr_b->left->payload.tmpl)
-				return false;
-			break;
-		case EXPR_EXTHDR:
-			if (expr_a->left->exthdr.desc != expr_b->left->exthdr.desc)
-				return false;
-			if (expr_a->left->exthdr.tmpl != expr_b->left->exthdr.tmpl)
-				return false;
-			break;
-		case EXPR_META:
-			if (expr_a->left->meta.key != expr_b->left->meta.key)
-				return false;
-			if (expr_a->left->meta.base != expr_b->left->meta.base)
-				return false;
-			break;
-		case EXPR_CT:
-			if (expr_a->left->ct.key != expr_b->left->ct.key)
-				return false;
-			if (expr_a->left->ct.base != expr_b->left->ct.base)
-				return false;
-			if (expr_a->left->ct.direction != expr_b->left->ct.direction)
-				return false;
-			if (expr_a->left->ct.nfproto != expr_b->left->ct.nfproto)
-				return false;
-			break;
-		case EXPR_RT:
-			if (expr_a->left->rt.key != expr_b->left->rt.key)
-				return false;
-			break;
-		case EXPR_SOCKET:
-			if (expr_a->left->socket.key != expr_b->left->socket.key)
-				return false;
-			if (expr_a->left->socket.level != expr_b->left->socket.level)
-				return false;
-			break;
-		default:
-			return false;
-		}
-		break;
+		return __expr_cmp(expr_a->left, expr_b->left);
 	case STMT_COUNTER:
 	case STMT_NOTRACK:
 		break;
