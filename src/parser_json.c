@@ -1903,6 +1903,28 @@ out_err:
 	return NULL;
 }
 
+static struct stmt *json_parse_flow_offload_stmt(struct json_ctx *ctx,
+						 const char *key, json_t *value)
+{
+	const char *opstr, *flowtable;
+
+	if (json_unpack_err(ctx, value, "{s:s, s:s}",
+			    "op", &opstr, "flowtable", &flowtable))
+		return NULL;
+
+	if (strcmp(opstr, "add")) {
+		json_error(ctx, "Unknown flow offload statement op '%s'.", opstr);
+		return NULL;
+	}
+
+	if (flowtable[0] != '@') {
+		json_error(ctx, "Illegal flowtable reference in flow offload statement.");
+		return NULL;
+	}
+
+	return flow_offload_stmt_alloc(int_loc, xstrdup(flowtable + 1));
+}
+
 static struct stmt *json_parse_notrack_stmt(struct json_ctx *ctx,
 					const char *key, json_t *value)
 {
@@ -2647,6 +2669,7 @@ static struct stmt *json_parse_stmt(struct json_ctx *ctx, json_t *root)
 		{ "mangle", json_parse_mangle_stmt },
 		{ "quota", json_parse_quota_stmt },
 		{ "limit", json_parse_limit_stmt },
+		{ "flow", json_parse_flow_offload_stmt },
 		{ "fwd", json_parse_fwd_stmt },
 		{ "notrack", json_parse_notrack_stmt },
 		{ "dup", json_parse_dup_stmt },
