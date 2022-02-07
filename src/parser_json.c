@@ -3125,7 +3125,9 @@ static struct expr *json_parse_flowtable_devs(struct json_ctx *ctx,
 	size_t index;
 
 	if (!json_unpack(root, "s", &dev)) {
-		tmp = symbol_expr_alloc(int_loc, SYMBOL_VALUE, NULL, dev);
+		tmp = constant_expr_alloc(int_loc, &string_type,
+					  BYTEORDER_HOST_ENDIAN,
+					  strlen(dev) * BITS_PER_BYTE, dev);
 		compound_expr_add(expr, tmp);
 		return expr;
 	}
@@ -3141,7 +3143,9 @@ static struct expr *json_parse_flowtable_devs(struct json_ctx *ctx,
 			expr_free(expr);
 			return NULL;
 		}
-		tmp = symbol_expr_alloc(int_loc, SYMBOL_VALUE, NULL, dev);
+		tmp = constant_expr_alloc(int_loc, &string_type,
+					  BYTEORDER_HOST_ENDIAN,
+					  strlen(dev) * BITS_PER_BYTE, dev);
 		compound_expr_add(expr, tmp);
 	}
 	return expr;
