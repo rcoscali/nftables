@@ -3158,7 +3158,7 @@ static struct cmd *json_parse_cmd_add_flowtable(struct json_ctx *ctx,
 	const char *family, *hook, *hookstr;
 	struct flowtable *flowtable;
 	struct handle h = { 0 };
-	json_t *devs;
+	json_t *devs = NULL;
 	int prio;
 
 	if (json_unpack_err(ctx, root, "{s:s, s:s}",
@@ -3187,13 +3187,14 @@ static struct cmd *json_parse_cmd_add_flowtable(struct json_ctx *ctx,
 	if (op == CMD_DELETE || op == CMD_LIST)
 		return cmd_alloc(op, cmd_obj, &h, int_loc, NULL);
 
-	if (json_unpack_err(ctx, root, "{s:s, s:I, s:o}",
+	if (json_unpack_err(ctx, root, "{s:s, s:I}",
 			    "hook", &hook,
-			    "prio", &prio,
-			    "dev", &devs)) {
+			    "prio", &prio)) {
 		handle_free(&h);
 		return NULL;
 	}
+
+	json_unpack(root, "{s:o}", &devs);
 
 	hookstr = chain_hookname_lookup(hook);
 	if (!hookstr) {
@@ -3209,12 +3210,14 @@ static struct cmd *json_parse_cmd_add_flowtable(struct json_ctx *ctx,
 				    BYTEORDER_HOST_ENDIAN,
 				    sizeof(int) * BITS_PER_BYTE, &prio);
 
-	flowtable->dev_expr = json_parse_flowtable_devs(ctx, devs);
-	if (!flowtable->dev_expr) {
-		json_error(ctx, "Invalid flowtable dev.");
-		flowtable_free(flowtable);
-		handle_free(&h);
-		return NULL;
+	if (devs) {
+		flowtable->dev_expr = json_parse_flowtable_devs(ctx, devs);
+		if (!flowtable->dev_expr) {
+			json_error(ctx, "Invalid flowtable dev.");
+			flowtable_free(flowtable);
+			handle_free(&h);
+			return NULL;
+		}
 	}
 	return cmd_alloc(op, cmd_obj, &h, int_loc, flowtable);
 }
