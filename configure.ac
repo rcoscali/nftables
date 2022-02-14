@@ -145,6 +145,7 @@ AC_CONFIG_FILES([					\
 		files/osf/Makefile			\
 		doc/Makefile				\
 		py/Makefile				\
+		examples/Makefile			\
 		])
 AC_OUTPUT
 
