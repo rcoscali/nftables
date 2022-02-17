@@ -135,7 +135,8 @@ struct nftnl_set_elem *alloc_nftnl_setelem(const struct expr *set,
 	default:
 		__netlink_gen_data(key, &nld, false);
 		nftnl_set_elem_set(nlse, NFTNL_SET_ELEM_KEY, &nld.value, nld.len);
-		if (set->set_flags & NFT_SET_INTERVAL && key->field_count > 1) {
+		if (set->set_flags & NFT_SET_INTERVAL &&
+		    key->etype == EXPR_CONCAT && key->field_count > 1) {
 			key->flags |= EXPR_F_INTERVAL_END;
 			__netlink_gen_data(key, &nld, false);
 			key->flags &= ~EXPR_F_INTERVAL_END;
