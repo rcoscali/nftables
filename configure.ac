@@ -1,5 +1,5 @@
-AC_INIT([nftables], [1.0.1], [netfilter-devel@vger.kernel.org])
-AC_DEFINE([RELEASE_NAME], ["Fearless Fosdick #3"], [Release name])
+AC_INIT([nftables], [1.0.2], [netfilter-devel@vger.kernel.org])
+AC_DEFINE([RELEASE_NAME], ["Lester Gooch"], [Release name])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
