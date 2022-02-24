@@ -91,7 +91,7 @@ libparser_la_CFLAGS = ${AM_CFLAGS} \
 
 libnftables_la_LIBADD = ${LIBMNL_LIBS} ${LIBNFTNL_LIBS} libparser.la
 libnftables_la_LDFLAGS = -version-info ${libnftables_LIBVERSION} \
-			 --version-script=$(srcdir)/libnftables.map
+			 -Wl,--version-script=$(srcdir)/libnftables.map
 
 if BUILD_MINIGMP
 noinst_LTLIBRARIES += libminigmp.la
