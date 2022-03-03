@@ -435,18 +435,22 @@ static void build_verdict_map(struct expr *expr, struct stmt *verdict, struct ex
 {
 	struct expr *item, *elem, *mapping;
 
-	if (expr->etype == EXPR_LIST) {
+	switch (expr->etype) {
+	case EXPR_LIST:
+	case EXPR_SET:
 		list_for_each_entry(item, &expr->expressions, list) {
 			elem = set_elem_expr_alloc(&internal_location, expr_get(item));
 			mapping = mapping_expr_alloc(&internal_location, elem,
 						     expr_get(verdict->expr));
 			compound_expr_add(set, mapping);
 		}
-	} else {
+		break;
+	default:
 		elem = set_elem_expr_alloc(&internal_location, expr_get(expr));
 		mapping = mapping_expr_alloc(&internal_location, elem,
 					     expr_get(verdict->expr));
 		compound_expr_add(set, mapping);
+		break;
 	}
 }
 
