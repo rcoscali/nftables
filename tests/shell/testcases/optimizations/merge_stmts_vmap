@@ -10,6 +10,7 @@ RULESET="table ip x {
 	chain z {
 		tcp dport { 1 } accept
 		tcp dport 2-3 drop
+		tcp dport 4 accept
 	}
 }"
 

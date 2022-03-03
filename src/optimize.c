@@ -437,7 +437,6 @@ static void build_verdict_map(struct expr *expr, struct stmt *verdict, struct ex
 
 	switch (expr->etype) {
 	case EXPR_LIST:
-	case EXPR_SET:
 		list_for_each_entry(item, &expr->expressions, list) {
 			elem = set_elem_expr_alloc(&internal_location, expr_get(item));
 			mapping = mapping_expr_alloc(&internal_location, elem,
@@ -445,11 +444,26 @@ static void build_verdict_map(struct expr *expr, struct stmt *verdict, struct ex
 			compound_expr_add(set, mapping);
 		}
 		break;
-	default:
+	case EXPR_SET:
+		list_for_each_entry(item, &expr->expressions, list) {
+			elem = set_elem_expr_alloc(&internal_location, expr_get(item->key));
+			mapping = mapping_expr_alloc(&internal_location, elem,
+						     expr_get(verdict->expr));
+			compound_expr_add(set, mapping);
+		}
+		break;
+	case EXPR_PREFIX:
+	case EXPR_RANGE:
+	case EXPR_VALUE:
+	case EXPR_SYMBOL:
+	case EXPR_CONCAT:
 		elem = set_elem_expr_alloc(&internal_location, expr_get(expr));
 		mapping = mapping_expr_alloc(&internal_location, elem,
 					     expr_get(verdict->expr));
 		compound_expr_add(set, mapping);
+		break;
+	default:
+		assert(0);
 		break;
 	}
 }

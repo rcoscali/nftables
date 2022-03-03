@@ -4,6 +4,6 @@ table ip x {
 	}
 
 	chain z {
-		tcp dport vmap { 1 : accept, 2-3 : drop }
+		tcp dport vmap { 1 : accept, 2-3 : drop, 4 : accept }
 	}
 }
