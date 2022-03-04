@@ -153,8 +153,16 @@ static bool __stmt_type_eq(const struct stmt *stmt_a, const struct stmt *stmt_b)
 		    stmt_a->log.qthreshold != stmt_b->log.qthreshold ||
 		    stmt_a->log.level != stmt_b->log.level ||
 		    stmt_a->log.logflags != stmt_b->log.logflags ||
-		    stmt_a->log.flags != stmt_b->log.flags ||
-		    stmt_a->log.prefix->etype != EXPR_VALUE ||
+		    stmt_a->log.flags != stmt_b->log.flags)
+			return false;
+
+		if (!!stmt_a->log.prefix ^ !!stmt_b->log.prefix)
+			return false;
+
+		if (!stmt_a->log.prefix)
+			return true;
+
+		if (stmt_a->log.prefix->etype != EXPR_VALUE ||
 		    stmt_b->log.prefix->etype != EXPR_VALUE ||
 		    mpz_cmp(stmt_a->log.prefix->value, stmt_b->log.prefix->value))
 			return false;
@@ -265,7 +273,8 @@ static int rule_collect_stmts(struct optimize_ctx *ctx, struct rule *rule)
 			break;
 		case STMT_LOG:
 			memcpy(&clone->log, &stmt->log, sizeof(clone->log));
-			clone->log.prefix = expr_get(stmt->log.prefix);
+			if (stmt->log.prefix)
+				clone->log.prefix = expr_get(stmt->log.prefix);
 			break;
 		default:
 			break;

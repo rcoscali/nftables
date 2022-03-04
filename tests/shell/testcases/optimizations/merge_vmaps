@@ -19,6 +19,7 @@ RULESET="table ip x {
 		}
 		meta l4proto tcp goto filter_in_tcp
 		meta l4proto udp goto filter_in_udp
+		log
 	}
 }"
 
