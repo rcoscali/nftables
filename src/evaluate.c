@@ -3425,6 +3425,7 @@ static int stmt_evaluate_chain(struct eval_ctx *ctx, struct stmt *stmt)
 			struct eval_ctx rule_ctx = {
 				.nft	= ctx->nft,
 				.msgs	= ctx->msgs,
+				.cmd	= ctx->cmd,
 			};
 			struct handle h2 = {};
 
