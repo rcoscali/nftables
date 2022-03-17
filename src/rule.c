@@ -758,6 +758,9 @@ struct chain *chain_lookup_fuzzy(const struct handle *h,
 	struct table *table;
 	struct chain *chain;
 
+	if (!h->chain.name)
+		return NULL;
+
 	string_misspell_init(&st);
 
 	list_for_each_entry(table, &cache->table_cache.list, cache.list) {
