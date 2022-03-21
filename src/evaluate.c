@@ -1513,6 +1513,20 @@ static int expr_evaluate_set(struct eval_ctx *ctx, struct expr **expr)
 }
 
 static int binop_transfer(struct eval_ctx *ctx, struct expr **expr);
+
+static void map_set_concat_info(struct expr *map)
+{
+	map->mappings->set->flags |= map->mappings->set->init->set_flags;
+
+	if (map->mappings->set->flags & NFT_SET_INTERVAL &&
+	    map->map->etype == EXPR_CONCAT) {
+		memcpy(&map->mappings->set->desc.field_len, &map->map->field_len,
+		       sizeof(map->mappings->set->desc.field_len));
+		map->mappings->set->desc.field_count = map->map->field_count;
+		map->mappings->flags |= NFT_SET_CONCAT;
+	}
+}
+
 static int expr_evaluate_map(struct eval_ctx *ctx, struct expr **expr)
 {
 	struct expr_ctx ectx = ctx->ectx;
@@ -1580,15 +1594,8 @@ static int expr_evaluate_map(struct eval_ctx *ctx, struct expr **expr)
 		ctx->set->key->len = ctx->ectx.len;
 		ctx->set = NULL;
 		map = *expr;
-		map->mappings->set->flags |= map->mappings->set->init->set_flags;
 
-		if (map->mappings->set->flags & NFT_SET_INTERVAL &&
-		    map->map->etype == EXPR_CONCAT) {
-			memcpy(&map->mappings->set->desc.field_len, &map->map->field_len,
-			       sizeof(map->mappings->set->desc.field_len));
-			map->mappings->set->desc.field_count = map->map->field_count;
-			map->mappings->flags |= NFT_SET_CONCAT;
-		}
+		map_set_concat_info(map);
 		break;
 	case EXPR_SYMBOL:
 		if (expr_evaluate(ctx, &map->mappings) < 0)
@@ -3751,8 +3758,7 @@ static int stmt_evaluate_objref_map(struct eval_ctx *ctx, struct stmt *stmt)
 			return -1;
 		ctx->set = NULL;
 
-		map->mappings->set->flags |=
-			map->mappings->set->init->set_flags;
+		map_set_concat_info(map);
 		/* fall through */
 	case EXPR_SYMBOL:
 		if (expr_evaluate(ctx, &map->mappings) < 0)
