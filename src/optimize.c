@@ -40,9 +40,6 @@ static bool __expr_cmp(const struct expr *expr_a, const struct expr *expr_b)
 
 	switch (expr_a->etype) {
 	case EXPR_PAYLOAD:
-		/* disable until concatenation with integer works. */
-		if (expr_a->payload.is_raw || expr_b->payload.is_raw)
-			return false;
 		if (expr_a->payload.base != expr_b->payload.base)
 			return false;
 		if (expr_a->payload.offset != expr_b->payload.offset)
