@@ -1093,9 +1093,7 @@ static void set_key_expression(struct netlink_ctx *ctx,
 {
 	struct nftnl_udata *nest1, *nest2;
 
-	if (expr->flags & EXPR_F_CONSTANT ||
-	    set_is_anonymous(set_flags) ||
-	    !expr_ops(expr)->build_udata)
+	if (!expr_ops(expr)->build_udata)
 		return;
 
 	nest1 = nftnl_udata_nest_start(udbuf, type);

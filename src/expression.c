@@ -18,6 +18,7 @@
 #include <expression.h>
 #include <statement.h>
 #include <datatype.h>
+#include <netlink.h>
 #include <rule.h>
 #include <gmputil.h>
 #include <utils.h>
@@ -950,7 +951,7 @@ static struct expr *concat_expr_parse_udata(const struct nftnl_udata *attr)
 	const struct nftnl_udata *ud[NFTNL_UDATA_SET_KEY_CONCAT_NEST_MAX] = {};
 	const struct datatype *dtype;
 	struct expr *concat_expr;
-	uint32_t dt = 0;
+	uint32_t dt = 0, len = 0;
 	unsigned int i;
 	int err;
 
@@ -991,6 +992,7 @@ static struct expr *concat_expr_parse_udata(const struct nftnl_udata *attr)
 
 		dt = concat_subtype_add(dt, expr->dtype->type);
 		compound_expr_add(concat_expr, expr);
+		len += netlink_padded_len(expr->len);
 	}
 
 	dtype = concat_type_alloc(dt);
@@ -998,7 +1000,7 @@ static struct expr *concat_expr_parse_udata(const struct nftnl_udata *attr)
 		goto err_free;
 
 	concat_expr->dtype = datatype_get(dtype);
-	concat_expr->len = dtype->size;
+	concat_expr->len = len;
 
 	return concat_expr;
 

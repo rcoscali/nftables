@@ -1105,17 +1105,25 @@ static struct expr *netlink_parse_interval_elem(const struct set *set,
 	return range_expr_to_prefix(range);
 }
 
-static struct expr *concat_elem_expr(struct expr *expr,
+static struct expr *concat_elem_expr(struct expr *key,
 				     const struct datatype *dtype,
 				     struct expr *data, int *off)
 {
 	const struct datatype *subtype;
+	struct expr *expr;
 
-	subtype = concat_subtype_lookup(dtype->type, --(*off));
-
-	expr = constant_expr_splice(data, subtype->size);
-	expr->dtype = subtype;
-	expr->byteorder = subtype->byteorder;
+	if (key) {
+		(*off)--;
+		expr = constant_expr_splice(data, key->len);
+		expr->dtype = datatype_get(key->dtype);
+		expr->byteorder = key->byteorder;
+		expr->len = key->len;
+	} else {
+		subtype = concat_subtype_lookup(dtype->type, --(*off));
+		expr = constant_expr_splice(data, subtype->size);
+		expr->dtype = subtype;
+		expr->byteorder = subtype->byteorder;
+	}
 
 	if (expr->byteorder == BYTEORDER_HOST_ENDIAN)
 		mpz_switch_byteorder(expr->value, expr->len / BITS_PER_BYTE);
@@ -1133,13 +1141,18 @@ static struct expr *netlink_parse_concat_elem_key(const struct set *set,
 						  struct expr *data)
 {
 	const struct datatype *dtype = set->key->dtype;
-	struct expr *concat, *expr;
+	struct expr *concat, *expr, *n = NULL;
 	int off = dtype->subtypes;
+
+	if (set->key->etype == EXPR_CONCAT)
+		n = list_first_entry(&set->key->expressions, struct expr, list);
 
 	concat = concat_expr_alloc(&data->location);
 	while (off > 0) {
-		expr = concat_elem_expr(expr, dtype, data, &off);
+		expr = concat_elem_expr(n, dtype, data, &off);
 		compound_expr_add(concat, expr);
+		if (set->key->etype == EXPR_CONCAT)
+			n = list_next_entry(n, list);
 	}
 
 	expr_free(data);
@@ -1159,7 +1172,7 @@ static struct expr *netlink_parse_concat_elem(const struct set *set,
 
 	concat = concat_expr_alloc(&data->location);
 	while (off > 0) {
-		expr = concat_elem_expr(expr, dtype, data, &off);
+		expr = concat_elem_expr(NULL, dtype, data, &off);
 		list_add_tail(&expr->list, &expressions);
 	}
 
@@ -1171,7 +1184,7 @@ static struct expr *netlink_parse_concat_elem(const struct set *set,
 		while (off > 0) {
 			left = list_first_entry(&expressions, struct expr, list);
 
-			expr = concat_elem_expr(expr, dtype, data, &off);
+			expr = concat_elem_expr(NULL, dtype, data, &off);
 			list_del(&left->list);
 
 			range = range_expr_alloc(&data->location, left, expr);

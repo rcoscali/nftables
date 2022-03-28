@@ -120,6 +120,7 @@ struct expr_ctx {
 	enum byteorder		byteorder;
 	unsigned int		len;
 	unsigned int		maxval;
+	const struct expr	*key;
 };
 
 static inline void __expr_set_context(struct expr_ctx *ctx,
@@ -131,6 +132,7 @@ static inline void __expr_set_context(struct expr_ctx *ctx,
 	ctx->byteorder	= byteorder;
 	ctx->len	= len;
 	ctx->maxval	= maxval;
+	ctx->key	= NULL;
 }
 
 static inline void expr_set_context(struct expr_ctx *ctx,

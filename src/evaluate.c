@@ -1246,7 +1246,15 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 	uint32_t type = dtype ? dtype->type : 0, ntype = 0;
 	int off = dtype ? dtype->subtypes : 0;
 	unsigned int flags = EXPR_F_CONSTANT | EXPR_F_SINGLETON;
-	struct expr *i, *next;
+	struct expr *i, *next, *key = NULL;
+	const struct expr *key_ctx = NULL;
+	uint32_t size = 0;
+
+	if (ctx->ectx.key && ctx->ectx.key->etype == EXPR_CONCAT) {
+		key_ctx = ctx->ectx.key;
+		assert(!list_empty(&ctx->ectx.key->expressions));
+		key = list_first_entry(&ctx->ectx.key->expressions, struct expr, list);
+	}
 
 	list_for_each_entry_safe(i, next, &(*expr)->expressions, list) {
 		unsigned dsize_bytes;
@@ -1263,15 +1271,30 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 						 "expecting %s",
 						 dtype->desc);
 
-		if (dtype == NULL)
+		if (key) {
+			tmp = key->dtype;
+			off--;
+		} else if (dtype == NULL) {
 			tmp = datatype_lookup(TYPE_INVALID);
-		else
+		} else {
 			tmp = concat_subtype_lookup(type, --off);
+		}
+
 		expr_set_context(&ctx->ectx, tmp, tmp->size);
 
 		if (list_member_evaluate(ctx, &i) < 0)
 			return -1;
 		flags &= i->flags;
+
+		if (!key && i->dtype->type == TYPE_INTEGER) {
+			struct datatype *clone;
+
+			clone = dtype_clone(i->dtype);
+			clone->size = i->len;
+			clone->byteorder = i->byteorder;
+			clone->refcnt = 1;
+			i->dtype = clone;
+		}
 
 		if (dtype == NULL && i->dtype->size == 0)
 			return expr_binary_error(ctx->msgs, i, *expr,
@@ -1284,11 +1307,14 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 
 		dsize_bytes = div_round_up(i->dtype->size, BITS_PER_BYTE);
 		(*expr)->field_len[(*expr)->field_count++] = dsize_bytes;
+		size += netlink_padded_len(i->dtype->size);
+		if (key)
+			key = list_next_entry(key, list);
 	}
 
 	(*expr)->flags |= flags;
 	datatype_set(*expr, concat_type_alloc(ntype));
-	(*expr)->len   = (*expr)->dtype->size;
+	(*expr)->len   = size;
 
 	if (off > 0)
 		return expr_error(ctx->msgs, *expr,
@@ -1297,6 +1323,10 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 				  dtype->desc, (*expr)->dtype->desc);
 
 	expr_set_context(&ctx->ectx, (*expr)->dtype, (*expr)->len);
+	if (!key_ctx)
+		ctx->ectx.key = *expr;
+	else
+		ctx->ectx.key = key_ctx;
 
 	return 0;
 }
@@ -1390,6 +1420,7 @@ static int expr_evaluate_set_elem(struct eval_ctx *ctx, struct expr **expr)
 
 		key = ctx->set->key;
 		__expr_set_context(&ctx->ectx, key->dtype, key->byteorder, key->len, 0);
+		ctx->ectx.key = key;
 	}
 
 	if (expr_evaluate(ctx, &elem->key) < 0)
@@ -1563,14 +1594,21 @@ static int expr_evaluate_map(struct eval_ctx *ctx, struct expr **expr)
 
 	switch (map->mappings->etype) {
 	case EXPR_SET:
-		key = constant_expr_alloc(&map->location,
-					  ctx->ectx.dtype,
-					  ctx->ectx.byteorder,
-					  ctx->ectx.len, NULL);
+		if (ctx->ectx.key && ctx->ectx.key->etype == EXPR_CONCAT) {
+			key = expr_clone(ctx->ectx.key);
+		} else {
+			key = constant_expr_alloc(&map->location,
+						  ctx->ectx.dtype,
+						  ctx->ectx.byteorder,
+						  ctx->ectx.len, NULL);
+		}
 
 		dtype = set_datatype_alloc(ectx.dtype, ectx.byteorder);
-		data = constant_expr_alloc(&netlink_location, dtype,
-					   dtype->byteorder, ectx.len, NULL);
+		if (dtype->type == TYPE_VERDICT)
+			data = verdict_expr_alloc(&netlink_location, 0, NULL);
+		else
+			data = constant_expr_alloc(&netlink_location, dtype,
+						   dtype->byteorder, ectx.len, NULL);
 
 		mappings = implicit_set_declaration(ctx, "__map%d",
 						    key, data,
@@ -3920,8 +3958,8 @@ static int set_key_data_error(struct eval_ctx *ctx, const struct set *set,
 static int set_expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 {
 	unsigned int flags = EXPR_F_CONSTANT | EXPR_F_SINGLETON;
+	uint32_t ntype = 0, size = 0;
 	struct expr *i, *next;
-	uint32_t ntype = 0;
 
 	list_for_each_entry_safe(i, next, &(*expr)->expressions, list) {
 		unsigned dsize_bytes;
@@ -3931,6 +3969,17 @@ static int set_expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 		     i->ct.key == NFT_CT_DST))
 			return expr_error(ctx->msgs, i,
 					  "specify either ip or ip6 for address matching");
+
+		if (i->etype == EXPR_PAYLOAD && i->payload.is_raw &&
+		    i->dtype->type == TYPE_INTEGER) {
+			struct datatype *dtype;
+
+			dtype = dtype_clone(i->dtype);
+			dtype->size = i->len;
+			dtype->byteorder = i->byteorder;
+			dtype->refcnt = 1;
+			i->dtype = dtype;
+		}
 
 		if (i->dtype->size == 0)
 			return expr_binary_error(ctx->msgs, i, *expr,
@@ -3945,13 +3994,15 @@ static int set_expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 
 		dsize_bytes = div_round_up(i->dtype->size, BITS_PER_BYTE);
 		(*expr)->field_len[(*expr)->field_count++] = dsize_bytes;
+		size += netlink_padded_len(i->dtype->size);
 	}
 
 	(*expr)->flags |= flags;
 	datatype_set(*expr, concat_type_alloc(ntype));
-	(*expr)->len   = (*expr)->dtype->size;
+	(*expr)->len   = size;
 
 	expr_set_context(&ctx->ectx, (*expr)->dtype, (*expr)->len);
+	ctx->ectx.key = *expr;
 
 	return 0;
 }
