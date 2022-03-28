@@ -3970,7 +3970,7 @@ static int set_expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 			return expr_error(ctx->msgs, i,
 					  "specify either ip or ip6 for address matching");
 
-		if (i->etype == EXPR_PAYLOAD && i->payload.is_raw &&
+		if (i->etype == EXPR_PAYLOAD &&
 		    i->dtype->type == TYPE_INTEGER) {
 			struct datatype *dtype;
 
