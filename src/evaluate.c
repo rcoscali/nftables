@@ -2690,8 +2690,12 @@ static int __stmt_evaluate_arg(struct eval_ctx *ctx, struct stmt *stmt,
 					 "expression has type %s with length %d",
 					 dtype->desc, (*expr)->dtype->desc,
 					 (*expr)->len);
-	else if ((*expr)->dtype->type != TYPE_INTEGER &&
-		 !datatype_equal((*expr)->dtype, dtype))
+
+	if ((dtype->type == TYPE_MARK &&
+	     !datatype_equal(datatype_basetype(dtype), datatype_basetype((*expr)->dtype))) ||
+	    (dtype->type != TYPE_MARK &&
+	     (*expr)->dtype->type != TYPE_INTEGER &&
+	     !datatype_equal((*expr)->dtype, dtype)))
 		return stmt_binary_error(ctx, *expr, stmt,		/* verdict vs invalid? */
 					 "datatype mismatch: expected %s, "
 					 "expression has type %s",
