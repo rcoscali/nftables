@@ -2603,6 +2603,42 @@ static void relational_binop_postprocess(struct rule_pp_ctx *ctx,
 	}
 }
 
+static bool payload_binop_postprocess(struct rule_pp_ctx *ctx,
+				      struct expr **exprp)
+{
+	struct expr *expr = *exprp;
+
+	if (expr->op != OP_RSHIFT)
+		return false;
+
+	if (expr->left->etype == EXPR_UNARY) {
+		/*
+		 * If the payload value was originally in a different byte-order
+		 * from the payload expression, there will be a byte-order
+		 * conversion to remove.
+		 */
+		struct expr *left = expr_get(expr->left->arg);
+		expr_free(expr->left);
+		expr->left = left;
+	}
+
+	if (expr->left->etype != EXPR_BINOP || expr->left->op != OP_AND)
+		return false;
+
+	if (expr->left->left->etype != EXPR_PAYLOAD)
+		return false;
+
+	expr_set_type(expr->right, &integer_type,
+		      BYTEORDER_HOST_ENDIAN);
+	expr_postprocess(ctx, &expr->right);
+
+	binop_postprocess(ctx, expr, &expr->left);
+	*exprp = expr_get(expr->left);
+	expr_free(expr);
+
+	return true;
+}
+
 static struct expr *string_wildcard_expr_alloc(struct location *loc,
 					       const struct expr *mask,
 					       const struct expr *expr)
@@ -2723,6 +2759,9 @@ static void expr_postprocess(struct rule_pp_ctx *ctx, struct expr **exprp)
 		expr_set_type(expr, expr->arg->dtype, !expr->arg->byteorder);
 		break;
 	case EXPR_BINOP:
+		if (payload_binop_postprocess(ctx, exprp))
+			break;
+
 		expr_postprocess(ctx, &expr->left);
 		switch (expr->op) {
 		case OP_LSHIFT:
