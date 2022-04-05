@@ -444,7 +444,7 @@ static struct error_record *date_type_parse(struct parse_ctx *ctx,
 					    struct expr **res)
 {
 	const char *endptr = sym->identifier;
-	time_t tstamp;
+	uint64_t tstamp;
 
 	if ((tstamp = parse_iso_date(sym->identifier)) != -1)
 		goto success;
