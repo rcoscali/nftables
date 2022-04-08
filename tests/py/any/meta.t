@@ -208,6 +208,8 @@ meta time "2019-06-21 17:00:00" drop;ok
 meta time "2019-07-01 00:00:00" drop;ok
 meta time "2019-07-01 00:01:00" drop;ok
 meta time "2019-07-01 00:00:01" drop;ok
+meta time < "2022-07-01 11:00:00" accept;ok
+meta time > "2022-07-01 11:00:00" accept;ok
 meta day "Saturday" drop;ok
 meta day 6 drop;ok;meta day "Saturday" drop
 meta day "Satturday" drop;fail
