@@ -1465,6 +1465,7 @@ void range_expr_value_high(mpz_t rop, const struct expr *expr)
 		return mpz_set(rop, expr->value);
 	case EXPR_PREFIX:
 		range_expr_value_low(rop, expr->prefix);
+		assert(expr->len >= expr->prefix_len);
 		mpz_init_bitmask(tmp, expr->len - expr->prefix_len);
 		mpz_add(rop, rop, tmp);
 		mpz_clear(tmp);

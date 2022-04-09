@@ -347,6 +347,7 @@ static int expr_evaluate_string(struct eval_ctx *ctx, struct expr **exprp)
 	datatype_set(prefix, ctx->ectx.dtype);
 	prefix->flags |= EXPR_F_CONSTANT;
 	prefix->byteorder = BYTEORDER_HOST_ENDIAN;
+	prefix->len = expr->len;
 
 	expr_free(expr);
 	*exprp = prefix;
