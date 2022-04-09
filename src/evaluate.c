@@ -338,9 +338,11 @@ static int expr_evaluate_string(struct eval_ctx *ctx, struct expr **exprp)
 		*exprp = value;
 		return 0;
 	}
+
+	data[datalen] = 0;
 	value = constant_expr_alloc(&expr->location, ctx->ectx.dtype,
 				    BYTEORDER_HOST_ENDIAN,
-				    datalen * BITS_PER_BYTE, data);
+				    expr->len, data);
 
 	prefix = prefix_expr_alloc(&expr->location, value,
 				   datalen * BITS_PER_BYTE);
