@@ -1,0 +1,28 @@
+table inet testifsets {
+	set simple {
+		type ifname
+		elements = { "abcdef0",
+			     "abcdef1",
+			     "othername" }
+	}
+
+	set simple_wild {
+		type ifname
+		flags interval
+		elements = { "abcdef*",
+			     "othername",
+			     "ppp0" }
+	}
+
+	chain v4icmp {
+		iifname @simple counter packets 0 bytes 0
+		iifname @simple_wild counter packets 0 bytes 0
+		iifname { "eth0", "abcdef0" } counter packets 0 bytes 0
+		iifname { "abcdef*", "eth0" } counter packets 0 bytes 0
+	}
+
+	chain input {
+		type filter hook input priority filter; policy accept;
+		ip protocol icmp goto v4icmp
+	}
+}

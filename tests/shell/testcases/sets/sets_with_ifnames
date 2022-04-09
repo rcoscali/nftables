@@ -1,0 +1,83 @@
+#!/bin/bash
+
+dumpfile=$(dirname $0)/dumps/$(basename $0).nft
+
+[ -z "$NFT" ] && exit 111
+
+$NFT -f "$dumpfile" || exit 1
+
+rnd=$(mktemp -u XXXXXXXX)
+ns1="nft1ifname-$rnd"
+ns2="nft2ifname-$rnd"
+
+cleanup()
+{
+	ip netns del "$ns1"
+}
+
+trap cleanup EXIT
+
+check_elem()
+{
+	setname=$1
+	ifname=$2
+	fail=$3
+
+	if [ $fail -eq 1 ]; then
+		ip netns exec "$ns1" $NFT get element inet testifsets $setname { "$ifname" } && exit 2
+	else
+		ip netns exec "$ns1" $NFT get element inet testifsets $setname { "$ifname" } || exit 3
+	fi
+}
+
+# send pings, check all rules with sets that contain abcdef1 match.
+# there are 4 rules in this chain, 4 should match.
+check_matching_icmp_ppp()
+{
+	pkt=$((RANDOM%10))
+	pkt=$((pkt+1))
+	ip netns exec "$ns1" ping -f -c $pkt 10.1.2.2
+
+	# replies should arrive via 'abcdeg', so, should NOT increment any counters.
+	ip netns exec "$ns1" ping -f -c 100 10.2.2.2
+
+	matches=$(ip netns exec "$ns1" $NFT list chain inet testifsets v4icmp | grep "counter packets $pkt " | wc -l)
+	want=3
+
+	if [ "$matches" -ne $want ] ;then
+		echo "Excpected $matches matching rules, got $want, packets $pkt"
+		ip netns exec "$ns1" $NFT list ruleset
+		exit 1
+	fi
+}
+
+ip netns add "$ns1" || exit 111
+ip netns add "$ns2" || exit 111
+ip netns exec "$ns1" $NFT -f "$dumpfile" || exit 3
+
+for n in abcdef0 abcdef1 othername;do
+	check_elem simple $n 0
+done
+
+check_elem simple foo 1
+
+set -e
+ip -net "$ns1" link set lo up
+ip -net "$ns2" link set lo up
+ip netns exec "$ns1" ping -f -c 10 127.0.0.1
+
+ip link add abcdef1 netns $ns1 type veth peer name veth0 netns $ns2
+ip link add abcdeg  netns $ns1 type veth peer name veth1 netns $ns2
+
+ip -net "$ns1" link set abcdef1 up
+ip -net "$ns2" link set veth0 up
+ip -net "$ns1" link set abcdeg up
+ip -net "$ns2" link set veth1 up
+
+ip -net "$ns1" addr add 10.1.2.1/24 dev abcdef1
+ip -net "$ns1" addr add 10.2.2.1/24 dev abcdeg
+
+ip -net "$ns2" addr add 10.1.2.2/24 dev veth0
+ip -net "$ns2" addr add 10.2.2.2/24 dev veth1
+
+check_matching_icmp_ppp
