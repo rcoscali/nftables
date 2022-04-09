@@ -773,6 +773,22 @@ out:
 	return range;
 }
 
+static struct expr *__expr_to_set_elem(struct expr *low, struct expr *expr)
+{
+	struct expr *elem = set_elem_expr_alloc(&low->location, expr);
+
+	if (low->etype == EXPR_MAPPING) {
+		interval_expr_copy(elem, low->left);
+
+		elem = mapping_expr_alloc(&low->location, elem,
+						    expr_clone(low->right));
+	} else {
+		interval_expr_copy(elem, low);
+	}
+
+	return elem;
+}
+
 int get_set_decompose(struct set *cache_set, struct set *set)
 {
 	struct expr *i, *next, *range;
@@ -980,6 +996,38 @@ next:
 	}
 }
 
+static struct expr *interval_to_prefix(struct expr *low, struct expr *i, const mpz_t range)
+{
+	unsigned int prefix_len;
+	struct expr *prefix;
+
+	prefix_len = expr_value(i)->len - mpz_scan0(range, 0);
+	prefix = prefix_expr_alloc(&low->location,
+				   expr_clone(expr_value(low)),
+						   prefix_len);
+	prefix->len = expr_value(i)->len;
+
+	return __expr_to_set_elem(low, prefix);
+}
+
+static struct expr *interval_to_range(struct expr *low, struct expr *i, mpz_t range)
+{
+	struct expr *tmp;
+
+	tmp = constant_expr_alloc(&low->location, low->dtype,
+				  low->byteorder, expr_value(low)->len,
+				  NULL);
+
+	mpz_add(range, range, expr_value(low)->value);
+	mpz_set(tmp->value, range);
+
+	tmp = range_expr_alloc(&low->location,
+			       expr_clone(expr_value(low)),
+			       tmp);
+
+	return __expr_to_set_elem(low, tmp);
+}
+
 void interval_map_decompose(struct expr *set)
 {
 	struct expr *i, *next, *low = NULL, *end, *catchall = NULL, *key;
@@ -1065,52 +1113,13 @@ void interval_map_decompose(struct expr *set)
 		else if ((!range_is_prefix(range) ||
 			  !(i->dtype->flags & DTYPE_F_PREFIX)) ||
 			 mpz_cmp_ui(p, 0)) {
-			struct expr *tmp;
+			struct expr *expr = interval_to_range(low, i, range);
 
-			tmp = constant_expr_alloc(&low->location, low->dtype,
-						  low->byteorder, expr_value(low)->len,
-						  NULL);
-
-			mpz_add(range, range, expr_value(low)->value);
-			mpz_set(tmp->value, range);
-
-			tmp = range_expr_alloc(&low->location,
-					       expr_clone(expr_value(low)),
-					       tmp);
-			tmp = set_elem_expr_alloc(&low->location, tmp);
-
-			if (low->etype == EXPR_MAPPING) {
-				interval_expr_copy(tmp, low->left);
-
-				tmp = mapping_expr_alloc(&tmp->location, tmp,
-							 expr_clone(low->right));
-			} else {
-				interval_expr_copy(tmp, low);
-			}
-
-			compound_expr_add(set, tmp);
+			compound_expr_add(set, expr);
 		} else {
-			struct expr *prefix;
-			unsigned int prefix_len;
+			struct expr *expr = interval_to_prefix(low, i, range);
 
-			prefix_len = expr_value(i)->len - mpz_scan0(range, 0);
-			prefix = prefix_expr_alloc(&low->location,
-						   expr_clone(expr_value(low)),
-						   prefix_len);
-			prefix->len = expr_value(i)->len;
-
-			prefix = set_elem_expr_alloc(&low->location, prefix);
-
-			if (low->etype == EXPR_MAPPING) {
-				interval_expr_copy(prefix, low->left);
-
-				prefix = mapping_expr_alloc(&low->location, prefix,
-							    expr_clone(low->right));
-			} else {
-				interval_expr_copy(prefix, low);
-			}
-
-			compound_expr_add(set, prefix);
+			compound_expr_add(set, expr);
 		}
 
 		if (i->flags & EXPR_F_INTERVAL_END) {
