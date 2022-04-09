@@ -70,12 +70,30 @@ struct elementary_interval {
 	struct expr			*expr;
 };
 
+static enum byteorder get_key_byteorder(const struct expr *e)
+{
+	enum datatypes basetype = expr_basetype(e)->type;
+
+	switch (basetype) {
+	case TYPE_INTEGER:
+		/* For ranges, integers MUST be in BYTEORDER_BIG_ENDIAN.
+		 * If the LHS (lookup key, e.g. 'meta mark', is host endian,
+		 * a byteorder expression is injected to convert the register
+		 * content before lookup.
+		 */
+		return BYTEORDER_BIG_ENDIAN;
+	case TYPE_STRING:
+		return BYTEORDER_HOST_ENDIAN;
+	default:
+		break;
+	}
+
+	return BYTEORDER_INVALID;
+}
+
 static void seg_tree_init(struct seg_tree *tree, const struct set *set,
 			  struct expr *init, unsigned int debug_mask)
 {
-	struct expr *first;
-
-	first = list_entry(init->expressions.next, struct expr, list);
 	tree->root	= RB_ROOT;
 	tree->keytype	= set->key->dtype;
 	tree->keylen	= set->key->len;
@@ -85,7 +103,8 @@ static void seg_tree_init(struct seg_tree *tree, const struct set *set,
 		tree->datatype	= set->data->dtype;
 		tree->datalen	= set->data->len;
 	}
-	tree->byteorder	= first->byteorder;
+
+	tree->byteorder = get_key_byteorder(set->key);
 	tree->debug_mask = debug_mask;
 }
 
@@ -608,6 +627,9 @@ static void set_insert_interval(struct expr *set, struct seg_tree *tree,
 	expr = constant_expr_alloc(&internal_location, tree->keytype,
 				   tree->byteorder, tree->keylen, NULL);
 	mpz_set(expr->value, ei->left);
+	if (tree->byteorder == BYTEORDER_HOST_ENDIAN)
+		mpz_switch_byteorder(expr->value, expr->len / BITS_PER_BYTE);
+
 	expr = set_elem_expr_alloc(&internal_location, expr);
 
 	if (ei->expr != NULL) {

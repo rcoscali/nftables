@@ -1442,7 +1442,11 @@ void range_expr_value_low(mpz_t rop, const struct expr *expr)
 {
 	switch (expr->etype) {
 	case EXPR_VALUE:
-		return mpz_set(rop, expr->value);
+		mpz_set(rop, expr->value);
+		if (expr->byteorder == BYTEORDER_HOST_ENDIAN &&
+		    expr_basetype(expr)->type == TYPE_STRING)
+			mpz_switch_byteorder(rop, expr->len / BITS_PER_BYTE);
+		return;
 	case EXPR_PREFIX:
 		return range_expr_value_low(rop, expr->prefix);
 	case EXPR_RANGE:
@@ -1462,7 +1466,7 @@ void range_expr_value_high(mpz_t rop, const struct expr *expr)
 
 	switch (expr->etype) {
 	case EXPR_VALUE:
-		return mpz_set(rop, expr->value);
+		return range_expr_value_low(rop, expr);
 	case EXPR_PREFIX:
 		range_expr_value_low(rop, expr->prefix);
 		assert(expr->len >= expr->prefix_len);
