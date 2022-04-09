@@ -218,6 +218,8 @@ meta hour "17:00:00" drop;ok;meta hour "17:00" drop
 meta hour "17:00:01" drop;ok
 meta hour "00:00" drop;ok
 meta hour "00:01" drop;ok
+time < "2022-07-01 11:00:00" accept;ok;meta time < "2022-07-01 11:00:00" accept
+time > "2022-07-01 11:00:00" accept;ok;meta time > "2022-07-01 11:00:00" accept
 
 meta time "meh";fail
 meta hour "24:00" drop;fail

@@ -2722,3 +2722,39 @@
         "drop": null
     }
 ]
+
+# time < "2022-07-01 11:00:00" accept
+[
+    {
+        "match": {
+            "left": {
+                "meta": {
+                    "key": "time"
+                }
+            },
+            "op": "<",
+            "right": "2022-07-01 11:00:00"
+        }
+    },
+    {
+        "accept": null
+    }
+]
+
+# time > "2022-07-01 11:00:00" accept
+[
+    {
+        "match": {
+            "left": {
+                "meta": {
+                    "key": "time"
+                }
+            },
+            "op": ">",
+            "right": "2022-07-01 11:00:00"
+        }
+    },
+    {
+        "accept": null
+    }
+]
