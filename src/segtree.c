@@ -720,6 +720,7 @@ static void set_elem_add(const struct set *set, struct expr *init, mpz_t value,
 
 struct expr *get_set_intervals(const struct set *set, const struct expr *init)
 {
+	enum byteorder byteorder = get_key_byteorder(set->key);
 	struct expr *new_init;
 	mpz_t low, high;
 	struct expr *i;
@@ -733,7 +734,7 @@ struct expr *get_set_intervals(const struct set *set, const struct expr *init)
 		switch (i->key->etype) {
 		case EXPR_VALUE:
 			set_elem_add(set, new_init, i->key->value,
-				     i->flags, i->byteorder);
+				     i->flags, byteorder);
 			break;
 		case EXPR_CONCAT:
 			compound_expr_add(new_init, expr_clone(i));
