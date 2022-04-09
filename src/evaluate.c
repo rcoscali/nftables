@@ -138,6 +138,7 @@ static enum ops byteorder_conversion_op(struct expr *expr,
 static int byteorder_conversion(struct eval_ctx *ctx, struct expr **expr,
 				enum byteorder byteorder)
 {
+	enum datatypes basetype;
 	enum ops op;
 
 	assert(!expr_is_constant(*expr) || expr_is_singleton(*expr));
@@ -149,11 +150,19 @@ static int byteorder_conversion(struct eval_ctx *ctx, struct expr **expr,
 	if ((*expr)->etype == EXPR_CONCAT)
 		return 0;
 
-	if (expr_basetype(*expr)->type != TYPE_INTEGER)
+	basetype = expr_basetype(*expr)->type;
+	switch (basetype) {
+	case TYPE_INTEGER:
+		break;
+	case TYPE_STRING:
+		return 0;
+	default:
 		return expr_error(ctx->msgs, *expr,
-			 	  "Byteorder mismatch: expected %s, got %s",
+				  "Byteorder mismatch: %s expected %s, %s got %s",
 				  byteorder_names[byteorder],
+				  expr_name(*expr),
 				  byteorder_names[(*expr)->byteorder]);
+	}
 
 	if (expr_is_constant(*expr) || (*expr)->len / BITS_PER_BYTE < 2)
 		(*expr)->byteorder = byteorder;
