@@ -774,6 +774,12 @@ static struct expr *get_set_interval_find(const struct set *cache_set,
 
 	list_for_each_entry(i, &set->init->expressions, list) {
 		switch (i->key->etype) {
+		case EXPR_VALUE:
+			if (expr_basetype(i->key)->type != TYPE_STRING)
+				break;
+			/* string type, check if its a range (wildcard), so
+			 * fall through.
+			 */
 		case EXPR_PREFIX:
 		case EXPR_RANGE:
 			range_expr_value_low(val, i);
@@ -796,6 +802,18 @@ out:
 	return range;
 }
 
+static struct expr *expr_value(struct expr *expr)
+{
+	switch (expr->etype) {
+	case EXPR_MAPPING:
+		return expr->left->key;
+	case EXPR_SET_ELEM:
+		return expr->key;
+	default:
+		BUG("invalid expression type %s\n", expr_name(expr));
+	}
+}
+
 static struct expr *__expr_to_set_elem(struct expr *low, struct expr *expr)
 {
 	struct expr *elem = set_elem_expr_alloc(&low->location, expr);
@@ -810,6 +828,31 @@ static struct expr *__expr_to_set_elem(struct expr *low, struct expr *expr)
 	}
 
 	return elem;
+}
+
+static struct expr *expr_to_set_elem(struct expr *e)
+{
+	unsigned int len = div_round_up(e->len, BITS_PER_BYTE);
+	unsigned int str_len;
+	char data[len + 1];
+	struct expr *expr;
+
+	if (expr_basetype(expr_value(e))->type != TYPE_STRING)
+		return expr_clone(e);
+
+	mpz_export_data(data, expr_value(e)->value, BYTEORDER_BIG_ENDIAN, len);
+
+	str_len = strnlen(data, len);
+	if (str_len >= len || str_len == 0)
+		return expr_clone(e);
+
+	data[str_len] = '*';
+
+	expr = constant_expr_alloc(&e->location, e->dtype,
+				   BYTEORDER_HOST_ENDIAN,
+				   (str_len + 1) * BITS_PER_BYTE, data);
+
+	return __expr_to_set_elem(e, expr);
 }
 
 int get_set_decompose(struct set *cache_set, struct set *set)
@@ -846,7 +889,7 @@ int get_set_decompose(struct set *cache_set, struct set *set)
 					compound_expr_add(new_init, range);
 				else
 					compound_expr_add(new_init,
-							  expr_clone(left));
+							  expr_to_set_elem(left));
 			}
 			left = i;
 		}
@@ -856,7 +899,7 @@ int get_set_decompose(struct set *cache_set, struct set *set)
 		if (range)
 			compound_expr_add(new_init, range);
 		else
-			compound_expr_add(new_init, expr_clone(left));
+			compound_expr_add(new_init, expr_to_set_elem(left));
 	}
 
 	expr_free(set->init);
@@ -876,18 +919,6 @@ static bool range_is_prefix(const mpz_t range)
 	ret = !mpz_cmp_ui(tmp, 0);
 	mpz_clear(tmp);
 	return ret;
-}
-
-static struct expr *expr_value(struct expr *expr)
-{
-	switch (expr->etype) {
-	case EXPR_MAPPING:
-		return expr->left->key;
-	case EXPR_SET_ELEM:
-		return expr->key;
-	default:
-		BUG("invalid expression type %s\n", expr_name(expr));
-	}
 }
 
 static int expr_value_cmp(const void *p1, const void *p2)
