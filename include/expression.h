@@ -486,10 +486,6 @@ extern struct expr *list_expr_alloc(const struct location *loc);
 
 extern struct expr *set_expr_alloc(const struct location *loc,
 				   const struct set *set);
-extern int set_to_intervals(struct list_head *msgs, struct set *set,
-			    struct expr *init, bool add,
-			    unsigned int debug_mask, bool merge,
-			    struct output_ctx *octx);
 extern void concat_range_aggregate(struct expr *set);
 extern void interval_map_decompose(struct expr *set);
 

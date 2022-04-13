@@ -26,6 +26,7 @@
 #include <json.h>
 #include <cache.h>
 #include <owner.h>
+#include <intervals.h>
 
 #include <libnftnl/common.h>
 #include <libnftnl/ruleset.h>
@@ -1495,9 +1496,7 @@ static int do_add_elements(struct netlink_ctx *ctx, struct cmd *cmd,
 	struct set *set = cmd->elem.set;
 
 	if (set_is_non_concat_range(set) &&
-	    set_to_intervals(ctx->msgs, set, init, true,
-			     ctx->nft->debug_mask, set->automerge,
-			     &ctx->nft->output) < 0)
+	    set_to_intervals(set, init, true) < 0)
 		return -1;
 
 	return __do_add_elements(ctx, set, init, flags);
@@ -1522,9 +1521,7 @@ static int do_add_set(struct netlink_ctx *ctx, struct cmd *cmd,
 		 * comes too late which might result in spurious ENFILE errors.
 		 */
 		if (set_is_non_concat_range(set) &&
-		    set_to_intervals(ctx->msgs, set, set->init, true,
-				     ctx->nft->debug_mask, set->automerge,
-				     &ctx->nft->output) < 0)
+		    set_to_intervals(set, set->init, true) < 0)
 			return -1;
 	}
 
@@ -1601,9 +1598,7 @@ static int do_delete_setelems(struct netlink_ctx *ctx, struct cmd *cmd)
 	struct set *set = cmd->elem.set;
 
 	if (set_is_non_concat_range(set) &&
-	    set_to_intervals(ctx->msgs, set, expr, false,
-			     ctx->nft->debug_mask, set->automerge,
-			     &ctx->nft->output) < 0)
+	    set_to_intervals(set, expr, false) < 0)
 		return -1;
 
 	if (mnl_nft_setelem_del(ctx, cmd) < 0)

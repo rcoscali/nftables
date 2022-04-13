@@ -29,6 +29,7 @@
 
 #include <expression.h>
 #include <statement.h>
+#include <intervals.h>
 #include <netlink.h>
 #include <time.h>
 #include <rule.h>
@@ -1465,6 +1466,36 @@ static const struct expr *expr_set_elem(const struct expr *expr)
 	return expr;
 }
 
+static int interval_set_eval(struct eval_ctx *ctx, struct set *set,
+			     struct expr *init)
+{
+	int ret;
+
+	if (!init)
+		return 0;
+
+	ret = 0;
+	switch (ctx->cmd->op) {
+	case CMD_CREATE:
+	case CMD_ADD:
+		if (set->automerge)
+			ret = set_automerge(ctx->msgs, set, init);
+		else
+			ret = set_overlap(ctx->msgs, set, init);
+		break;
+	case CMD_DELETE:
+		set_to_range(init);
+		break;
+	case CMD_GET:
+		break;
+	default:
+		assert(1);
+		break;
+	}
+
+	return ret;
+}
+
 static int expr_evaluate_set(struct eval_ctx *ctx, struct expr **expr)
 {
 	struct expr *set = *expr, *i, *next;
@@ -1552,6 +1583,7 @@ static int expr_evaluate_set(struct eval_ctx *ctx, struct expr **expr)
 	datatype_set(set, ctx->ectx.dtype);
 	set->len   = ctx->ectx.len;
 	set->flags |= EXPR_F_CONSTANT;
+
 	return 0;
 }
 
@@ -1634,6 +1666,12 @@ static int expr_evaluate_map(struct eval_ctx *ctx, struct expr **expr)
 		ctx->set = mappings->set;
 		if (expr_evaluate(ctx, &map->mappings->set->init) < 0)
 			return -1;
+
+		if (set_is_interval(map->mappings->set->init->set_flags) &&
+		    !(map->mappings->set->init->set_flags & NFT_SET_CONCAT) &&
+		    interval_set_eval(ctx, ctx->set, map->mappings->set->init) < 0)
+			return -1;
+
 		expr_set_context(&ctx->ectx, ctx->set->key->dtype, ctx->set->key->len);
 		if (binop_transfer(ctx, expr) < 0)
 			return -1;
@@ -3806,6 +3844,12 @@ static int stmt_evaluate_objref_map(struct eval_ctx *ctx, struct stmt *stmt)
 		ctx->set = mappings->set;
 		if (expr_evaluate(ctx, &map->mappings->set->init) < 0)
 			return -1;
+
+		if (set_is_interval(map->mappings->set->init->set_flags) &&
+		    !(map->mappings->set->init->set_flags & NFT_SET_CONCAT) &&
+		    interval_set_eval(ctx, ctx->set, map->mappings->set->init) < 0)
+			return -1;
+
 		ctx->set = NULL;
 
 		map_set_concat_info(map);
@@ -3942,13 +3986,19 @@ static int setelem_evaluate(struct eval_ctx *ctx, struct cmd *cmd)
 		return set_not_found(ctx, &ctx->cmd->handle.set.location,
 				     ctx->cmd->handle.set.name);
 
+	set->existing_set = set;
 	ctx->set = set;
 	expr_set_context(&ctx->ectx, set->key->dtype, set->key->len);
 	if (expr_evaluate(ctx, &cmd->expr) < 0)
 		return -1;
-	ctx->set = NULL;
 
 	cmd->elem.set = set_get(set);
+
+	if (set_is_interval(ctx->set->flags) &&
+	    !(set->flags & NFT_SET_CONCAT))
+		return interval_set_eval(ctx, ctx->set, cmd->expr);
+
+	ctx->set = NULL;
 
 	return 0;
 }
@@ -4021,6 +4071,7 @@ static int set_expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 
 static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 {
+	struct set *existing_set = NULL;
 	unsigned int num_stmts = 0;
 	struct table *table;
 	struct stmt *stmt;
@@ -4033,7 +4084,8 @@ static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 		if (table == NULL)
 			return table_not_found(ctx);
 
-		if (!set_cache_find(table, set->handle.set.name))
+		existing_set = set_cache_find(table, set->handle.set.name);
+		if (!existing_set)
 			set_cache_add(set_get(set), table);
 	}
 
@@ -4097,9 +4149,16 @@ static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 	if (num_stmts > 1)
 		set->flags |= NFT_SET_EXPR;
 
-	if (set_is_anonymous(set->flags))
-		return 0;
+	if (set_is_anonymous(set->flags)) {
+		if (set_is_interval(set->init->set_flags) &&
+		    !(set->init->set_flags & NFT_SET_CONCAT) &&
+		    interval_set_eval(ctx, set, set->init) < 0)
+			return -1;
 
+		return 0;
+	}
+
+	set->existing_set = existing_set;
 	ctx->set = set;
 	if (set->init != NULL) {
 		__expr_set_context(&ctx->ectx, set->key->dtype,
@@ -4110,6 +4169,11 @@ static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 			return expr_error(ctx->msgs, set->init, "Set %s: Unexpected initial type %s, missing { }?",
 					  set->handle.set.name, expr_name(set->init));
 	}
+
+	if (set_is_interval(ctx->set->flags) &&
+	    !(ctx->set->flags & NFT_SET_CONCAT))
+		return interval_set_eval(ctx, ctx->set, set->init);
+
 	ctx->set = NULL;
 
 	return 0;

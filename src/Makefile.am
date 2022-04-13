@@ -48,6 +48,7 @@ libnftables_la_SOURCES =			\
 		exthdr.c			\
 		fib.c				\
 		hash.c				\
+		intervals.c			\
 		ipopt.c				\
 		meta.c				\
 		rt.c				\
