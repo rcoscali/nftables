@@ -62,7 +62,6 @@ libnftables_la_SOURCES =			\
 		monitor.c			\
 		owner.c				\
 		segtree.c			\
-		rbtree.c			\
 		gmputil.c			\
 		utils.c				\
 		erec.c				\
