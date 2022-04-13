@@ -255,6 +255,256 @@ int set_automerge(struct list_head *msgs, struct cmd *cmd, struct set *set,
 	return 0;
 }
 
+static void remove_elem(struct expr *prev, struct set *set, struct expr *purge)
+{
+	struct expr *clone;
+
+	if (!(prev->flags & EXPR_F_REMOVE)) {
+		if (prev->flags & EXPR_F_KERNEL) {
+			clone = expr_clone(prev);
+			list_move_tail(&clone->list, &purge->expressions);
+		} else {
+			list_del(&prev->list);
+			expr_free(prev);
+		}
+	}
+}
+
+static void __adjust_elem_left(struct set *set, struct expr *prev, struct expr *i,
+			       struct expr *add)
+{
+	prev->flags &= EXPR_F_KERNEL;
+	expr_free(prev->key->left);
+	prev->key->left = expr_get(i->key->right);
+	mpz_add_ui(prev->key->left->value, prev->key->left->value, 1);
+	list_move(&prev->list, &add->expressions);
+}
+
+static void adjust_elem_left(struct set *set, struct expr *prev, struct expr *i,
+			     struct expr *add, struct expr *purge)
+{
+	struct expr *clone;
+
+	remove_elem(prev, set, purge);
+	__adjust_elem_left(set, prev, i, add);
+
+	list_del(&i->list);
+	expr_free(i);
+
+	clone = expr_clone(prev);
+	list_add_tail(&clone->list, &set->existing_set->init->expressions);
+}
+
+static void __adjust_elem_right(struct set *set, struct expr *prev, struct expr *i,
+				struct expr *add)
+{
+	prev->flags &= EXPR_F_KERNEL;
+	expr_free(prev->key->right);
+	prev->key->right = expr_get(i->key->left);
+	mpz_sub_ui(prev->key->right->value, prev->key->right->value, 1);
+	list_move(&prev->list, &add->expressions);
+}
+
+static void adjust_elem_right(struct set *set, struct expr *prev, struct expr *i,
+			      struct expr *add, struct expr *purge)
+{
+	struct expr *clone;
+
+	remove_elem(prev, set, purge);
+	__adjust_elem_right(set, prev, i, add);
+
+	list_del(&i->list);
+	expr_free(i);
+
+	clone = expr_clone(prev);
+	list_add_tail(&clone->list, &set->existing_set->init->expressions);
+}
+
+static void split_range(struct set *set, struct expr *prev, struct expr *i,
+			struct expr *add, struct expr *purge)
+{
+	struct expr *clone;
+
+	clone = expr_clone(prev);
+	list_move_tail(&clone->list, &purge->expressions);
+
+	prev->flags &= EXPR_F_KERNEL;
+	clone = expr_clone(prev);
+	expr_free(clone->key->left);
+	clone->key->left = expr_get(i->key->right);
+	mpz_add_ui(clone->key->left->value, i->key->right->value, 1);
+	list_move(&clone->list, &add->expressions);
+	clone = expr_clone(clone);
+	list_add_tail(&clone->list, &set->existing_set->init->expressions);
+
+	expr_free(prev->key->right);
+	prev->key->right = expr_get(i->key->left);
+	mpz_sub_ui(prev->key->right->value, i->key->left->value, 1);
+	list_move(&prev->list, &add->expressions);
+	clone = expr_clone(prev);
+	list_add_tail(&clone->list, &set->existing_set->init->expressions);
+
+	list_del(&i->list);
+	expr_free(i);
+}
+
+static int setelem_adjust(struct set *set, struct expr *add, struct expr *purge,
+			  struct range *prev_range, struct range *range,
+			  struct expr *prev, struct expr *i)
+{
+	if (mpz_cmp(prev_range->low, range->low) == 0 &&
+	    mpz_cmp(prev_range->high, range->high) > 0) {
+		if (!(prev->flags & EXPR_F_REMOVE) &&
+		    i->flags & EXPR_F_REMOVE)
+			adjust_elem_left(set, prev, i, add, purge);
+	} else if (mpz_cmp(prev_range->low, range->low) < 0 &&
+		   mpz_cmp(prev_range->high, range->high) == 0) {
+		if (!(prev->flags & EXPR_F_REMOVE) &&
+		    i->flags & EXPR_F_REMOVE)
+			adjust_elem_right(set, prev, i, add, purge);
+	} else if (mpz_cmp(prev_range->low, range->low) < 0 &&
+		   mpz_cmp(prev_range->high, range->high) > 0) {
+		if (!(prev->flags & EXPR_F_REMOVE) &&
+		    i->flags & EXPR_F_REMOVE)
+			split_range(set, prev, i, add, purge);
+	} else {
+		return -1;
+	}
+
+	return 0;
+}
+
+static int setelem_delete(struct list_head *msgs, struct set *set,
+			  struct expr *add, struct expr *purge,
+			  struct expr *elems, unsigned int debug_mask)
+{
+	struct expr *i, *next, *prev = NULL;
+	struct range range, prev_range;
+	int err = 0;
+	mpz_t rop;
+
+	mpz_init(prev_range.low);
+	mpz_init(prev_range.high);
+	mpz_init(range.low);
+	mpz_init(range.high);
+	mpz_init(rop);
+
+	list_for_each_entry_safe(i, next, &elems->expressions, list) {
+		if (i->key->etype == EXPR_SET_ELEM_CATCHALL)
+			continue;
+
+		range_expr_value_low(range.low, i);
+		range_expr_value_high(range.high, i);
+
+		if (!prev && i->flags & EXPR_F_REMOVE) {
+			expr_error(msgs, i, "element does not exist");
+			err = -1;
+			goto err;
+		}
+
+		if (!(i->flags & EXPR_F_REMOVE)) {
+			prev = i;
+			mpz_set(prev_range.low, range.low);
+			mpz_set(prev_range.high, range.high);
+			continue;
+		}
+
+		if (mpz_cmp(prev_range.low, range.low) == 0 &&
+		    mpz_cmp(prev_range.high, range.high) == 0) {
+			if (!(prev->flags & EXPR_F_REMOVE) &&
+			    i->flags & EXPR_F_REMOVE) {
+				list_move_tail(&prev->list, &purge->expressions);
+				list_del(&i->list);
+				expr_free(i);
+			}
+		} else if (set->automerge &&
+			   setelem_adjust(set, add, purge, &prev_range, &range, prev, i) < 0) {
+			expr_error(msgs, i, "element does not exist");
+			err = -1;
+			goto err;
+		}
+		prev = NULL;
+	}
+err:
+	mpz_clear(prev_range.low);
+	mpz_clear(prev_range.high);
+	mpz_clear(range.low);
+	mpz_clear(range.high);
+	mpz_clear(rop);
+
+	return err;
+}
+
+static void automerge_delete(struct list_head *msgs, struct set *set,
+			     struct expr *init, unsigned int debug_mask)
+{
+	struct set_automerge_ctx ctx = {
+		.set		= set,
+		.init		= init,
+		.debug_mask	= debug_mask,
+	};
+
+	ctx.purge = set_expr_alloc(&internal_location, set);
+	list_expr_sort(&init->expressions);
+	setelem_automerge(&ctx);
+	expr_free(ctx.purge);
+}
+
+/* detection for unexisting intervals already exists in Linux kernels >= 5.7. */
+int set_delete(struct list_head *msgs, struct cmd *cmd, struct set *set,
+	       struct expr *init, unsigned int debug_mask)
+{
+	struct set *existing_set = set->existing_set;
+	struct expr *i, *add;
+	struct handle h = {};
+	struct cmd *add_cmd;
+	int err;
+
+	set_to_range(init);
+	if (set->automerge)
+		automerge_delete(msgs, set, init, debug_mask);
+
+	list_for_each_entry(i, &init->expressions, list)
+		i->flags |= EXPR_F_REMOVE;
+
+	set_to_range(existing_set->init);
+	list_splice_init(&init->expressions, &existing_set->init->expressions);
+
+	list_expr_sort(&existing_set->init->expressions);
+
+	add = set_expr_alloc(&internal_location, set);
+
+	err = setelem_delete(msgs, set, add, init, existing_set->init, debug_mask);
+	if (err < 0) {
+		expr_free(add);
+		return err;
+	}
+
+	if (debug_mask & NFT_DEBUG_SEGTREE) {
+		list_for_each_entry(i, &init->expressions, list)
+			gmp_printf("remove: [%Zx-%Zx]\n",
+				   i->key->left->value, i->key->right->value);
+		list_for_each_entry(i, &add->expressions, list)
+			gmp_printf("add: [%Zx-%Zx]\n",
+				   i->key->left->value, i->key->right->value);
+		list_for_each_entry(i, &existing_set->init->expressions, list)
+			gmp_printf("existing: [%Zx-%Zx]\n",
+				   i->key->left->value, i->key->right->value);
+	}
+
+	if (list_empty(&add->expressions)) {
+		expr_free(add);
+		return 0;
+	}
+
+	handle_merge(&h, &cmd->handle);
+	add_cmd = cmd_alloc(CMD_ADD, CMD_OBJ_ELEMENTS, &h, &cmd->location, add);
+	add_cmd->elem.set = set_get(set);
+	list_add(&add_cmd->list, &cmd->list);
+
+	return 0;
+}
+
 static int setelem_overlap(struct list_head *msgs, struct set *set,
 			   struct expr *init)
 {

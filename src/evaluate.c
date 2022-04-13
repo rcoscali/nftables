@@ -1486,7 +1486,8 @@ static int interval_set_eval(struct eval_ctx *ctx, struct set *set,
 		}
 		break;
 	case CMD_DELETE:
-		set_to_range(init);
+		ret = set_delete(ctx->msgs, ctx->cmd, set, init,
+				 ctx->nft->debug_mask);
 		break;
 	case CMD_GET:
 		break;
