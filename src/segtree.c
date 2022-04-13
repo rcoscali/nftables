@@ -826,6 +826,7 @@ static struct expr *__expr_to_set_elem(struct expr *low, struct expr *expr)
 	} else {
 		interval_expr_copy(elem, low);
 	}
+	elem->flags |= EXPR_F_KERNEL;
 
 	return elem;
 }
@@ -1192,7 +1193,7 @@ void interval_map_decompose(struct expr *set)
 		if (!mpz_cmp_ui(range, 0)) {
 			if (expr_basetype(low)->type == TYPE_STRING)
 				mpz_switch_byteorder(expr_value(low)->value, low->len / BITS_PER_BYTE);
-
+			low->flags |= EXPR_F_KERNEL;
 			compound_expr_add(set, expr_get(low));
 		} else if (range_is_prefix(range) && !mpz_cmp_ui(p, 0)) {
 			struct expr *expr;
@@ -1239,6 +1240,8 @@ void interval_map_decompose(struct expr *set)
 		} else {
 			interval_expr_copy(i, low);
 		}
+		i->flags |= EXPR_F_KERNEL;
+
 		expr_free(low);
 	}
 
