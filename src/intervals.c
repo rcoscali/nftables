@@ -25,6 +25,9 @@ static void setelem_expr_to_range(struct expr *expr)
 	case EXPR_PREFIX:
 		mpz_init(rop);
 		mpz_bitmask(rop, expr->key->len - expr->key->prefix_len);
+		if (expr_basetype(expr)->type == TYPE_STRING)
+			mpz_switch_byteorder(expr->key->prefix->value, expr->len / BITS_PER_BYTE);
+
 		mpz_ior(rop, rop, expr->key->prefix->value);
 	        mpz_export_data(data, rop, expr->key->prefix->byteorder,
 				expr->key->prefix->len / BITS_PER_BYTE);
@@ -40,6 +43,9 @@ static void setelem_expr_to_range(struct expr *expr)
 		expr->key = key;
 		break;
 	case EXPR_VALUE:
+		if (expr_basetype(expr)->type == TYPE_STRING)
+			mpz_switch_byteorder(expr->key->value, expr->len / BITS_PER_BYTE);
+
 		key = range_expr_alloc(&expr->location,
 				       expr_clone(expr->key),
 				       expr_get(expr->key));
