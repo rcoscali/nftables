@@ -51,11 +51,33 @@ static void setelem_expr_to_range(struct expr *expr)
 	}
 }
 
-static void remove_overlapping_range(struct expr *i, struct expr *init)
+struct set_automerge_ctx {
+	struct set	*set;
+	struct expr	*init;
+	struct expr	*purge;
+	unsigned int	debug_mask;
+};
+
+static void purge_elem(struct set_automerge_ctx *ctx, struct expr *i)
 {
+	if (ctx->debug_mask & NFT_DEBUG_SEGTREE) {
+		pr_gmp_debug("remove: [%Zx-%Zx]\n",
+			     i->key->left->value,
+			     i->key->right->value);
+	}
+	list_move_tail(&i->list, &ctx->purge->expressions);
+}
+
+static void remove_overlapping_range(struct set_automerge_ctx *ctx,
+				     struct expr *prev, struct expr *i)
+{
+	if (i->flags & EXPR_F_KERNEL) {
+		purge_elem(ctx, i);
+		return;
+	}
 	list_del(&i->list);
 	expr_free(i);
-	init->size--;
+	ctx->init->size--;
 }
 
 struct range {
@@ -63,20 +85,33 @@ struct range {
 	mpz_t	high;
 };
 
-static void merge_ranges(struct expr *prev, struct expr *i,
-			 struct range *prev_range, struct range *range,
-			 struct expr *init)
+static bool merge_ranges(struct set_automerge_ctx *ctx,
+			 struct expr *prev, struct expr *i,
+			 struct range *prev_range, struct range *range)
 {
-	expr_free(prev->key->right);
-	prev->key->right = expr_get(i->key->right);
-	list_del(&i->list);
-	expr_free(i);
-	mpz_set(prev_range->high, range->high);
-	init->size--;
+	if (prev->flags & EXPR_F_KERNEL) {
+		purge_elem(ctx, prev);
+		expr_free(i->key->left);
+		i->key->left = expr_get(prev->key->left);
+		mpz_set(prev_range->high, range->high);
+		return true;
+	} else if (i->flags & EXPR_F_KERNEL) {
+		purge_elem(ctx, i);
+		expr_free(prev->key->right);
+		prev->key->right = expr_get(i->key->right);
+		mpz_set(prev_range->high, range->high);
+	} else {
+		expr_free(prev->key->right);
+		prev->key->right = expr_get(i->key->right);
+		mpz_set(prev_range->high, range->high);
+		list_del(&i->list);
+		expr_free(i);
+		ctx->init->size--;
+	}
+	return false;
 }
 
-static void setelem_automerge(struct list_head *msgs, struct set *set,
-			      struct expr *init)
+static void setelem_automerge(struct set_automerge_ctx *ctx)
 {
 	struct expr *i, *next, *prev = NULL;
 	struct range range, prev_range;
@@ -88,7 +123,7 @@ static void setelem_automerge(struct list_head *msgs, struct set *set,
 	mpz_init(range.high);
 	mpz_init(rop);
 
-	list_for_each_entry_safe(i, next, &init->expressions, list) {
+	list_for_each_entry_safe(i, next, &ctx->init->expressions, list) {
 		if (i->key->etype == EXPR_SET_ELEM_CATCHALL)
 			continue;
 
@@ -104,16 +139,18 @@ static void setelem_automerge(struct list_head *msgs, struct set *set,
 
 		if (mpz_cmp(prev_range.low, range.low) <= 0 &&
 		    mpz_cmp(prev_range.high, range.high) >= 0) {
-			remove_overlapping_range(i, init);
+			remove_overlapping_range(ctx, prev, i);
 			continue;
 		} else if (mpz_cmp(range.low, prev_range.high) <= 0) {
-			merge_ranges(prev, i, &prev_range, &range, init);
+			if (merge_ranges(ctx, prev, i, &prev_range, &range))
+				prev = i;
 			continue;
-		} else if (set->automerge) {
+		} else if (ctx->set->automerge) {
 			mpz_sub(rop, range.low, prev_range.high);
 			/* two contiguous ranges */
 			if (mpz_cmp_ui(rop, 1) == 0) {
-				merge_ranges(prev, i, &prev_range, &range, init);
+				if (merge_ranges(ctx, prev, i, &prev_range, &range))
+					prev = i;
 				continue;
 			}
 		}
@@ -157,18 +194,63 @@ void set_to_range(struct expr *init)
 		elem = interval_expr_key(i);
 		setelem_expr_to_range(elem);
 	}
-
-	list_expr_sort(&init->expressions);
 }
 
-int set_automerge(struct list_head *msgs, struct set *set, struct expr *init)
+int set_automerge(struct list_head *msgs, struct cmd *cmd, struct set *set,
+		  struct expr *init, unsigned int debug_mask)
 {
+	struct set *existing_set = set->existing_set;
+	struct set_automerge_ctx ctx = {
+		.set		= set,
+		.init		= init,
+		.debug_mask	= debug_mask,
+	};
+	struct expr *i, *next, *clone;
+	struct cmd *purge_cmd;
+	struct handle h = {};
+
+	if (existing_set) {
+		if (existing_set->init) {
+			list_splice_init(&existing_set->init->expressions,
+					 &init->expressions);
+		} else {
+			existing_set->init = set_expr_alloc(&internal_location,
+							    set);
+		}
+	}
+
 	set_to_range(init);
+	list_expr_sort(&init->expressions);
 
 	if (set->flags & NFT_SET_MAP)
 		return 0;
 
-	setelem_automerge(msgs, set, init);
+	ctx.purge = set_expr_alloc(&internal_location, set);
+
+	setelem_automerge(&ctx);
+
+	list_for_each_entry_safe(i, next, &init->expressions, list) {
+		if (i->flags & EXPR_F_KERNEL) {
+			list_move_tail(&i->list, &existing_set->init->expressions);
+		} else if (existing_set) {
+			if (debug_mask & NFT_DEBUG_SEGTREE) {
+				pr_gmp_debug("add: [%Zx-%Zx]\n",
+					     i->key->left->value, i->key->right->value);
+			}
+			clone = expr_clone(i);
+			list_add_tail(&clone->list, &existing_set->init->expressions);
+		}
+	}
+
+	if (list_empty(&ctx.purge->expressions)) {
+		expr_free(ctx.purge);
+		return 0;
+	}
+
+	handle_merge(&h, &set->handle);
+	purge_cmd = cmd_alloc(CMD_DELETE, CMD_OBJ_ELEMENTS, &h, &init->location, ctx.purge);
+	purge_cmd->elem.set = set_get(set);
+	list_add_tail(&purge_cmd->list, &cmd->list);
 
 	return 0;
 }
@@ -250,21 +332,31 @@ err_out:
 int set_overlap(struct list_head *msgs, struct set *set, struct expr *init)
 {
 	struct set *existing_set = set->existing_set;
-	struct expr *i, *n;
+	struct expr *i, *n, *clone;
 	int err;
 
-	if (existing_set && existing_set->init) {
-		list_splice_init(&existing_set->init->expressions,
-				 &init->expressions);
+	if (existing_set) {
+		if (existing_set->init) {
+			list_splice_init(&existing_set->init->expressions,
+					 &init->expressions);
+		} else {
+			existing_set->init = set_expr_alloc(&internal_location,
+							    set);
+		}
 	}
 
 	set_to_range(init);
+	list_expr_sort(&init->expressions);
 
 	err = setelem_overlap(msgs, set, init);
 
 	list_for_each_entry_safe(i, n, &init->expressions, list) {
 		if (i->flags & EXPR_F_KERNEL)
 			list_move_tail(&i->list, &existing_set->init->expressions);
+		else if (existing_set) {
+			clone = expr_clone(i);
+			list_add_tail(&clone->list, &existing_set->init->expressions);
+		}
 	}
 
 	return err;

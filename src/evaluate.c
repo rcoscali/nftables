@@ -1478,10 +1478,12 @@ static int interval_set_eval(struct eval_ctx *ctx, struct set *set,
 	switch (ctx->cmd->op) {
 	case CMD_CREATE:
 	case CMD_ADD:
-		if (set->automerge)
-			ret = set_automerge(ctx->msgs, set, init);
-		else
+		if (set->automerge) {
+			ret = set_automerge(ctx->msgs, ctx->cmd, set, init,
+					    ctx->nft->debug_mask);
+		} else {
 			ret = set_overlap(ctx->msgs, set, init);
+		}
 		break;
 	case CMD_DELETE:
 		set_to_range(init);
