@@ -279,7 +279,7 @@ static void remove_elem(struct expr *prev, struct set *set, struct expr *purge)
 static void __adjust_elem_left(struct set *set, struct expr *prev, struct expr *i,
 			       struct expr *add)
 {
-	prev->flags &= EXPR_F_KERNEL;
+	prev->flags &= ~EXPR_F_KERNEL;
 	expr_free(prev->key->left);
 	prev->key->left = expr_get(i->key->right);
 	mpz_add_ui(prev->key->left->value, prev->key->left->value, 1);
@@ -304,7 +304,7 @@ static void adjust_elem_left(struct set *set, struct expr *prev, struct expr *i,
 static void __adjust_elem_right(struct set *set, struct expr *prev, struct expr *i,
 				struct expr *add)
 {
-	prev->flags &= EXPR_F_KERNEL;
+	prev->flags &= ~EXPR_F_KERNEL;
 	expr_free(prev->key->right);
 	prev->key->right = expr_get(i->key->left);
 	mpz_sub_ui(prev->key->right->value, prev->key->right->value, 1);
@@ -334,7 +334,7 @@ static void split_range(struct set *set, struct expr *prev, struct expr *i,
 	clone = expr_clone(prev);
 	list_move_tail(&clone->list, &purge->expressions);
 
-	prev->flags &= EXPR_F_KERNEL;
+	prev->flags &= ~EXPR_F_KERNEL;
 	clone = expr_clone(prev);
 	expr_free(clone->key->left);
 	clone->key->left = expr_get(i->key->right);
