@@ -1728,9 +1728,9 @@ int mnl_nft_setelem_flush(struct netlink_ctx *ctx, const struct cmd *cmd)
 	return 0;
 }
 
-int mnl_nft_setelem_del(struct netlink_ctx *ctx, const struct cmd *cmd)
+int mnl_nft_setelem_del(struct netlink_ctx *ctx, const struct handle *h,
+			const struct expr *init)
 {
-	const struct handle *h = &cmd->handle;
 	struct nftnl_set *nls;
 	int err;
 
@@ -1748,7 +1748,7 @@ int mnl_nft_setelem_del(struct netlink_ctx *ctx, const struct cmd *cmd)
 	netlink_dump_set(nls, ctx);
 
 	err = mnl_nft_setelem_batch(nls, ctx->batch, NFT_MSG_DELSETELEM, 0,
-				    ctx->seqnum, cmd->expr, ctx);
+				    ctx->seqnum, init, ctx);
 	nftnl_set_free(nls);
 
 	return err;

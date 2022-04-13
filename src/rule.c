@@ -1601,7 +1601,7 @@ static int do_delete_setelems(struct netlink_ctx *ctx, struct cmd *cmd)
 	    set_to_intervals(set, expr, false) < 0)
 		return -1;
 
-	if (mnl_nft_setelem_del(ctx, cmd) < 0)
+	if (mnl_nft_setelem_del(ctx, &cmd->handle, cmd->elem.expr) < 0)
 		return -1;
 
 	return 0;
