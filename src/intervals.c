@@ -265,14 +265,12 @@ static void remove_elem(struct expr *prev, struct set *set, struct expr *purge)
 {
 	struct expr *clone;
 
-	if (!(prev->flags & EXPR_F_REMOVE)) {
-		if (prev->flags & EXPR_F_KERNEL) {
-			clone = expr_clone(prev);
-			list_move_tail(&clone->list, &purge->expressions);
-		} else {
-			list_del(&prev->list);
-			expr_free(prev);
-		}
+	if (prev->flags & EXPR_F_KERNEL) {
+		clone = expr_clone(prev);
+		list_move_tail(&clone->list, &purge->expressions);
+	} else {
+		list_del(&prev->list);
+		expr_free(prev);
 	}
 }
 
@@ -360,18 +358,15 @@ static int setelem_adjust(struct set *set, struct expr *add, struct expr *purge,
 {
 	if (mpz_cmp(prev_range->low, range->low) == 0 &&
 	    mpz_cmp(prev_range->high, range->high) > 0) {
-		if (!(prev->flags & EXPR_F_REMOVE) &&
-		    i->flags & EXPR_F_REMOVE)
+		if (i->flags & EXPR_F_REMOVE)
 			adjust_elem_left(set, prev, i, add, purge);
 	} else if (mpz_cmp(prev_range->low, range->low) < 0 &&
 		   mpz_cmp(prev_range->high, range->high) == 0) {
-		if (!(prev->flags & EXPR_F_REMOVE) &&
-		    i->flags & EXPR_F_REMOVE)
+		if (i->flags & EXPR_F_REMOVE)
 			adjust_elem_right(set, prev, i, add, purge);
 	} else if (mpz_cmp(prev_range->low, range->low) < 0 &&
 		   mpz_cmp(prev_range->high, range->high) > 0) {
-		if (!(prev->flags & EXPR_F_REMOVE) &&
-		    i->flags & EXPR_F_REMOVE)
+		if (i->flags & EXPR_F_REMOVE)
 			split_range(set, prev, i, add, purge);
 	} else {
 		return -1;
@@ -417,8 +412,7 @@ static int setelem_delete(struct list_head *msgs, struct set *set,
 
 		if (mpz_cmp(prev_range.low, range.low) == 0 &&
 		    mpz_cmp(prev_range.high, range.high) == 0) {
-			if (!(prev->flags & EXPR_F_REMOVE) &&
-			    i->flags & EXPR_F_REMOVE) {
+			if (i->flags & EXPR_F_REMOVE) {
 				list_move_tail(&prev->list, &purge->expressions);
 				list_del(&i->list);
 				expr_free(i);
