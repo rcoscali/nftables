@@ -329,8 +329,10 @@ static void split_range(struct set *set, struct expr *prev, struct expr *i,
 {
 	struct expr *clone;
 
-	clone = expr_clone(prev);
-	list_move_tail(&clone->list, &purge->expressions);
+	if (prev->flags & EXPR_F_KERNEL) {
+		clone = expr_clone(prev);
+		list_move_tail(&clone->list, &purge->expressions);
+	}
 
 	prev->flags &= ~EXPR_F_KERNEL;
 	clone = expr_clone(prev);
@@ -413,7 +415,9 @@ static int setelem_delete(struct list_head *msgs, struct set *set,
 		if (mpz_cmp(prev_range.low, range.low) == 0 &&
 		    mpz_cmp(prev_range.high, range.high) == 0) {
 			if (i->flags & EXPR_F_REMOVE) {
-				list_move_tail(&prev->list, &purge->expressions);
+				if (prev->flags & EXPR_F_KERNEL)
+					list_move_tail(&prev->list, &purge->expressions);
+
 				list_del(&i->list);
 				expr_free(i);
 			}
