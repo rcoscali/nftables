@@ -454,34 +454,44 @@ static void automerge_delete(struct list_head *msgs, struct set *set,
 	expr_free(ctx.purge);
 }
 
+static int __set_delete(struct list_head *msgs, struct expr *i,	struct set *set,
+			struct expr *add, struct expr *init,
+			struct set *existing_set, unsigned int debug_mask)
+{
+	i->flags |= EXPR_F_REMOVE;
+	list_move(&i->list, &existing_set->init->expressions);
+	list_expr_sort(&existing_set->init->expressions);
+
+	return setelem_delete(msgs, set, add, init, existing_set->init, debug_mask);
+}
+
 /* detection for unexisting intervals already exists in Linux kernels >= 5.7. */
 int set_delete(struct list_head *msgs, struct cmd *cmd, struct set *set,
 	       struct expr *init, unsigned int debug_mask)
 {
 	struct set *existing_set = set->existing_set;
-	struct expr *i, *add;
+	struct expr *i, *next, *add;
 	struct handle h = {};
 	struct cmd *add_cmd;
+	LIST_HEAD(del_list);
 	int err;
 
 	set_to_range(init);
 	if (set->automerge)
 		automerge_delete(msgs, set, init, debug_mask);
 
-	list_for_each_entry(i, &init->expressions, list)
-		i->flags |= EXPR_F_REMOVE;
-
 	set_to_range(existing_set->init);
-	list_splice_init(&init->expressions, &existing_set->init->expressions);
-
-	list_expr_sort(&existing_set->init->expressions);
-
 	add = set_expr_alloc(&internal_location, set);
 
-	err = setelem_delete(msgs, set, add, init, existing_set->init, debug_mask);
-	if (err < 0) {
-		expr_free(add);
-		return err;
+	list_splice_init(&init->expressions, &del_list);
+
+	list_for_each_entry_safe(i, next, &del_list, list) {
+		err = __set_delete(msgs, i, set, add, init, existing_set, debug_mask);
+		if (err < 0) {
+			list_splice(&del_list, &init->expressions);
+			expr_free(add);
+			return err;
+		}
 	}
 
 	if (debug_mask & NFT_DEBUG_SEGTREE) {
