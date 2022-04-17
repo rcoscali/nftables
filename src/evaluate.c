@@ -1270,7 +1270,8 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 	}
 
 	list_for_each_entry_safe(i, next, &(*expr)->expressions, list) {
-		unsigned dsize_bytes;
+		enum byteorder bo = BYTEORDER_INVALID;
+		unsigned dsize_bytes, dsize = 0;
 
 		if (i->etype == EXPR_CT &&
 		    (i->ct.key == NFT_CT_SRC ||
@@ -1286,14 +1287,18 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 
 		if (key) {
 			tmp = key->dtype;
+			dsize = key->len;
+			bo = key->byteorder;
 			off--;
 		} else if (dtype == NULL) {
 			tmp = datatype_lookup(TYPE_INVALID);
 		} else {
 			tmp = concat_subtype_lookup(type, --off);
+			dsize = tmp->size;
+			bo = tmp->byteorder;
 		}
 
-		expr_set_context(&ctx->ectx, tmp, tmp->size);
+		__expr_set_context(&ctx->ectx, tmp, bo, dsize, 0);
 
 		if (list_member_evaluate(ctx, &i) < 0)
 			return -1;
@@ -1315,12 +1320,14 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 						 "data types (%s) in concat "
 						 "expressions",
 						 i->dtype->name);
+		if (dsize == 0) /* reload after evaluation or clone above */
+			dsize = i->dtype->size;
 
 		ntype = concat_subtype_add(ntype, i->dtype->type);
 
-		dsize_bytes = div_round_up(i->dtype->size, BITS_PER_BYTE);
+		dsize_bytes = div_round_up(dsize, BITS_PER_BYTE);
 		(*expr)->field_len[(*expr)->field_count++] = dsize_bytes;
-		size += netlink_padded_len(i->dtype->size);
+		size += netlink_padded_len(dsize);
 		if (key)
 			key = list_next_entry(key, list);
 	}
@@ -4046,20 +4053,23 @@ static int set_expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 			i->dtype = dtype;
 		}
 
-		if (i->dtype->size == 0)
+		if (i->dtype->size == 0 && i->len == 0)
 			return expr_binary_error(ctx->msgs, i, *expr,
 						 "can not use variable sized "
 						 "data types (%s) in concat "
 						 "expressions",
 						 i->dtype->name);
 
+		if (i->dtype->size)
+			assert(i->len == i->dtype->size);
+
 		flags &= i->flags;
 
 		ntype = concat_subtype_add(ntype, i->dtype->type);
 
-		dsize_bytes = div_round_up(i->dtype->size, BITS_PER_BYTE);
+		dsize_bytes = div_round_up(i->len, BITS_PER_BYTE);
 		(*expr)->field_len[(*expr)->field_count++] = dsize_bytes;
-		size += netlink_padded_len(i->dtype->size);
+		size += netlink_padded_len(i->len);
 	}
 
 	(*expr)->flags |= flags;
