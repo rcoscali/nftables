@@ -805,7 +805,7 @@ static struct expr *set_make_key(const struct nftnl_udata *attr)
 	return expr;
 }
 
-static bool set_udata_key_valid(const struct expr *e, const struct datatype *d, uint32_t len)
+static bool set_udata_key_valid(const struct expr *e, uint32_t len)
 {
 	if (!e)
 		return false;
@@ -935,7 +935,7 @@ struct set *netlink_delinearize_set(struct netlink_ctx *ctx,
 		dtype = set_datatype_alloc(datatype, databyteorder);
 		klen = nftnl_set_get_u32(nls, NFTNL_SET_DATA_LEN) * BITS_PER_BYTE;
 
-		if (set_udata_key_valid(typeof_expr_data, dtype, klen)) {
+		if (set_udata_key_valid(typeof_expr_data, klen)) {
 			datatype_free(datatype_get(dtype));
 			set->data = typeof_expr_data;
 		} else {
@@ -960,7 +960,7 @@ struct set *netlink_delinearize_set(struct netlink_ctx *ctx,
 	dtype = set_datatype_alloc(keytype, keybyteorder);
 	klen = nftnl_set_get_u32(nls, NFTNL_SET_KEY_LEN) * BITS_PER_BYTE;
 
-	if (set_udata_key_valid(typeof_expr_key, dtype, klen)) {
+	if (set_udata_key_valid(typeof_expr_key, klen)) {
 		datatype_free(datatype_get(dtype));
 		set->key = typeof_expr_key;
 		set->key_typeof_valid = true;
