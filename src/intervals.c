@@ -244,6 +244,7 @@ int set_automerge(struct list_head *msgs, struct cmd *cmd, struct set *set,
 					     i->key->left->value, i->key->right->value);
 			}
 			clone = expr_clone(i);
+			clone->flags |= EXPR_F_KERNEL;
 			list_add_tail(&clone->list, &existing_set->init->expressions);
 		}
 	}
@@ -481,6 +482,7 @@ int set_delete(struct list_head *msgs, struct cmd *cmd, struct set *set,
 		if (!(i->flags & EXPR_F_KERNEL)) {
 			clone = expr_clone(i);
 			list_add_tail(&clone->list, &add->expressions);
+			i->flags |= EXPR_F_KERNEL;
 		}
 	}
 
@@ -609,6 +611,7 @@ int set_overlap(struct list_head *msgs, struct set *set, struct expr *init)
 			list_move_tail(&i->list, &existing_set->init->expressions);
 		else if (existing_set) {
 			clone = expr_clone(i);
+			clone->flags |= EXPR_F_KERNEL;
 			list_add_tail(&clone->list, &existing_set->init->expressions);
 		}
 	}
