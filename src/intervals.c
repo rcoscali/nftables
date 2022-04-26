@@ -20,6 +20,7 @@ static void setelem_expr_to_range(struct expr *expr)
 	assert(expr->etype == EXPR_SET_ELEM);
 
 	switch (expr->key->etype) {
+	case EXPR_SET_ELEM_CATCHALL:
 	case EXPR_RANGE:
 		break;
 	case EXPR_PREFIX:
@@ -53,7 +54,7 @@ static void setelem_expr_to_range(struct expr *expr)
 		expr->key = key;
 		break;
 	default:
-		assert(1);
+		BUG("unhandled key type %d\n", expr->key->etype);
 	}
 }
 
@@ -185,7 +186,7 @@ static struct expr *interval_expr_key(struct expr *i)
 		elem = i;
 		break;
 	default:
-		assert(1);
+		BUG("unhandled expression type %d\n", i->etype);
 		return NULL;
 	}
 

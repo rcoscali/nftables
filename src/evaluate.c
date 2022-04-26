@@ -1499,7 +1499,7 @@ static int interval_set_eval(struct eval_ctx *ctx, struct set *set,
 	case CMD_GET:
 		break;
 	default:
-		assert(1);
+		BUG("unhandled op %d\n", ctx->cmd->op);
 		break;
 	}
 
