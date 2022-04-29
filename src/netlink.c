@@ -259,6 +259,10 @@ static int netlink_gen_concat_data_expr(int end, const struct expr *i,
 			mpz_t v;
 
 			mpz_init_bitmask(v, i->len - i->prefix_len);
+
+			if (i->byteorder == BYTEORDER_HOST_ENDIAN)
+				mpz_switch_byteorder(v, i->len / BITS_PER_BYTE);
+
 			mpz_add(v, i->prefix->value, v);
 			count = netlink_export_pad(data, v, i);
 			mpz_clear(v);
