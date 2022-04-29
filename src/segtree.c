@@ -345,6 +345,8 @@ void concat_range_aggregate(struct expr *set)
 		list_for_each_entry_safe(r1, r1_next,
 					 &expr_value(start)->expressions,
 					 list) {
+			bool string_type = false;
+
 			mpz_init(range);
 			mpz_init(p);
 
@@ -356,16 +358,48 @@ void concat_range_aggregate(struct expr *set)
 				goto next;
 			}
 
+			if (expr_basetype(r1)->type == TYPE_STRING &&
+			    expr_basetype(r2)->type == TYPE_STRING) {
+				string_type = true;
+				mpz_switch_byteorder(r1->value, r1->len / BITS_PER_BYTE);
+				mpz_switch_byteorder(r2->value, r2->len / BITS_PER_BYTE);
+			}
+
 			mpz_sub(range, r2->value, r1->value);
 			mpz_sub_ui(range, range, 1);
 			mpz_and(p, r1->value, range);
 
 			/* Check if we are forced, or if it's anyway preferable,
-			 * to express the range as two points instead of a
-			 * netmask.
+			 * to express the range as a wildcard string, or two points
+			 * instead of a netmask.
 			 */
 			prefix_len = range_mask_len(r1->value, r2->value,
 						    r1->len);
+			if (string_type) {
+				mpz_switch_byteorder(r1->value, r1->len / BITS_PER_BYTE);
+				mpz_switch_byteorder(r2->value, r2->len / BITS_PER_BYTE);
+			}
+
+			if (prefix_len >= 0 &&
+			    (prefix_len % BITS_PER_BYTE) == 0 &&
+			    string_type) {
+				unsigned int str_len = prefix_len / BITS_PER_BYTE;
+				char data[str_len + 2];
+
+				mpz_export_data(data, r1->value, BYTEORDER_HOST_ENDIAN, str_len);
+				data[str_len] = '*';
+
+				tmp = constant_expr_alloc(&r1->location, r1->dtype,
+							  BYTEORDER_HOST_ENDIAN,
+							  (str_len + 1) * BITS_PER_BYTE, data);
+				tmp->len = r2->len;
+				list_replace(&r2->list, &tmp->list);
+				r2_next = tmp->list.next;
+				expr_free(r2);
+				free_r1 = 1;
+				goto next;
+			}
+
 			if (prefix_len < 0 ||
 			    !(r1->dtype->flags & DTYPE_F_PREFIX)) {
 				tmp = range_expr_alloc(&r1->location, r1,
