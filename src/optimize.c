@@ -274,7 +274,7 @@ static int rule_collect_stmts(struct optimize_ctx *ctx, struct rule *rule)
 				clone->log.prefix = expr_get(stmt->log.prefix);
 			break;
 		default:
-			break;
+			continue;
 		}
 
 		ctx->stmt[ctx->num_stmts++] = clone;
