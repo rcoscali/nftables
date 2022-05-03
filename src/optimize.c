@@ -622,12 +622,14 @@ static bool stmt_verdict_cmp(const struct optimize_ctx *ctx,
 		stmt_a = ctx->stmt_matrix[i][k];
 		stmt_b = ctx->stmt_matrix[i + 1][k];
 		if (!stmt_a && !stmt_b)
-			return true;
-		if (stmt_verdict_eq(stmt_a, stmt_b))
-			return true;
+			continue;
+		if (!stmt_a || !stmt_b)
+			return false;
+		if (!stmt_verdict_eq(stmt_a, stmt_b))
+			return false;
 	}
 
-	return false;
+	return true;
 }
 
 static void rule_optimize_print(struct output_ctx *octx,
