@@ -270,9 +270,6 @@ static void remove_elem(struct expr *prev, struct set *set, struct expr *purge)
 	if (prev->flags & EXPR_F_KERNEL) {
 		clone = expr_clone(prev);
 		list_move_tail(&clone->list, &purge->expressions);
-	} else {
-		list_del(&prev->list);
-		expr_free(prev);
 	}
 }
 
