@@ -100,7 +100,7 @@ static void netlink_release_registers(struct netlink_parse_ctx *ctx)
 {
 	int i;
 
-	for (i = 0; i < MAX_REGS; i++)
+	for (i = 0; i <= MAX_REGS; i++)
 		expr_free(ctx->registers[i]);
 }
 
