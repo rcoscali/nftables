@@ -2309,13 +2309,9 @@ static int do_list_chain(struct netlink_ctx *ctx, struct cmd *cmd,
 
 	table_print_declaration(table, &ctx->nft->output);
 
-	list_for_each_entry(chain, &table->chain_cache.list, cache.list) {
-		if (chain->handle.family != cmd->handle.family ||
-		    strcmp(cmd->handle.chain.name, chain->handle.chain.name) != 0)
-			continue;
-
+	chain = chain_cache_find(table, cmd->handle.chain.name);
+	if (chain)
 		chain_print(chain, &ctx->nft->output);
-	}
 
 	nft_print(&ctx->nft->output, "}\n");
 
