@@ -486,14 +486,14 @@ int set_delete(struct list_head *msgs, struct cmd *cmd, struct set *set,
 
 	if (debug_mask & NFT_DEBUG_SEGTREE) {
 		list_for_each_entry(i, &init->expressions, list)
-			gmp_printf("remove: [%Zx-%Zx]\n",
-				   i->key->left->value, i->key->right->value);
+			pr_gmp_debug("remove: [%Zx-%Zx]\n",
+				     i->key->left->value, i->key->right->value);
 		list_for_each_entry(i, &add->expressions, list)
-			gmp_printf("add: [%Zx-%Zx]\n",
-				   i->key->left->value, i->key->right->value);
+			pr_gmp_debug("add: [%Zx-%Zx]\n",
+				     i->key->left->value, i->key->right->value);
 		list_for_each_entry(i, &existing_set->init->expressions, list)
-			gmp_printf("existing: [%Zx-%Zx]\n",
-				   i->key->left->value, i->key->right->value);
+			pr_gmp_debug("existing: [%Zx-%Zx]\n",
+				     i->key->left->value, i->key->right->value);
 	}
 
 	if (list_empty(&add->expressions)) {
