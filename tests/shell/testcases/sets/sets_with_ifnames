@@ -13,6 +13,7 @@ ns2="nft2ifname-$rnd"
 cleanup()
 {
 	ip netns del "$ns1"
+	ip netns del "$ns2"
 }
 
 trap cleanup EXIT
