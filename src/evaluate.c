@@ -4005,8 +4005,9 @@ static int setelem_evaluate(struct eval_ctx *ctx, struct cmd *cmd)
 	cmd->elem.set = set_get(set);
 
 	if (set_is_interval(ctx->set->flags) &&
-	    !(set->flags & NFT_SET_CONCAT))
-		return interval_set_eval(ctx, ctx->set, cmd->expr);
+	    !(set->flags & NFT_SET_CONCAT) &&
+	    interval_set_eval(ctx, ctx->set, cmd->expr) < 0)
+		return -1;
 
 	ctx->set = NULL;
 
@@ -4184,8 +4185,9 @@ static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 	}
 
 	if (set_is_interval(ctx->set->flags) &&
-	    !(ctx->set->flags & NFT_SET_CONCAT))
-		return interval_set_eval(ctx, ctx->set, set->init);
+	    !(ctx->set->flags & NFT_SET_CONCAT) &&
+	    interval_set_eval(ctx, ctx->set, set->init) < 0)
+		return -1;
 
 	ctx->set = NULL;
 
