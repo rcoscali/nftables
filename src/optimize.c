@@ -304,7 +304,7 @@ static int rule_collect_stmts(struct optimize_ctx *ctx, struct rule *rule)
 			clone->nat.type_flags = stmt->nat.type_flags;
 			break;
 		default:
-			stmt_free(clone);
+			xfree(clone);
 			continue;
 		}
 
