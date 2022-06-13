@@ -540,8 +540,7 @@ static int setelem_overlap(struct list_head *msgs, struct set *set,
 		}
 
 		if (mpz_cmp(prev_range.low, range.low) == 0 &&
-		    mpz_cmp(prev_range.high, range.high) == 0 &&
-		    (elem->flags & EXPR_F_KERNEL || prev->flags & EXPR_F_KERNEL))
+		    mpz_cmp(prev_range.high, range.high) == 0)
 			goto next;
 
 		if (mpz_cmp(prev_range.low, range.low) <= 0 &&
