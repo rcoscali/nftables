@@ -501,7 +501,9 @@ static int nft_evaluate(struct nft_ctx *nft, struct list_head *msgs,
 {
 	struct nft_cache_filter *filter;
 	struct cmd *cmd, *next;
+	bool collapsed = false;
 	unsigned int flags;
+	int err = 0;
 
 	filter = nft_cache_filter_init();
 	flags = nft_cache_evaluate(nft, cmds, filter);
@@ -512,17 +514,26 @@ static int nft_evaluate(struct nft_ctx *nft, struct list_head *msgs,
 
 	nft_cache_filter_fini(filter);
 
+	if (nft_cmd_collapse(cmds))
+		collapsed = true;
+
 	list_for_each_entry_safe(cmd, next, cmds, list) {
 		struct eval_ctx ectx = {
 			.nft	= nft,
 			.msgs	= msgs,
 		};
+
 		if (cmd_evaluate(&ectx, cmd) < 0 &&
-		    ++nft->state->nerrs == nft->parser_max_errors)
-			return -1;
+		    ++nft->state->nerrs == nft->parser_max_errors) {
+			err = -1;
+			break;
+		}
 	}
 
-	if (nft->state->nerrs)
+	if (collapsed)
+		nft_cmd_uncollapse(cmds);
+
+	if (err < 0 || nft->state->nerrs)
 		return -1;
 
 	list_for_each_entry(cmd, cmds, list) {

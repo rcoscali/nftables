@@ -243,6 +243,7 @@ struct expr {
 	enum expr_types		etype:8;
 	enum ops		op:8;
 	unsigned int		len;
+	struct cmd		*cmd;
 
 	union {
 		struct {

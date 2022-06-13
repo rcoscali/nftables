@@ -1279,6 +1279,8 @@ struct cmd *cmd_alloc(enum cmd_ops op, enum cmd_obj obj,
 	cmd->handle   = *h;
 	cmd->location = *loc;
 	cmd->data     = data;
+	init_list_head(&cmd->collapse_list);
+
 	return cmd;
 }
 
@@ -1376,6 +1378,79 @@ void nft_cmd_expand(struct cmd *cmd)
 		break;
 	default:
 		break;
+	}
+}
+
+bool nft_cmd_collapse(struct list_head *cmds)
+{
+	struct cmd *cmd, *next, *elems = NULL;
+	struct expr *expr, *enext;
+	bool collapse = false;
+
+	list_for_each_entry_safe(cmd, next, cmds, list) {
+		if (cmd->op != CMD_ADD &&
+		    cmd->op != CMD_CREATE) {
+			elems = NULL;
+			continue;
+		}
+
+		if (cmd->obj != CMD_OBJ_ELEMENTS) {
+			elems = NULL;
+			continue;
+		}
+
+		if (!elems) {
+			elems = cmd;
+			continue;
+		}
+
+		if (cmd->op != elems->op) {
+			elems = cmd;
+			continue;
+		}
+
+		if (strcmp(elems->handle.table.name, cmd->handle.table.name) ||
+		    strcmp(elems->handle.set.name, cmd->handle.set.name)) {
+			elems = cmd;
+			continue;
+		}
+
+		collapse = true;
+		list_for_each_entry_safe(expr, enext, &cmd->expr->expressions, list) {
+			expr->cmd = cmd;
+			list_move_tail(&expr->list, &elems->expr->expressions);
+		}
+		elems->expr->size += cmd->expr->size;
+		list_move_tail(&cmd->list, &elems->collapse_list);
+	}
+
+	return collapse;
+}
+
+void nft_cmd_uncollapse(struct list_head *cmds)
+{
+	struct cmd *cmd, *cmd_next, *collapse_cmd, *collapse_cmd_next;
+	struct expr *expr, *next;
+
+	list_for_each_entry_safe(cmd, cmd_next, cmds, list) {
+		if (list_empty(&cmd->collapse_list))
+			continue;
+
+		assert(cmd->obj == CMD_OBJ_ELEMENTS);
+
+		list_for_each_entry_safe(expr, next, &cmd->expr->expressions, list) {
+			if (!expr->cmd)
+				continue;
+
+			list_move_tail(&expr->list, &expr->cmd->expr->expressions);
+			cmd->expr->size--;
+			expr->cmd = NULL;
+		}
+
+		list_for_each_entry_safe(collapse_cmd, collapse_cmd_next, &cmd->collapse_list, list) {
+			collapse_cmd->elem.set = set_get(cmd->elem.set);
+			list_add(&collapse_cmd->list, &cmd->list);
+		}
 	}
 }
 
