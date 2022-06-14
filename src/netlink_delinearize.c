@@ -2539,16 +2539,21 @@ static void expr_postprocess(struct rule_pp_ctx *ctx, struct expr **exprp)
 		unsigned int type = expr->dtype->type, ntype = 0;
 		int off = expr->dtype->subtypes;
 		const struct datatype *dtype;
+		LIST_HEAD(tmp);
+		struct expr *n;
 
-		list_for_each_entry(i, &expr->expressions, list) {
+		list_for_each_entry_safe(i, n, &expr->expressions, list) {
 			if (type) {
 				dtype = concat_subtype_lookup(type, --off);
 				expr_set_type(i, dtype, dtype->byteorder);
 			}
+			list_del(&i->list);
 			expr_postprocess(ctx, &i);
+			list_add_tail(&i->list, &tmp);
 
 			ntype = concat_subtype_add(ntype, i->dtype->type);
 		}
+		list_splice(&tmp, &expr->expressions);
 		datatype_set(expr, concat_type_alloc(ntype));
 		break;
 	}
