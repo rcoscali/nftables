@@ -216,6 +216,12 @@ int set_automerge(struct list_head *msgs, struct cmd *cmd, struct set *set,
 	struct cmd *purge_cmd;
 	struct handle h = {};
 
+	if (set->flags & NFT_SET_MAP) {
+		set_to_range(init);
+		list_expr_sort(&init->expressions);
+		return 0;
+	}
+
 	if (existing_set) {
 		if (existing_set->init) {
 			list_splice_init(&existing_set->init->expressions,
@@ -228,9 +234,6 @@ int set_automerge(struct list_head *msgs, struct cmd *cmd, struct set *set,
 
 	set_to_range(init);
 	list_expr_sort(&init->expressions);
-
-	if (set->flags & NFT_SET_MAP)
-		return 0;
 
 	ctx.purge = set_expr_alloc(&internal_location, set);
 
