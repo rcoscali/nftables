@@ -105,6 +105,12 @@ static bool stmt_expr_supported(const struct expr *expr)
 	return false;
 }
 
+static bool expr_symbol_set(const struct expr *expr)
+{
+	return expr->right->etype == EXPR_SYMBOL &&
+	       expr->right->symtype == SYMBOL_SET;
+}
+
 static bool __stmt_type_eq(const struct stmt *stmt_a, const struct stmt *stmt_b,
 			   bool fully_compare)
 {
@@ -121,6 +127,10 @@ static bool __stmt_type_eq(const struct stmt *stmt_a, const struct stmt *stmt_b,
 		if (fully_compare) {
 			if (!stmt_expr_supported(expr_a) ||
 			    !stmt_expr_supported(expr_b))
+				return false;
+
+			if (expr_symbol_set(expr_a) ||
+			    expr_symbol_set(expr_b))
 				return false;
 		}
 
