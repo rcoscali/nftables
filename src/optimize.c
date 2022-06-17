@@ -87,6 +87,12 @@ static bool __expr_cmp(const struct expr *expr_a, const struct expr *expr_b)
 		if (expr_a->osf.flags != expr_b->osf.flags)
 			return false;
 		break;
+	case EXPR_XFRM:
+		if (expr_a->xfrm.key != expr_b->xfrm.key)
+			return false;
+		if (expr_a->xfrm.direction != expr_b->xfrm.direction)
+			return false;
+		break;
 	default:
 		return false;
 	}
