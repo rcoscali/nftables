@@ -81,6 +81,12 @@ static bool __expr_cmp(const struct expr *expr_a, const struct expr *expr_b)
 		if (expr_a->socket.level != expr_b->socket.level)
 			return false;
 		break;
+	case EXPR_OSF:
+		if (expr_a->osf.ttl != expr_b->osf.ttl)
+			return false;
+		if (expr_a->osf.flags != expr_b->osf.flags)
+			return false;
+		break;
 	default:
 		return false;
 	}
