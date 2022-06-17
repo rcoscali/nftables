@@ -873,6 +873,11 @@ static void merge_rules(const struct optimize_ctx *ctx,
 		assert(0);
 	}
 
+	if (ctx->rule[from]->comment) {
+		xfree(ctx->rule[from]->comment);
+		ctx->rule[from]->comment = NULL;
+	}
+
         octx->flags |= NFT_CTX_OUTPUT_STATELESS;
 
 	fprintf(octx->error_fp, "Merging:\n");
