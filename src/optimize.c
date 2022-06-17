@@ -873,6 +873,8 @@ static void merge_rules(const struct optimize_ctx *ctx,
 		assert(0);
 	}
 
+        octx->flags |= NFT_CTX_OUTPUT_STATELESS;
+
 	fprintf(octx->error_fp, "Merging:\n");
 	rule_optimize_print(octx, ctx->rule[from]);
 
@@ -885,6 +887,8 @@ static void merge_rules(const struct optimize_ctx *ctx,
 	fprintf(octx->error_fp, "into:\n\t");
 	rule_print(ctx->rule[from], octx);
 	fprintf(octx->error_fp, "\n");
+
+        octx->flags &= ~NFT_CTX_OUTPUT_STATELESS;
 }
 
 static bool stmt_type_eq(const struct stmt *stmt_a, const struct stmt *stmt_b)
