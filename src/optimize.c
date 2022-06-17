@@ -99,6 +99,8 @@ static bool __expr_cmp(const struct expr *expr_a, const struct expr *expr_b)
 		if (expr_a->fib.result != expr_b->fib.result)
 			return false;
 		break;
+	case EXPR_BINOP:
+		return __expr_cmp(expr_a->left, expr_b->left);
 	default:
 		return false;
 	}
