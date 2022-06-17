@@ -164,6 +164,11 @@ static bool __stmt_type_eq(const struct stmt *stmt_a, const struct stmt *stmt_b,
 		expr_a = stmt_a->expr;
 		expr_b = stmt_b->expr;
 
+		if (expr_a->op != expr_b->op)
+			return false;
+		if (expr_a->op != OP_IMPLICIT && expr_a->op != OP_EQ)
+			return false;
+
 		if (fully_compare) {
 			if (!stmt_expr_supported(expr_a) ||
 			    !stmt_expr_supported(expr_b))
@@ -351,6 +356,11 @@ static int rule_collect_stmts(struct optimize_ctx *ctx, struct rule *rule)
 		clone = stmt_alloc(&internal_location, stmt->ops);
 		switch (stmt->ops->type) {
 		case STMT_EXPRESSION:
+			if (stmt->expr->op != OP_IMPLICIT &&
+			    stmt->expr->op != OP_EQ) {
+				clone->ops = &unsupported_stmt_ops;
+				break;
+			}
 		case STMT_VERDICT:
 			clone->expr = expr_get(stmt->expr);
 			break;
