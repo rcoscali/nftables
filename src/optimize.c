@@ -139,6 +139,9 @@ static bool __stmt_type_eq(const struct stmt *stmt_a, const struct stmt *stmt_b,
 	case STMT_NOTRACK:
 		break;
 	case STMT_VERDICT:
+		if (!fully_compare)
+			break;
+
 		expr_a = stmt_a->expr;
 		expr_b = stmt_b->expr;
 
@@ -274,10 +277,6 @@ static int rule_collect_stmts(struct optimize_ctx *ctx, struct rule *rule)
 
 	list_for_each_entry(stmt, &rule->stmts, list) {
 		if (stmt_type_find(ctx, stmt))
-			continue;
-
-		if (stmt->ops->type == STMT_VERDICT &&
-		    stmt->expr->etype == EXPR_MAP)
 			continue;
 
 		/* No refcounter available in statement objects, clone it to
@@ -998,6 +997,10 @@ static int chain_optimize(struct nft_ctx *nft, struct list_head *rules)
 			switch (ctx->stmt_matrix[i][m]->ops->type) {
 			case STMT_EXPRESSION:
 				merge[k].stmt[merge[k].num_stmts++] = m;
+				break;
+			case STMT_VERDICT:
+				if (ctx->stmt_matrix[i][m]->expr->etype == EXPR_MAP)
+					merge[k].stmt[merge[k].num_stmts++] = m;
 				break;
 			default:
 				break;
