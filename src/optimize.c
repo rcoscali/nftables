@@ -178,12 +178,18 @@ static bool __stmt_type_eq(const struct stmt *stmt_a, const struct stmt *stmt_b,
 			return false;
 		break;
 	case STMT_REJECT:
-		if (stmt_a->reject.expr || stmt_b->reject.expr)
-			return false;
-
 		if (stmt_a->reject.family != stmt_b->reject.family ||
 		    stmt_a->reject.type != stmt_b->reject.type ||
 		    stmt_a->reject.icmp_code != stmt_b->reject.icmp_code)
+			return false;
+
+		if (!!stmt_a->reject.expr ^ !!stmt_b->reject.expr)
+			return false;
+
+		if (!stmt_a->reject.expr)
+			return true;
+
+		if (__expr_cmp(stmt_a->reject.expr, stmt_b->reject.expr))
 			return false;
 		break;
 	case STMT_NAT:
@@ -303,6 +309,13 @@ static int rule_collect_stmts(struct optimize_ctx *ctx, struct rule *rule)
 				clone->nat.proto = expr_clone(stmt->nat.proto);
 			clone->nat.flags = stmt->nat.flags;
 			clone->nat.type_flags = stmt->nat.type_flags;
+			break;
+		case STMT_REJECT:
+			if (stmt->reject.expr)
+				clone->reject.expr = expr_get(stmt->reject.expr);
+			clone->reject.type = stmt->reject.type;
+			clone->reject.icmp_code = stmt->reject.icmp_code;
+			clone->reject.family = stmt->reject.family;
 			break;
 		default:
 			xfree(clone);
