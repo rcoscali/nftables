@@ -197,14 +197,6 @@ static bool __stmt_type_eq(const struct stmt *stmt_a, const struct stmt *stmt_b,
 		    expr_b->etype == EXPR_MAP)
 			return __expr_cmp(expr_a->map, expr_b->map);
 		break;
-	case STMT_LIMIT:
-		if (stmt_a->limit.rate != stmt_b->limit.rate ||
-		    stmt_a->limit.unit != stmt_b->limit.unit ||
-		    stmt_a->limit.burst != stmt_b->limit.burst ||
-		    stmt_a->limit.type != stmt_b->limit.type ||
-		    stmt_a->limit.flags != stmt_b->limit.flags)
-			return false;
-		break;
 	case STMT_LOG:
 		if (stmt_a->log.snaplen != stmt_b->log.snaplen ||
 		    stmt_a->log.group != stmt_b->log.group ||
@@ -322,7 +314,6 @@ static bool stmt_type_find(struct optimize_ctx *ctx, const struct stmt *stmt)
 	case STMT_VERDICT:
 	case STMT_COUNTER:
 	case STMT_NOTRACK:
-	case STMT_LIMIT:
 	case STMT_LOG:
 	case STMT_NAT:
 	case STMT_REJECT:
@@ -366,9 +357,6 @@ static int rule_collect_stmts(struct optimize_ctx *ctx, struct rule *rule)
 			break;
 		case STMT_COUNTER:
 		case STMT_NOTRACK:
-			break;
-		case STMT_LIMIT:
-			memcpy(&clone->limit, &stmt->limit, sizeof(clone->limit));
 			break;
 		case STMT_LOG:
 			memcpy(&clone->log, &stmt->log, sizeof(clone->log));
