@@ -93,6 +93,12 @@ static bool __expr_cmp(const struct expr *expr_a, const struct expr *expr_b)
 		if (expr_a->xfrm.direction != expr_b->xfrm.direction)
 			return false;
 		break;
+	case EXPR_FIB:
+		if (expr_a->fib.flags != expr_b->fib.flags)
+			return false;
+		if (expr_a->fib.result != expr_b->fib.result)
+			return false;
+		break;
 	default:
 		return false;
 	}
