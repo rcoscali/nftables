@@ -105,7 +105,8 @@ static bool stmt_expr_supported(const struct expr *expr)
 	return false;
 }
 
-static bool __stmt_type_eq(const struct stmt *stmt_a, const struct stmt *stmt_b)
+static bool __stmt_type_eq(const struct stmt *stmt_a, const struct stmt *stmt_b,
+			   bool fully_compare)
 {
 	struct expr *expr_a, *expr_b;
 
@@ -117,9 +118,11 @@ static bool __stmt_type_eq(const struct stmt *stmt_a, const struct stmt *stmt_b)
 		expr_a = stmt_a->expr;
 		expr_b = stmt_b->expr;
 
-		if (!stmt_expr_supported(expr_a) ||
-		    !stmt_expr_supported(expr_b))
-			return false;
+		if (fully_compare) {
+			if (!stmt_expr_supported(expr_a) ||
+			    !stmt_expr_supported(expr_b))
+				return false;
+		}
 
 		return __expr_cmp(expr_a->left, expr_b->left);
 	case STMT_COUNTER:
@@ -237,24 +240,12 @@ static bool stmt_verdict_eq(const struct stmt *stmt_a, const struct stmt *stmt_b
 	return false;
 }
 
-static bool stmt_type_eq(const struct stmt *stmt_a, const struct stmt *stmt_b)
-{
-	if (!stmt_a && !stmt_b)
-		return true;
-	else if (!stmt_a)
-		return false;
-	else if (!stmt_b)
-		return false;
-
-	return __stmt_type_eq(stmt_a, stmt_b);
-}
-
 static bool stmt_type_find(struct optimize_ctx *ctx, const struct stmt *stmt)
 {
 	uint32_t i;
 
 	for (i = 0; i < ctx->num_stmts; i++) {
-		if (__stmt_type_eq(stmt, ctx->stmt[i]))
+		if (__stmt_type_eq(stmt, ctx->stmt[i], false))
 			return true;
 	}
 
@@ -321,7 +312,7 @@ static int cmd_stmt_find_in_stmt_matrix(struct optimize_ctx *ctx, struct stmt *s
 	uint32_t i;
 
 	for (i = 0; i < ctx->num_stmts; i++) {
-		if (__stmt_type_eq(stmt, ctx->stmt[i]))
+		if (__stmt_type_eq(stmt, ctx->stmt[i], false))
 			return i;
 	}
 	/* should not ever happen. */
@@ -884,6 +875,18 @@ static void merge_rules(const struct optimize_ctx *ctx,
 	fprintf(octx->error_fp, "into:\n\t");
 	rule_print(ctx->rule[from], octx);
 	fprintf(octx->error_fp, "\n");
+}
+
+static bool stmt_type_eq(const struct stmt *stmt_a, const struct stmt *stmt_b)
+{
+	if (!stmt_a && !stmt_b)
+		return true;
+	else if (!stmt_a)
+		return false;
+	else if (!stmt_b)
+		return false;
+
+	return __stmt_type_eq(stmt_a, stmt_b, true);
 }
 
 static bool rules_eq(const struct optimize_ctx *ctx, int i, int j)
