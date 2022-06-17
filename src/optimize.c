@@ -107,6 +107,18 @@ static bool __expr_cmp(const struct expr *expr_a, const struct expr *expr_b)
 		if (expr_a->numgen.offset != expr_b->numgen.offset)
 			return false;
 		break;
+	case EXPR_HASH:
+		if (expr_a->hash.mod != expr_b->hash.mod)
+			return false;
+		if (expr_a->hash.seed_set != expr_b->hash.seed_set)
+			return false;
+		if (expr_a->hash.seed != expr_b->hash.seed)
+			return false;
+		if (expr_a->hash.offset != expr_b->hash.offset)
+			return false;
+		if (expr_a->hash.type != expr_b->hash.type)
+			return false;
+		break;
 	case EXPR_BINOP:
 		return __expr_cmp(expr_a->left, expr_b->left);
 	default:
