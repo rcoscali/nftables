@@ -708,6 +708,8 @@ err:
 	if (rc)
 		nft_cache_release(&nft->cache);
 
+	scope_release(nft->state->scopes[0]);
+
 	return rc;
 }
 
