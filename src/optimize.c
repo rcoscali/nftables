@@ -944,7 +944,8 @@ static enum stmt_types merge_stmt_type(const struct optimize_ctx *ctx)
 		}
 	}
 
-	return STMT_INVALID;
+	/* actually no verdict, this assumes rules have the same verdict. */
+	return STMT_VERDICT;
 }
 
 static void merge_rules(const struct optimize_ctx *ctx,
