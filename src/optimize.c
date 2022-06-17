@@ -301,15 +301,41 @@ static bool stmt_verdict_eq(const struct stmt *stmt_a, const struct stmt *stmt_b
 
 static bool stmt_type_find(struct optimize_ctx *ctx, const struct stmt *stmt)
 {
+	bool unsupported_exists = false;
 	uint32_t i;
 
 	for (i = 0; i < ctx->num_stmts; i++) {
+		if (ctx->stmt[i]->ops->type == STMT_INVALID)
+			unsupported_exists = true;
+
 		if (__stmt_type_eq(stmt, ctx->stmt[i], false))
 			return true;
 	}
 
+	switch (stmt->ops->type) {
+	case STMT_EXPRESSION:
+	case STMT_VERDICT:
+	case STMT_COUNTER:
+	case STMT_NOTRACK:
+	case STMT_LIMIT:
+	case STMT_LOG:
+	case STMT_NAT:
+	case STMT_REJECT:
+		break;
+	default:
+		/* add unsupported statement only once to statement matrix. */
+		if (unsupported_exists)
+			return true;
+		break;
+	}
+
 	return false;
 }
+
+static struct stmt_ops unsupported_stmt_ops = {
+	.type	= STMT_INVALID,
+	.name	= "unsupported",
+};
 
 static int rule_collect_stmts(struct optimize_ctx *ctx, struct rule *rule)
 {
@@ -357,8 +383,8 @@ static int rule_collect_stmts(struct optimize_ctx *ctx, struct rule *rule)
 			clone->reject.family = stmt->reject.family;
 			break;
 		default:
-			xfree(clone);
-			continue;
+			clone->ops = &unsupported_stmt_ops;
+			break;
 		}
 
 		ctx->stmt[ctx->num_stmts++] = clone;
@@ -369,6 +395,18 @@ static int rule_collect_stmts(struct optimize_ctx *ctx, struct rule *rule)
 	return 0;
 }
 
+static int unsupported_in_stmt_matrix(const struct optimize_ctx *ctx)
+{
+	uint32_t i;
+
+	for (i = 0; i < ctx->num_stmts; i++) {
+		if (ctx->stmt[i]->ops->type == STMT_INVALID)
+			return i;
+	}
+	/* this should not happen. */
+	return -1;
+}
+
 static int cmd_stmt_find_in_stmt_matrix(struct optimize_ctx *ctx, struct stmt *stmt)
 {
 	uint32_t i;
@@ -377,9 +415,13 @@ static int cmd_stmt_find_in_stmt_matrix(struct optimize_ctx *ctx, struct stmt *s
 		if (__stmt_type_eq(stmt, ctx->stmt[i], false))
 			return i;
 	}
-	/* should not ever happen. */
-	return 0;
+
+	return -1;
 }
+
+static struct stmt unsupported_stmt = {
+	.ops	= &unsupported_stmt_ops,
+};
 
 static void rule_build_stmt_matrix_stmts(struct optimize_ctx *ctx,
 					 struct rule *rule, uint32_t *i)
@@ -389,6 +431,12 @@ static void rule_build_stmt_matrix_stmts(struct optimize_ctx *ctx,
 
 	list_for_each_entry(stmt, &rule->stmts, list) {
 		k = cmd_stmt_find_in_stmt_matrix(ctx, stmt);
+		if (k < 0) {
+			k = unsupported_in_stmt_matrix(ctx);
+			assert(k >= 0);
+			ctx->stmt_matrix[*i][k] = &unsupported_stmt;
+			continue;
+		}
 		ctx->stmt_matrix[*i][k] = stmt;
 	}
 	ctx->rule[(*i)++] = rule;
