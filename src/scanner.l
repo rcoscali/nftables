@@ -1144,6 +1144,8 @@ void *scanner_init(struct parser_state *state)
 	yylex_init_extra(state, &scanner);
 	yyset_out(NULL, scanner);
 
+	state->startcond_active = xzalloc_array(__SC_MAX,
+						sizeof(*state->startcond_active));
 	return scanner;
 }
 
@@ -1173,6 +1175,8 @@ void scanner_destroy(struct nft_ctx *nft)
 	struct parser_state *state = yyget_extra(nft->scanner);
 
 	input_descriptor_list_destroy(state);
+	xfree(state->startcond_active);
+
 	yylex_destroy(nft->scanner);
 }
 
@@ -1181,6 +1185,7 @@ static void scanner_push_start_cond(void *scanner, enum startcond_type type)
 	struct parser_state *state = yyget_extra(scanner);
 
 	state->startcond_type = type;
+	state->startcond_active[type]++;
 
 	yy_push_state((int)type, scanner);
 }
@@ -1188,6 +1193,8 @@ static void scanner_push_start_cond(void *scanner, enum startcond_type type)
 void scanner_pop_start_cond(void *scanner, enum startcond_type t)
 {
 	struct parser_state *state = yyget_extra(scanner);
+
+	state->startcond_active[t]--;
 
 	if (state->startcond_type != t) {
 		state->flex_state_pop++;
@@ -1198,6 +1205,10 @@ void scanner_pop_start_cond(void *scanner, enum startcond_type t)
 		state->flex_state_pop--;
 		state->startcond_type = yy_top_state(scanner);
 		yy_pop_state(scanner);
+
+		t = state->startcond_type;
+		if (state->startcond_active[t])
+			return;
 	}
 
 	state->startcond_type = yy_top_state(scanner);

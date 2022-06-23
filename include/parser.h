@@ -26,6 +26,7 @@ struct parser_state {
 	unsigned int			flex_state_pop;
 	unsigned int			startcond_type;
 	struct list_head		*cmds;
+	unsigned int			*startcond_active;
 };
 
 enum startcond_type {
@@ -81,6 +82,8 @@ enum startcond_type {
 	PARSER_SC_STMT_REJECT,
 	PARSER_SC_STMT_SYNPROXY,
 	PARSER_SC_STMT_TPROXY,
+
+	__SC_MAX
 };
 
 struct mnl_socket;
