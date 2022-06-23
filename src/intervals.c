@@ -421,6 +421,10 @@ static int setelem_delete(struct list_head *msgs, struct set *set,
 			expr_error(msgs, i, "element does not exist");
 			err = -1;
 			goto err;
+		} else if (i->flags & EXPR_F_REMOVE) {
+			expr_error(msgs, i, "element does not exist");
+			err = -1;
+			goto err;
 		}
 		prev = NULL;
 	}
