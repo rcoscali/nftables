@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e
+
+RULESET="table ip x {
+	set y {
+		type ipv4_addr
+		flags interval
+	}
+}
+
+delete element ip x y { 2.3.4.5 }"
+
+$NFT -f - <<< $RULESET || exit 0

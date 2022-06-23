@@ -475,7 +475,11 @@ int set_delete(struct list_head *msgs, struct cmd *cmd, struct set *set,
 	if (set->automerge)
 		automerge_delete(msgs, set, init, debug_mask);
 
-	set_to_range(existing_set->init);
+	if (existing_set->init) {
+		set_to_range(existing_set->init);
+	} else {
+		existing_set->init = set_expr_alloc(&internal_location, set);
+	}
 
 	list_splice_init(&init->expressions, &del_list);
 
