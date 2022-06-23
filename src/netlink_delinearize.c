@@ -200,6 +200,7 @@ static struct expr *netlink_parse_concat_data(struct netlink_parse_ctx *ctx,
 
 		len -= netlink_padded_len(expr->len);
 		reg += netlink_register_space(expr->len);
+		expr_free(expr);
 	}
 	return concat;
 
