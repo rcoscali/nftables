@@ -27,4 +27,15 @@ delete element x y { 1.1.1.1/24 }
 add element x y { 1.1.1.1/24 }
 delete element x y { 2.2.2.2/24 }"
 
+$NFT -f - <<< $RULESET
+if [ $? -eq 0 ]
+then
+	exit 1
+fi
+
+RULESET="flush ruleset
+create table inet filter
+set inet filter foo {}
+add element inet filter foo { foobar }"
+
 $NFT -f - <<< $RULESET || exit 0

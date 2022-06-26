@@ -3996,6 +3996,9 @@ static int setelem_evaluate(struct eval_ctx *ctx, struct cmd *cmd)
 		return set_not_found(ctx, &ctx->cmd->handle.set.location,
 				     ctx->cmd->handle.set.name);
 
+	if (set->key == NULL)
+		return -1;
+
 	set->existing_set = set;
 	ctx->set = set;
 	expr_set_context(&ctx->ectx, set->key->dtype, set->key->len);
