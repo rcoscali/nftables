@@ -2914,7 +2914,7 @@ verdict_map_list_expr	:	verdict_map_list_member_expr
 
 verdict_map_list_member_expr:	opt_newline	set_elem_expr	COLON	verdict_expr	opt_newline
 			{
-				$$ = mapping_expr_alloc(&@$, $2, $4);
+				$$ = mapping_expr_alloc(&@2, $2, $4);
 			}
 			;
 
@@ -4262,7 +4262,7 @@ set_list_member_expr	:	opt_newline	set_expr	opt_newline
 			}
 			|	opt_newline	set_elem_expr	COLON	set_rhs_expr	opt_newline
 			{
-				$$ = mapping_expr_alloc(&@$, $2, $4);
+				$$ = mapping_expr_alloc(&@2, $2, $4);
 			}
 			;
 
