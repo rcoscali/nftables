@@ -1550,11 +1550,11 @@ void cmd_free(struct cmd *cmd)
 #include <netlink.h>
 #include <mnl.h>
 
-static int __do_add_elements(struct netlink_ctx *ctx, struct set *set,
-			     struct expr *expr, uint32_t flags)
+static int __do_add_elements(struct netlink_ctx *ctx, struct cmd *cmd,
+			     struct set *set, struct expr *expr, uint32_t flags)
 {
 	expr->set_flags |= set->flags;
-	if (mnl_nft_setelem_add(ctx, set, expr, flags) < 0)
+	if (mnl_nft_setelem_add(ctx, cmd, set, expr, flags) < 0)
 		return -1;
 
 	return 0;
@@ -1570,7 +1570,7 @@ static int do_add_elements(struct netlink_ctx *ctx, struct cmd *cmd,
 	    set_to_intervals(set, init, true) < 0)
 		return -1;
 
-	return __do_add_elements(ctx, set, init, flags);
+	return __do_add_elements(ctx, cmd, set, init, flags);
 }
 
 static int do_add_setelems(struct netlink_ctx *ctx, struct cmd *cmd,
@@ -1578,7 +1578,7 @@ static int do_add_setelems(struct netlink_ctx *ctx, struct cmd *cmd,
 {
 	struct set *set = cmd->set;
 
-	return __do_add_elements(ctx, set, set->init, flags);
+	return __do_add_elements(ctx, cmd, set, set->init, flags);
 }
 
 static int do_add_set(struct netlink_ctx *ctx, struct cmd *cmd,
@@ -1672,7 +1672,7 @@ static int do_delete_setelems(struct netlink_ctx *ctx, struct cmd *cmd)
 	    set_to_intervals(set, expr, false) < 0)
 		return -1;
 
-	if (mnl_nft_setelem_del(ctx, &cmd->handle, cmd->elem.expr) < 0)
+	if (mnl_nft_setelem_del(ctx, cmd, &cmd->handle, cmd->elem.expr) < 0)
 		return -1;
 
 	return 0;
