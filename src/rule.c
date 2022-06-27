@@ -1279,6 +1279,9 @@ struct cmd *cmd_alloc(enum cmd_ops op, enum cmd_obj obj,
 	cmd->handle   = *h;
 	cmd->location = *loc;
 	cmd->data     = data;
+	cmd->attr     = xzalloc_array(NFT_NLATTR_LOC_MAX,
+				      sizeof(struct nlerr_loc));
+	cmd->attr_array_len = NFT_NLATTR_LOC_MAX;
 	init_list_head(&cmd->collapse_list);
 
 	return cmd;
@@ -1286,8 +1289,10 @@ struct cmd *cmd_alloc(enum cmd_ops op, enum cmd_obj obj,
 
 void cmd_add_loc(struct cmd *cmd, uint16_t offset, const struct location *loc)
 {
-	if (cmd->num_attrs >= NFT_NLATTR_LOC_MAX)
-		return;
+	if (cmd->num_attrs >= cmd->attr_array_len) {
+		cmd->attr_array_len *= 2;
+		cmd->attr = xrealloc(cmd->attr, sizeof(struct nlerr_loc) * cmd->attr_array_len);
+	}
 
 	cmd->attr[cmd->num_attrs].offset = offset;
 	cmd->attr[cmd->num_attrs].location = loc;
@@ -1537,6 +1542,7 @@ void cmd_free(struct cmd *cmd)
 			BUG("invalid command object type %u\n", cmd->obj);
 		}
 	}
+	xfree(cmd->attr);
 	xfree(cmd->arg);
 	xfree(cmd);
 }

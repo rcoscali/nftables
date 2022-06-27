@@ -681,6 +681,11 @@ void monitor_free(struct monitor *m);
 
 #define NFT_NLATTR_LOC_MAX 32
 
+struct nlerr_loc {
+	uint16_t		offset;
+	const struct location	*location;
+};
+
 /**
  * struct cmd - command statement
  *
@@ -717,11 +722,9 @@ struct cmd {
 		struct markup	*markup;
 		struct obj	*object;
 	};
-	struct {
-		uint16_t		offset;
-		const struct location	*location;
-	} attr[NFT_NLATTR_LOC_MAX];
-	int			num_attrs;
+	struct nlerr_loc	*attr;
+	uint32_t		attr_array_len;
+	uint32_t		num_attrs;
 	const void		*arg;
 };
 
