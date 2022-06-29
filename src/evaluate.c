@@ -1431,10 +1431,9 @@ static int __expr_evaluate_set_elem(struct eval_ctx *ctx, struct expr *elem)
 static int expr_evaluate_set_elem(struct eval_ctx *ctx, struct expr **expr)
 {
 	struct expr *elem = *expr;
+	const struct expr *key;
 
 	if (ctx->set) {
-		const struct expr *key;
-
 		if (__expr_evaluate_set_elem(ctx, elem) < 0)
 			return -1;
 
@@ -1451,9 +1450,19 @@ static int expr_evaluate_set_elem(struct eval_ctx *ctx, struct expr **expr)
 		switch (elem->key->etype) {
 		case EXPR_PREFIX:
 		case EXPR_RANGE:
-			return expr_error(ctx->msgs, elem,
-					  "You must add 'flags interval' to your %s declaration if you want to add %s elements",
-					  set_is_map(ctx->set->flags) ? "map" : "set", expr_name(elem->key));
+			key = elem->key;
+			goto err_missing_flag;
+		case EXPR_CONCAT:
+			list_for_each_entry(key, &elem->key->expressions, list) {
+				switch (key->etype) {
+				case EXPR_PREFIX:
+				case EXPR_RANGE:
+					goto err_missing_flag;
+				default:
+					break;
+				}
+			}
+			break;
 		default:
 			break;
 		}
@@ -1462,7 +1471,13 @@ static int expr_evaluate_set_elem(struct eval_ctx *ctx, struct expr **expr)
 	datatype_set(elem, elem->key->dtype);
 	elem->len   = elem->key->len;
 	elem->flags = elem->key->flags;
+
 	return 0;
+
+err_missing_flag:
+	return expr_error(ctx->msgs, key,
+			  "You must add 'flags interval' to your %s declaration if you want to add %s elements",
+			  set_is_map(ctx->set->flags) ? "map" : "set", expr_name(key));
 }
 
 static const struct expr *expr_set_elem(const struct expr *expr)

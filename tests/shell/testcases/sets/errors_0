@@ -38,4 +38,20 @@ create table inet filter
 set inet filter foo {}
 add element inet filter foo { foobar }"
 
+$NFT -f - <<< $RULESET
+if [ $? -eq 0 ]
+then
+	exit 1
+fi
+
+RULESET="table ip x {
+        map x {
+                type ifname . ipv4_addr : verdict
+                elements = { if2 . 10.0.0.2 : jump chain2,
+                             if2 . 192.168.0.0/24 : jump chain2 }
+        }
+
+        chain chain2 {}
+}"
+
 $NFT -f - <<< $RULESET || exit 0
