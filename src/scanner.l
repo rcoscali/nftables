@@ -403,7 +403,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 }
 
 "log"			{ scanner_push_start_cond(yyscanner, SCANSTATE_STMT_LOG); return LOG; }
-<SCANSTATE_STMT_LOG,SCANSTATE_STMT_NAT,SCANSTATE_IP>"prefix"		{ return PREFIX; }
+<SCANSTATE_STMT_LOG,SCANSTATE_STMT_NAT,SCANSTATE_IP,SCANSTATE_IP6>"prefix"		{ return PREFIX; }
 <SCANSTATE_STMT_LOG>{
 	"snaplen"		{ return SNAPLEN; }
 	"queue-threshold"	{ return QUEUE_THRESHOLD; }
