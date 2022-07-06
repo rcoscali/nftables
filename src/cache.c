@@ -847,12 +847,21 @@ static int rule_init_cache(struct netlink_ctx *ctx, struct table *table,
 			chain = chain_binding_lookup(table,
 						     rule->handle.chain.name);
 		if (!chain)
-			return -1;
+			goto err_ctx_list;
 
 		list_move_tail(&rule->list, &chain->rules);
 	}
 
 	return ret;
+
+err_ctx_list:
+	list_for_each_entry_safe(rule, nrule, &ctx->list, list) {
+		list_del(&rule->list);
+		rule_free(rule);
+	}
+	errno = EINTR;
+
+	return -1;
 }
 
 static int implicit_chain_cache(struct netlink_ctx *ctx, struct table *table,
