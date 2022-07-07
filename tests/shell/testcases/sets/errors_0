@@ -54,4 +54,16 @@ RULESET="table ip x {
         chain chain2 {}
 }"
 
+$NFT -f - <<< $RULESET
+if [ $? -eq 0 ]
+then
+	exit 1
+fi
+
+RULESET="add set inet filter myset { type ipv4_addr; flags interval; auto-merge }
+add element inet filter myset { 192.168.0.0/24 }
+add element inet filter myset { 192.168.0.2 }
+add element inet filter myset { 192.168.1.0/24 }
+add element inet filter myset { 192.168.1.100 }"
+
 $NFT -f - <<< $RULESET || exit 0

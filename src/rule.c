@@ -1453,7 +1453,9 @@ void nft_cmd_uncollapse(struct list_head *cmds)
 		}
 
 		list_for_each_entry_safe(collapse_cmd, collapse_cmd_next, &cmd->collapse_list, list) {
-			collapse_cmd->elem.set = set_get(cmd->elem.set);
+			if (cmd->elem.set)
+				collapse_cmd->elem.set = set_get(cmd->elem.set);
+
 			list_add(&collapse_cmd->list, &cmd->list);
 		}
 	}
