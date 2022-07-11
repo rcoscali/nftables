@@ -684,7 +684,9 @@ static const struct symbol_table dscp_type_tbl = {
 		SYMBOL("cs5",	0x28),
 		SYMBOL("cs6",	0x30),
 		SYMBOL("cs7",	0x38),
+		SYMBOL("df",	0x00),
 		SYMBOL("be",	0x00),
+		SYMBOL("lephb",	0x01),
 		SYMBOL("af11",	0x0a),
 		SYMBOL("af12",	0x0c),
 		SYMBOL("af13",	0x0e),
@@ -697,6 +699,7 @@ static const struct symbol_table dscp_type_tbl = {
 		SYMBOL("af41",	0x22),
 		SYMBOL("af42",	0x24),
 		SYMBOL("af43",	0x26),
+		SYMBOL("va",	0x2c),
 		SYMBOL("ef",	0x2e),
 		SYMBOL_LIST_END
 	},
