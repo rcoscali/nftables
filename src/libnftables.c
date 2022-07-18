@@ -506,7 +506,10 @@ static int nft_evaluate(struct nft_ctx *nft, struct list_head *msgs,
 	int err = 0;
 
 	filter = nft_cache_filter_init();
-	flags = nft_cache_evaluate(nft, cmds, filter);
+	if (nft_cache_evaluate(nft, cmds, msgs, filter, &flags) < 0) {
+		nft_cache_filter_fini(filter);
+		return -1;
+	}
 	if (nft_cache_update(nft, flags, msgs, filter) < 0) {
 		nft_cache_filter_fini(filter);
 		return -1;

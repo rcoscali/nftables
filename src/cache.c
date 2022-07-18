@@ -262,8 +262,9 @@ static unsigned int evaluate_cache_list(struct nft_ctx *nft, struct cmd *cmd,
 	return flags;
 }
 
-unsigned int nft_cache_evaluate(struct nft_ctx *nft, struct list_head *cmds,
-				struct nft_cache_filter *filter)
+int nft_cache_evaluate(struct nft_ctx *nft, struct list_head *cmds,
+		       struct list_head *msgs, struct nft_cache_filter *filter,
+		       unsigned int *pflags)
 {
 	unsigned int flags = NFT_CACHE_EMPTY;
 	struct cmd *cmd;
@@ -318,8 +319,9 @@ unsigned int nft_cache_evaluate(struct nft_ctx *nft, struct list_head *cmds,
 			break;
 		}
 	}
+	*pflags = flags;
 
-	return flags;
+	return 0;
 }
 
 void table_cache_add(struct table *table, struct nft_cache *cache)
