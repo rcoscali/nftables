@@ -1181,7 +1181,11 @@ replay:
 			goto replay;
 		}
 
+		erec_queue(error(&netlink_location, "cache initialization failed: %s",
+				 strerror(errno)),
+			   msgs);
 		nft_cache_release(cache);
+
 		return -1;
 	}
 
