@@ -817,3 +817,44 @@
         }
     }
 ]
+
+# ether saddr . vlan id { 0a:0b:0c:0d:0e:0f . 42, 0a:0b:0c:0d:0e:0f . 4095 }
+[
+    {
+        "match": {
+            "left": {
+                "concat": [
+                    {
+                        "payload": {
+                            "field": "saddr",
+                            "protocol": "ether"
+                        }
+                    },
+                    {
+                        "payload": {
+                            "field": "id",
+                            "protocol": "vlan"
+                        }
+                    }
+                ]
+            },
+            "op": "==",
+            "right": {
+                "set": [
+                    {
+                        "concat": [
+                            "0a:0b:0c:0d:0e:0f",
+                            42
+                        ]
+                    },
+                    {
+                        "concat": [
+                            "0a:0b:0c:0d:0e:0f",
+                            4095
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+]
