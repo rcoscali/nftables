@@ -160,8 +160,6 @@ static void proto_ctx_debug(const struct proto_ctx *ctx, enum proto_bases base,
 			 proto_base_names[i],
 			 ctx->protocol[i].desc ? ctx->protocol[i].desc->name :
 						 "none");
-		if (ctx->protocol[i].offset)
-			pr_debug(" (offset: %u)", ctx->protocol[i].offset);
 		if (i == base)
 			pr_debug(" <-");
 		pr_debug("\n");

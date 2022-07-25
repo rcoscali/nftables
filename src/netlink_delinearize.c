@@ -1977,11 +1977,6 @@ static void payload_match_postprocess(struct rule_pp_ctx *ctx,
 				      struct expr *expr,
 				      struct expr *payload)
 {
-	enum proto_bases base = payload->payload.base;
-
-	assert(payload->payload.offset >= ctx->pctx.protocol[base].offset);
-	payload->payload.offset -= ctx->pctx.protocol[base].offset;
-
 	switch (expr->op) {
 	case OP_EQ:
 	case OP_NEQ:

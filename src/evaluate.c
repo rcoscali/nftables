@@ -678,7 +678,13 @@ static int resolve_protocol_conflict(struct eval_ctx *ctx,
 	    conflict_resolution_gen_dependency(ctx, link, payload, &nstmt) < 0)
 		return 1;
 
-	payload->payload.offset += ctx->pctx.protocol[base].offset;
+	if (base == PROTO_BASE_LL_HDR) {
+		unsigned int i;
+
+		for (i = 0; i < ctx->pctx.stacked_ll_count; i++)
+			payload->payload.offset += ctx->pctx.stacked_ll[i]->length;
+	}
+
 	rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
 
 	return 0;
@@ -727,7 +733,12 @@ static int __expr_evaluate_payload(struct eval_ctx *ctx, struct expr *expr)
 	if (desc == payload->payload.desc) {
 		const struct proto_hdr_template *tmpl;
 
-		payload->payload.offset += ctx->pctx.protocol[base].offset;
+		if (desc->base == PROTO_BASE_LL_HDR) {
+			unsigned int i;
+
+			for (i = 0; i < ctx->pctx.stacked_ll_count; i++)
+				payload->payload.offset += ctx->pctx.stacked_ll[i]->length;
+		}
 check_icmp:
 		if (desc != &proto_icmp && desc != &proto_icmp6)
 			return 0;
