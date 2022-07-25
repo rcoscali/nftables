@@ -659,13 +659,22 @@ static int resolve_protocol_conflict(struct eval_ctx *ctx,
 	struct stmt *nstmt = NULL;
 	int link, err;
 
-	if (payload->payload.base == PROTO_BASE_LL_HDR &&
-	    proto_is_dummy(desc)) {
-		err = meta_iiftype_gen_dependency(ctx, payload, &nstmt);
-		if (err < 0)
-			return err;
+	if (payload->payload.base == PROTO_BASE_LL_HDR) {
+		if (proto_is_dummy(desc)) {
+			err = meta_iiftype_gen_dependency(ctx, payload, &nstmt);
+			if (err < 0)
+				return err;
 
-		rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
+			rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
+		} else {
+			unsigned int i;
+
+			/* payload desc stored in the L2 header stack? No conflict. */
+			for (i = 0; i < ctx->pctx.stacked_ll_count; i++) {
+				if (ctx->pctx.stacked_ll[i] == payload->payload.desc)
+					return 0;
+			}
+		}
 	}
 
 	assert(base <= PROTO_BASE_MAX);
