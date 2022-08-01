@@ -44,8 +44,10 @@ struct netlink_parse_ctx {
 
 
 #define RULE_PP_IN_CONCATENATION	(1 << 0)
+#define RULE_PP_IN_SET_ELEM		(1 << 1)
 
-#define RULE_PP_REMOVE_OP_AND		(RULE_PP_IN_CONCATENATION)
+#define RULE_PP_REMOVE_OP_AND		(RULE_PP_IN_CONCATENATION | \
+					 RULE_PP_IN_SET_ELEM)
 
 struct rule_pp_ctx {
 	struct proto_ctx	pctx;

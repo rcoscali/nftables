@@ -2661,7 +2661,9 @@ static void expr_postprocess(struct rule_pp_ctx *ctx, struct expr **exprp)
 		expr_postprocess(ctx, &expr->prefix);
 		break;
 	case EXPR_SET_ELEM:
+		ctx->flags |= RULE_PP_IN_SET_ELEM;
 		expr_postprocess(ctx, &expr->key);
+		ctx->flags &= ~RULE_PP_IN_SET_ELEM;
 		break;
 	case EXPR_EXTHDR:
 		exthdr_dependency_kill(&ctx->pdctx, expr, ctx->pctx.family);
