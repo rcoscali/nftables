@@ -1,0 +1,12 @@
+table ip x {
+	chain t1 {
+	}
+
+	chain t2 {
+	}
+
+	chain y {
+		counter packets 0 bytes 0 jump t1
+		counter packets 0 bytes 0 jump t2
+	}
+}

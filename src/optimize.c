@@ -1011,14 +1011,40 @@ static bool stmt_type_eq(const struct stmt *stmt_a, const struct stmt *stmt_b)
 	return __stmt_type_eq(stmt_a, stmt_b, true);
 }
 
+static bool stmt_is_mergeable(const struct stmt *stmt)
+{
+	if (!stmt)
+		return false;
+
+	switch (stmt->ops->type) {
+	case STMT_VERDICT:
+		if (stmt->expr->etype == EXPR_MAP)
+			return true;
+		break;
+	case STMT_EXPRESSION:
+	case STMT_NAT:
+		return true;
+	default:
+		break;
+	}
+
+	return false;
+}
+
 static bool rules_eq(const struct optimize_ctx *ctx, int i, int j)
 {
-	uint32_t k;
+	uint32_t k, mergeable = 0;
 
 	for (k = 0; k < ctx->num_stmts; k++) {
+		if (stmt_is_mergeable(ctx->stmt_matrix[i][k]))
+			mergeable++;
+
 		if (!stmt_type_eq(ctx->stmt_matrix[i][k], ctx->stmt_matrix[j][k]))
 			return false;
 	}
+
+	if (mergeable == 0)
+		return false;
 
 	return true;
 }
