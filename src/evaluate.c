@@ -665,6 +665,7 @@ static int resolve_protocol_conflict(struct eval_ctx *ctx,
 			if (err < 0)
 				return err;
 
+			desc = payload->payload.desc;
 			rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
 		} else {
 			unsigned int i;
