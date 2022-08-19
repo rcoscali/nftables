@@ -2575,7 +2575,8 @@ static int stmt_evaluate_verdict(struct eval_ctx *ctx, struct stmt *stmt)
 		if (stmt->expr->verdict != NFT_CONTINUE)
 			stmt->flags |= STMT_F_TERMINAL;
 		if (stmt->expr->chain != NULL) {
-			if (expr_evaluate(ctx, &stmt->expr->chain) < 0)
+			if (stmt_evaluate_arg(ctx, stmt, &string_type, 0, 0,
+					      &stmt->expr->chain) < 0)
 				return -1;
 			if (stmt->expr->chain->etype != EXPR_VALUE) {
 				return expr_error(ctx->msgs, stmt->expr->chain,
