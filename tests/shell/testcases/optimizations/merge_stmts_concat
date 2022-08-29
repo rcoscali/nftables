@@ -12,3 +12,22 @@ RULESET="table ip x {
 }"
 
 $NFT -o -f - <<< $RULESET
+
+RULESET="table ip x {
+	chain c1 {
+		udp dport 51820 iifname "foo" accept
+		udp dport { 67, 514 } iifname "bar" accept
+	}
+
+	chain c2 {
+		udp dport { 51820, 100 } iifname "foo" accept
+		udp dport { 67, 514 } iifname "bar" accept
+	}
+
+	chain c3 {
+		udp dport { 51820, 100 } iifname { "foo", "test" } accept
+		udp dport { 67, 514 } iifname "bar" accept
+	}
+}"
+
+$NFT -o -f - <<< $RULESET
