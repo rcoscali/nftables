@@ -332,8 +332,13 @@ ____
 A limit statement matches at a limited rate using a token bucket filter. A rule
 using this statement will match until this limit is reached. It can be used in
 combination with the log statement to give limited logging. The optional
-*over* keyword makes it match over the specified rate. Default *burst* is 5.
-if you specify *burst*, it must be non-zero value.
+*over* keyword makes it match over the specified rate.
+
+The *burst* value influences the bucket size, i.e. jitter tolerance. With
+packet-based *limit*, the bucket holds exactly *burst* packets, by default
+five. If you specify packet *burst*, it must be a non-zero value. With
+byte-based *limit*, the bucket's minimum size is the given rate's byte value
+and the *burst* value adds to that, by default zero bytes.
 
 .limit statement values
 [options="header"]

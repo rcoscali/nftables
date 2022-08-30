@@ -1826,7 +1826,7 @@ static struct stmt *json_parse_limit_stmt(struct json_ctx *ctx,
 					  const char *key, json_t *value)
 {
 	struct stmt *stmt;
-	uint64_t rate, burst = 5;
+	uint64_t rate, burst = 0;
 	const char *rate_unit = "packets", *time, *burst_unit = "bytes";
 	int inv = 0;
 
@@ -1840,6 +1840,9 @@ static struct stmt *json_parse_limit_stmt(struct json_ctx *ctx,
 		stmt = limit_stmt_alloc(int_loc);
 
 		if (!strcmp(rate_unit, "packets")) {
+			if (burst == 0)
+				burst = 5;
+
 			stmt->limit.type = NFT_LIMIT_PKTS;
 			stmt->limit.rate = rate;
 			stmt->limit.burst = burst;

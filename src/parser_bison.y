@@ -3203,7 +3203,7 @@ log_flag_tcp		:	SEQUENCE
 limit_stmt		:	LIMIT	RATE	limit_mode	limit_rate_pkts	limit_burst_pkts	close_scope_limit
 	    		{
 				if ($5 == 0) {
-					erec_queue(error(&@5, "limit burst must be > 0"),
+					erec_queue(error(&@5, "packet limit burst must be > 0"),
 						   state->msgs);
 					YYERROR;
 				}
@@ -3216,11 +3216,6 @@ limit_stmt		:	LIMIT	RATE	limit_mode	limit_rate_pkts	limit_burst_pkts	close_scope
 			}
 			|	LIMIT	RATE	limit_mode	limit_rate_bytes	limit_burst_bytes	close_scope_limit
 			{
-				if ($5 == 0) {
-					erec_queue(error(&@5, "limit burst must be > 0"),
-						   state->msgs);
-					YYERROR;
-				}
 				$$ = limit_stmt_alloc(&@$);
 				$$->limit.rate	= $4.rate;
 				$$->limit.unit	= $4.unit;
@@ -3301,7 +3296,7 @@ limit_rate_pkts		:	NUM     SLASH	time_unit
 			}
 			;
 
-limit_burst_bytes	:	/* empty */			{ $$ = 5; }
+limit_burst_bytes	:	/* empty */			{ $$ = 0; }
 			|	BURST	limit_bytes		{ $$ = $2; }
 			;
 
