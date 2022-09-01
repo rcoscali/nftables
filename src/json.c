@@ -1439,11 +1439,28 @@ json_t *counter_stmt_json(const struct stmt *stmt, struct output_ctx *octx)
 			 "bytes", stmt->counter.bytes);
 }
 
+static json_t *set_stmt_list_json(const struct list_head *stmt_list,
+	                           struct output_ctx *octx)
+{
+	json_t *root, *tmp;
+	struct stmt *i;
+
+	root = json_array();
+
+	list_for_each_entry(i, stmt_list, list) {
+		tmp = stmt_print_json(i, octx);
+		json_array_append_new(root, tmp);
+	}
+
+	return root;
+}
+
 json_t *set_stmt_json(const struct stmt *stmt, struct output_ctx *octx)
 {
-	return json_pack("{s:{s:s, s:o, s:s+}}", "set",
+	return json_pack("{s:{s:s, s:o, s:o, s:s+}}", "set",
 			 "op", set_stmt_op_names[stmt->set.op],
 			 "elem", expr_print_json(stmt->set.key, octx),
+			 "stmt", set_stmt_list_json(&stmt->set.stmt_list, octx),
 			 "set", "@", stmt->set.set->set->handle.set.name);
 }
 

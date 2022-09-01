@@ -2230,13 +2230,36 @@ static struct stmt *json_parse_reject_stmt(struct json_ctx *ctx,
 	return stmt;
 }
 
+static void json_parse_set_stmt_list(struct json_ctx *ctx,
+				      struct list_head *stmt_list,
+				      json_t *stmt_json)
+{
+	struct list_head *head;
+	struct stmt *tmp;
+	json_t *value;
+	size_t index;
+
+	if (!stmt_json)
+		return;
+
+	if (!json_is_array(stmt_json))
+		json_error(ctx, "Unexpected object type in stmt");
+
+	head = stmt_list;
+	json_array_foreach(stmt_json, index, value) {
+		tmp = json_parse_stmt(ctx, value);
+		list_add(&tmp->list, head);
+		head = &tmp->list;
+	}
+}
+
 static struct stmt *json_parse_set_stmt(struct json_ctx *ctx,
 					  const char *key, json_t *value)
 {
 	const char *opstr, *set;
 	struct expr *expr, *expr2;
+	json_t *elem, *stmt_json;
 	struct stmt *stmt;
-	json_t *elem;
 	int op;
 
 	if (json_unpack_err(ctx, value, "{s:s, s:o, s:s}",
@@ -2271,6 +2294,10 @@ static struct stmt *json_parse_set_stmt(struct json_ctx *ctx,
 	stmt->set.op = op;
 	stmt->set.key = expr;
 	stmt->set.set = expr2;
+
+	if (!json_unpack(value, "{s:o}", "stmt", &stmt_json))
+		json_parse_set_stmt_list(ctx, &stmt->set.stmt_list, stmt_json);
+
 	return stmt;
 }
 
