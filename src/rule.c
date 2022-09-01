@@ -1414,7 +1414,8 @@ bool nft_cmd_collapse(struct list_head *cmds)
 			continue;
 		}
 
-		if (strcmp(elems->handle.table.name, cmd->handle.table.name) ||
+		if (elems->handle.family != cmd->handle.family ||
+		    strcmp(elems->handle.table.name, cmd->handle.table.name) ||
 		    strcmp(elems->handle.set.name, cmd->handle.set.name)) {
 			elems = cmd;
 			continue;
