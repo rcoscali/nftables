@@ -77,6 +77,34 @@ static json_t *set_dtype_json(const struct expr *key)
 	return root;
 }
 
+static json_t *stmt_print_json(const struct stmt *stmt, struct output_ctx *octx)
+{
+	char buf[1024];
+	FILE *fp;
+
+	/* XXX: Can't be supported at this point:
+	 * xt_stmt_xlate() ignores output_fp.
+	 */
+	if (stmt->ops->type == STMT_XT)
+		return json_pack("{s:n}", "xt");
+
+	if (stmt->ops->json)
+		return stmt->ops->json(stmt, octx);
+
+	fprintf(stderr, "warning: stmt ops %s have no json callback\n",
+		stmt->ops->name);
+
+	fp = octx->output_fp;
+	octx->output_fp = fmemopen(buf, 1024, "w");
+
+	stmt->ops->print(stmt, octx);
+
+	fclose(octx->output_fp);
+	octx->output_fp = fp;
+
+	return json_pack("s", buf);
+}
+
 static json_t *set_print_json(struct output_ctx *octx, const struct set *set)
 {
 	json_t *root, *tmp;
@@ -152,6 +180,20 @@ static json_t *set_print_json(struct output_ctx *octx, const struct set *set)
 		json_object_set_new(root, "elem", array);
 	}
 
+	if (!list_empty(&set->stmt_list)) {
+		json_t *array, *tmp;
+		struct stmt *stmt;
+
+		array = json_array();
+
+		list_for_each_entry(stmt, &set->stmt_list, list) {
+			tmp = stmt_print_json(stmt, octx);
+			json_array_append_new(array, tmp);
+		}
+
+		json_object_set_new(root, "stmt", array);
+	}
+
 	return json_pack("{s:o}", type, root);
 }
 
@@ -166,34 +208,6 @@ static json_t *element_print_json(struct output_ctx *octx,
 			 "table", set->handle.table.name,
 			 "name", set->handle.set.name,
 			 "elem", root);
-}
-
-static json_t *stmt_print_json(const struct stmt *stmt, struct output_ctx *octx)
-{
-	char buf[1024];
-	FILE *fp;
-
-	/* XXX: Can't be supported at this point:
-	 * xt_stmt_xlate() ignores output_fp.
-	 */
-	if (stmt->ops->type == STMT_XT)
-		return json_pack("{s:n}", "xt");
-
-	if (stmt->ops->json)
-		return stmt->ops->json(stmt, octx);
-
-	fprintf(stderr, "warning: stmt ops %s have no json callback\n",
-		stmt->ops->name);
-
-	fp = octx->output_fp;
-	octx->output_fp = fmemopen(buf, 1024, "w");
-
-	stmt->ops->print(stmt, octx);
-
-	fclose(octx->output_fp);
-	octx->output_fp = fp;
-
-	return json_pack("s", buf);
 }
 
 static json_t *rule_print_json(struct output_ctx *octx,
