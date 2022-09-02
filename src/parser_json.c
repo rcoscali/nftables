@@ -3862,13 +3862,14 @@ static int json_verify_metainfo(struct json_ctx *ctx, json_t *root)
 {
 	int schema_version;
 
-	if (!json_unpack(root, "{s:i}", "json_schema_version", &schema_version))
-			return 0;
-
-	if (schema_version > JSON_SCHEMA_VERSION) {
-		json_error(ctx, "Schema version %d not supported, maximum supported version is %d\n",
-			   schema_version, JSON_SCHEMA_VERSION);
-		return 1;
+	if (!json_unpack(root, "{s:i}", "json_schema_version", &schema_version)) {
+		if (schema_version > JSON_SCHEMA_VERSION) {
+			json_error(ctx,
+				   "Schema version %d not supported, maximum"
+			           " supported version is %d\n",
+				   schema_version, JSON_SCHEMA_VERSION);
+			return 1;
+		}
 	}
 
 	return 0;
