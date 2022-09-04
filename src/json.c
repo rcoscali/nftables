@@ -105,6 +105,25 @@ static json_t *stmt_print_json(const struct stmt *stmt, struct output_ctx *octx)
 	return json_pack("s", buf);
 }
 
+static json_t *set_stmt_list_json(const struct list_head *stmt_list,
+				   struct output_ctx *octx)
+{
+	unsigned int flags = octx->flags;
+	json_t *root, *tmp;
+	struct stmt *i;
+
+	root = json_array();
+	octx->flags |= NFT_CTX_OUTPUT_STATELESS;
+
+	list_for_each_entry(i, stmt_list, list) {
+		tmp = stmt_print_json(i, octx);
+		json_array_append_new(root, tmp);
+	}
+	octx->flags = flags;
+
+	return root;
+}
+
 static json_t *set_print_json(struct output_ctx *octx, const struct set *set)
 {
 	json_t *root, *tmp;
@@ -181,17 +200,8 @@ static json_t *set_print_json(struct output_ctx *octx, const struct set *set)
 	}
 
 	if (!list_empty(&set->stmt_list)) {
-		json_t *array, *tmp;
-		struct stmt *stmt;
-
-		array = json_array();
-
-		list_for_each_entry(stmt, &set->stmt_list, list) {
-			tmp = stmt_print_json(stmt, octx);
-			json_array_append_new(array, tmp);
-		}
-
-		json_object_set_new(root, "stmt", array);
+		json_object_set_new(root, "stmt",
+				    set_stmt_list_json(&set->stmt_list, octx));
 	}
 
 	return json_pack("{s:o}", type, root);
@@ -1453,29 +1463,22 @@ json_t *counter_stmt_json(const struct stmt *stmt, struct output_ctx *octx)
 			 "bytes", stmt->counter.bytes);
 }
 
-static json_t *set_stmt_list_json(const struct list_head *stmt_list,
-	                           struct output_ctx *octx)
-{
-	json_t *root, *tmp;
-	struct stmt *i;
-
-	root = json_array();
-
-	list_for_each_entry(i, stmt_list, list) {
-		tmp = stmt_print_json(i, octx);
-		json_array_append_new(root, tmp);
-	}
-
-	return root;
-}
-
 json_t *set_stmt_json(const struct stmt *stmt, struct output_ctx *octx)
 {
-	return json_pack("{s:{s:s, s:o, s:o, s:s+}}", "set",
+	json_t *root;
+
+	root = json_pack("{s:s, s:o, s:s+}",
 			 "op", set_stmt_op_names[stmt->set.op],
 			 "elem", expr_print_json(stmt->set.key, octx),
-			 "stmt", set_stmt_list_json(&stmt->set.stmt_list, octx),
 			 "set", "@", stmt->set.set->set->handle.set.name);
+
+	if (!list_empty(&stmt->set.stmt_list)) {
+		json_object_set_new(root, "stmt",
+				    set_stmt_list_json(&stmt->set.stmt_list,
+						       octx));
+	}
+
+	return json_pack("{s:o}", "set", root);
 }
 
 json_t *objref_stmt_json(const struct stmt *stmt, struct output_ctx *octx)
