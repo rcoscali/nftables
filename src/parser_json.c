@@ -1966,6 +1966,23 @@ static struct stmt *json_parse_dup_stmt(struct json_ctx *ctx,
 	return stmt;
 }
 
+static struct stmt *json_parse_secmark_stmt(struct json_ctx *ctx,
+					     const char *key, json_t *value)
+{
+	struct stmt *stmt;
+
+	stmt = objref_stmt_alloc(int_loc);
+	stmt->objref.type = NFT_OBJECT_SECMARK;
+	stmt->objref.expr = json_parse_stmt_expr(ctx, value);
+	if (!stmt->objref.expr) {
+		json_error(ctx, "Invalid secmark reference.");
+		stmt_free(stmt);
+		return NULL;
+	}
+
+	return stmt;
+}
+
 static int json_parse_nat_flag(struct json_ctx *ctx,
 			       json_t *root, int *flags)
 {
@@ -2727,6 +2744,7 @@ static struct stmt *json_parse_stmt(struct json_ctx *ctx, json_t *root)
 		{ "tproxy", json_parse_tproxy_stmt },
 		{ "synproxy", json_parse_synproxy_stmt },
 		{ "reset", json_parse_optstrip_stmt },
+		{ "secmark", json_parse_secmark_stmt },
 	};
 	const char *type;
 	unsigned int i;
