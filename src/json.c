@@ -329,6 +329,12 @@ static json_t *obj_print_json(const struct obj *obj)
 			"table", obj->handle.table.name,
 			"handle", obj->handle.handle.id);
 
+	if (obj->comment) {
+		tmp = json_pack("{s:s}", "comment", obj->comment);
+		json_object_update(root, tmp);
+		json_decref(tmp);
+	}
+
 	switch (obj->type) {
 	case NFT_OBJECT_COUNTER:
 		tmp = json_pack("{s:I, s:I}",

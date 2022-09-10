@@ -3357,6 +3357,9 @@ static struct cmd *json_parse_cmd_add_object(struct json_ctx *ctx,
 
 	obj = obj_alloc(int_loc);
 
+	if (!json_unpack(root, "{s:s}", "comment", &obj->comment))
+		obj->comment = xstrdup(obj->comment);
+
 	switch (cmd_obj) {
 	case CMD_OBJ_COUNTER:
 		obj->type = NFT_OBJECT_COUNTER;
