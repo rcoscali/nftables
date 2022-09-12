@@ -37,6 +37,9 @@ const char *nft_ctx_get_error_buffer(struct nft_ctx* '\*ctx'*);
 int nft_ctx_add_include_path(struct nft_ctx* '\*ctx'*, const char* '\*path'*);
 void nft_ctx_clear_include_paths(struct nft_ctx* '\*ctx'*);
 
+int nft_ctx_add_var(struct nft_ctx* '\*ctx'*, const char* '\*var'*);
+void nft_ctx_clear_vars(struct nft_ctx '\*ctx'*);
+
 int nft_run_cmd_from_buffer(struct nft_ctx* '\*nft'*, const char* '\*buf'*);
 int nft_run_cmd_from_filename(struct nft_ctx* '\*nft'*,
 			      const char* '\*filename'*);*
@@ -205,6 +208,14 @@ The *nft_ctx_add_include_path*() function extends the list of include paths in '
 The function returns zero on success or non-zero if memory allocation failed.
 
 The *nft_ctx_clear_include_paths*() function removes all include paths, even the built-in default one.
+
+=== nft_ctx_add_var() and nft_ctx_clear_vars()
+The *define* command in nftables ruleset allows to define variables.
+
+The *nft_ctx_add_var*() function extends the list of variables in 'ctx'. The variable must be given in the format 'key=value'.
+The function returns zero on success or non-zero if the variable is malformed.
+
+The *nft_ctx_clear_vars*() function removes all variables.
 
 === nft_run_cmd_from_buffer() and nft_run_cmd_from_filename()
 These functions perform the actual work of parsing user input into nftables commands and executing them.
