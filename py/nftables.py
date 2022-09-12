@@ -134,6 +134,13 @@ class Nftables:
         self.nft_ctx_set_dry_run = lib.nft_ctx_set_dry_run
         self.nft_ctx_set_dry_run.argtypes = [c_void_p, c_bool]
 
+        self.nft_ctx_add_var = lib.nft_ctx_add_var
+        self.nft_ctx_add_var.restype = c_int
+        self.nft_ctx_add_var.argtypes = [c_void_p, c_char_p]
+
+        self.nft_ctx_clear_vars = lib.nft_ctx_clear_vars
+        self.nft_ctx_clear_vars.argtypes = [c_void_p]
+
         self.nft_ctx_free = lib.nft_ctx_free
         lib.nft_ctx_free.argtypes = [c_void_p]
 
@@ -471,15 +478,13 @@ class Nftables:
         filename can be a str or a Path
 
         Returns a tuple (rc, output, error):
-        rc     -- return code as returned by nft_run_cmd_from_buffer() function
+        rc     -- return code as returned by nft_run_cmd_from_filename() function
         output -- a string containing output written to stdout
         error  -- a string containing output written to stderr
         """
-
         filename_is_unicode = False
         if not isinstance(filename, bytes):
             filename_is_unicode = True
-            # allow filename to be a Path
             filename = str(filename)
             filename= filename.encode("utf-8")
         rc = self.nft_run_cmd_from_filename(self.__ctx, filename)
@@ -492,14 +497,11 @@ class Nftables:
 
     def add_include_path(self, filename):
         """Add a path to the include file list
-        The default list includes /etc
+        The default list includes the built-in default one
 
-        Returns True on success
-        False if memory allocation fails
+        Returns True on success, False if memory allocation fails
         """
-
         if not isinstance(filename, bytes):
-            # allow filename to be a Path
             filename = str(filename)
             filename= filename.encode("utf-8")
         rc = self.nft_ctx_add_include_path(self.__ctx, filename)
@@ -508,9 +510,8 @@ class Nftables:
     def clear_include_paths(self):
         """Clear include path list
 
-        Will also remove /etc
+        Will also remove the built-in default one
         """
-
         self.nft_ctx_clear_include_paths(self.__ctx)
 
     def get_dry_run(self):
@@ -518,13 +519,29 @@ class Nftables:
 
         Returns True if set, False otherwise
         """
-
         return self.nft_ctx_get_dry_run(self.__ctx)
 
     def set_dry_run(self, onoff):
         """ Set dry run state
 
-        Called with True/False
+        Returns the previous dry run state
         """
-
+        old = self.get_dry_run()
         self.nft_ctx_set_dry_run(self.__ctx, onoff)
+
+        return old
+
+    def add_var(self, var):
+        """Add a variable to the variable list
+
+        Returns True if added, False otherwise
+        """
+        if not isinstance(var, bytes):
+            var = var.encode("utf-8")
+        rc = self.nft_ctx_add_var(self.__ctx, var)
+        return rc == 0
+
+    def clear_vars(self):
+        """Clear variable list
+        """
+        self.nft_ctx_clear_vars(self.__ctx)
