@@ -158,6 +158,8 @@ static struct expr *expr_value(struct expr *expr)
 		return expr->left->key;
 	case EXPR_SET_ELEM:
 		return expr->key;
+	case EXPR_VALUE:
+		return expr;
 	default:
 		BUG("invalid expression type %s\n", expr_name(expr));
 	}
@@ -503,7 +505,8 @@ add_interval(struct expr *set, struct expr *low, struct expr *i)
 	mpz_init(p);
 
 	mpz_sub(range, expr_value(i)->value, expr_value(low)->value);
-	mpz_sub_ui(range, range, 1);
+	if (i->etype != EXPR_VALUE)
+		mpz_sub_ui(range, range, 1);
 
 	mpz_and(p, expr_value(low)->value, range);
 
@@ -618,25 +621,14 @@ void interval_map_decompose(struct expr *set)
 	mpz_bitmask(i->value, i->len);
 
 	if (!mpz_cmp(i->value, expr_value(low)->value)) {
-		expr_free(i);
-		i = low;
+		compound_expr_add(set, low);
 	} else {
-		i = range_expr_alloc(&low->location,
-				     expr_clone(expr_value(low)), i);
-		i = set_elem_expr_alloc(&low->location, i);
-		if (low->etype == EXPR_MAPPING) {
-			i = mapping_expr_alloc(&i->location, i,
-					       expr_clone(low->right));
-			interval_expr_copy(i->left, low->left);
-		} else {
-			interval_expr_copy(i, low);
-		}
-		i->flags |= EXPR_F_KERNEL;
-
+		add_interval(set, low, i);
 		expr_free(low);
 	}
 
-	compound_expr_add(set, i);
+	expr_free(i);
+
 out:
 	if (catchall)
 		compound_expr_add(set, catchall);
