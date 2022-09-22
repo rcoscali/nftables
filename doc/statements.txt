@@ -11,7 +11,7 @@ The verdict statement alters control flow in the ruleset and issues policy decis
 [horizontal]
 *accept*:: Terminate ruleset evaluation and accept the packet.
 The packet can still be dropped later by another hook, for instance accept
-in the forward hook still allows to drop the packet later in the postrouting hook,
+in the forward hook still allows one to drop the packet later in the postrouting hook,
 or another forward base chain that has a higher priority number and is evaluated
 afterwards in the processing pipeline.
 *drop*:: Terminate ruleset evaluation and drop the packet.
@@ -278,7 +278,7 @@ ct event set new,related,destroy
 
 NOTRACK STATEMENT
 ~~~~~~~~~~~~~~~~~
-The notrack statement allows to disable connection tracking for certain
+The notrack statement allows one to disable connection tracking for certain
 packets.
 
 [verse]
@@ -613,7 +613,7 @@ ____
 
 QUEUE_EXPRESSION can be used to compute a queue number
 at run-time with the hash or numgen expressions. It also
-allows to use the map statement to assign fixed queue numbers
+allows one to use the map statement to assign fixed queue numbers
 based on external inputs such as the source ip address or interface names.
 
 .queue statement values

@@ -3725,7 +3725,7 @@ static int stmt_evaluate_log_prefix(struct eval_ctx *ctx, struct stmt *stmt)
 				       expr->sym->expr->identifier);
 			break;
 		default:
-			BUG("unknown expresion type %s\n", expr_name(expr));
+			BUG("unknown expression type %s\n", expr_name(expr));
 			break;
 		}
 		SNPRINTF_BUFFER_SIZE(ret, size, len, offset);
@@ -4335,7 +4335,7 @@ static bool evaluate_device_expr(struct eval_ctx *ctx, struct expr **dev_expr)
 		case EXPR_VALUE:
 			break;
 		default:
-			BUG("invalid expresion type %s\n", expr_name(expr));
+			BUG("invalid expression type %s\n", expr_name(expr));
 			break;
 		}
 

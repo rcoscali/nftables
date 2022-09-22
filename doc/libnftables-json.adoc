@@ -1172,7 +1172,7 @@ point (*base*). The following *base* values are accepted:
 *"th"*::
 	The offset is relative to Transport Layer header start offset.
 
-The second form allows to reference a field by name (*field*) in a named packet
+The second form allows one to reference a field by name (*field*) in a named packet
 header (*protocol*).
 
 === EXTHDR
