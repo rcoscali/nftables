@@ -723,7 +723,25 @@ static int __expr_evaluate_payload(struct eval_ctx *ctx, struct expr *expr)
 
 		rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
 		desc = ctx->pctx.protocol[base].desc;
-		goto check_icmp;
+
+		if (desc == expr->payload.desc)
+			goto check_icmp;
+
+		if (base == PROTO_BASE_LL_HDR) {
+			int link;
+
+			link = proto_find_num(desc, payload->payload.desc);
+			if (link < 0 ||
+			    conflict_resolution_gen_dependency(ctx, link, payload, &nstmt) < 0)
+				return expr_error(ctx->msgs, payload,
+						  "conflicting protocols specified: %s vs. %s",
+						  desc->name,
+						  payload->payload.desc->name);
+
+			payload->payload.offset += ctx->pctx.stacked_ll[0]->length;
+			rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
+			return 1;
+		}
 	}
 
 	if (payload->payload.base == desc->base &&
