@@ -3195,7 +3195,10 @@ struct rule *netlink_delinearize_rule(struct netlink_ctx *ctx,
 	pctx->rule = rule_alloc(&netlink_location, &h);
 	pctx->table = table_cache_find(&ctx->nft->cache.table_cache,
 				       h.table.name, h.family);
-	assert(pctx->table != NULL);
+	if (!pctx->table) {
+		errno = ENOENT;
+		return NULL;
+	}
 
 	pctx->rule->comment = nftnl_rule_get_comment(nlr);
 

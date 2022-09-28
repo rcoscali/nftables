@@ -551,6 +551,10 @@ static int netlink_events_rule_cb(const struct nlmsghdr *nlh, int type,
 
 	nlr = netlink_rule_alloc(nlh);
 	r = netlink_delinearize_rule(monh->ctx, nlr);
+	if (!r) {
+		fprintf(stderr, "W: Received event for an unknown table.\n");
+		goto out_free_nlr;
+	}
 	nlr_for_each_set(nlr, rule_map_decompose_cb, NULL,
 			 &monh->ctx->nft->cache);
 	cmd = netlink_msg2cmd(type, nlh->nlmsg_flags);
@@ -587,6 +591,7 @@ static int netlink_events_rule_cb(const struct nlmsghdr *nlh, int type,
 		break;
 	}
 	rule_free(r);
+out_free_nlr:
 	nftnl_rule_free(nlr);
 	return MNL_CB_OK;
 }
