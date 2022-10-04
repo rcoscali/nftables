@@ -1265,7 +1265,7 @@ static int expr_evaluate_binop(struct eval_ctx *ctx, struct expr **expr)
 					 sym, expr_name(right));
 
 	/* The grammar guarantees this */
-	assert(expr_basetype(left) == expr_basetype(right));
+	assert(datatype_equal(expr_basetype(left), expr_basetype(right)));
 
 	switch (op->op) {
 	case OP_LSHIFT:
