@@ -1058,13 +1058,19 @@ static void chain_print_declaration(const struct chain *chain,
 void chain_rules_print(const struct chain *chain, struct output_ctx *octx,
 		       const char *indent)
 {
+	unsigned int flags = octx->flags;
 	struct rule *rule;
+
+	if (chain->flags & CHAIN_F_BINDING)
+		octx->flags &= ~NFT_CTX_OUTPUT_HANDLE;
 
 	list_for_each_entry(rule, &chain->rules, list) {
 		nft_print(octx, "\t\t%s", indent ? : "");
 		rule_print(rule, octx);
 		nft_print(octx, "\n");
 	}
+
+	octx->flags = flags;
 }
 
 static void chain_print(const struct chain *chain, struct output_ctx *octx)
