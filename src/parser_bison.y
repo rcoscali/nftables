@@ -65,15 +65,26 @@ static struct scope *current_scope(const struct parser_state *state)
 	return state->scopes[state->scope];
 }
 
-static void open_scope(struct parser_state *state, struct scope *scope)
+static int open_scope(struct parser_state *state, struct scope *scope)
 {
-	assert(state->scope < array_size(state->scopes) - 1);
+	if (state->scope >= array_size(state->scopes) - 1) {
+		state->scope_err = true;
+		return -1;
+	}
+
 	scope_init(scope, current_scope(state));
 	state->scopes[++state->scope] = scope;
+
+	return 0;
 }
 
 static void close_scope(struct parser_state *state)
 {
+	if (state->scope_err) {
+		state->scope_err = false;
+		return;
+	}
+
 	assert(state->scope > 0);
 	state->scope--;
 }
@@ -1674,7 +1685,11 @@ describe_cmd		:	primary_expr
 table_block_alloc	:	/* empty */
 			{
 				$$ = table_alloc();
-				open_scope(state, &$$->scope);
+				if (open_scope(state, &$$->scope) < 0) {
+					erec_queue(error(&@$, "too many levels of nesting"),
+						   state->msgs);
+					state->nerrs++;
+				}
 			}
 			;
 
@@ -1836,7 +1851,11 @@ table_block		:	/* empty */	{ $$ = $<table>-1; }
 chain_block_alloc	:	/* empty */
 			{
 				$$ = chain_alloc(NULL);
-				open_scope(state, &$$->scope);
+				if (open_scope(state, &$$->scope) < 0) {
+					erec_queue(error(&@$, "too many levels of nesting"),
+						   state->msgs);
+					state->nerrs++;
+				}
 			}
 			;
 
