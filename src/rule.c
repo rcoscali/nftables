@@ -1233,6 +1233,11 @@ static void table_print(const struct table *table, struct output_ctx *octx)
 	const char *delim = "";
 	const char *family = family2str(table->handle.family);
 
+	if (table->has_xt_stmts)
+		fprintf(octx->error_fp,
+			"# Warning: table %s %s is managed by iptables-nft, do not touch!\n",
+			family, table->handle.table.name);
+
 	nft_print(octx, "table %s %s {", family, table->handle.table.name);
 	if (nft_output_handle(octx) || table->flags & TABLE_F_OWNER)
 		nft_print(octx, " #");
@@ -2387,9 +2392,14 @@ static int do_list_tables(struct netlink_ctx *ctx, struct cmd *cmd)
 static void table_print_declaration(struct table *table,
 				    struct output_ctx *octx)
 {
-	nft_print(octx, "table %s %s {\n",
-		  family2str(table->handle.family),
-		  table->handle.table.name);
+	const char *family = family2str(table->handle.family);
+
+	if (table->has_xt_stmts)
+		fprintf(octx->error_fp,
+			"# Warning: table %s %s is managed by iptables-nft, do not touch!\n",
+			family, table->handle.table.name);
+
+	nft_print(octx, "table %s %s {\n", family, table->handle.table.name);
 }
 
 static int do_list_chain(struct netlink_ctx *ctx, struct cmd *cmd,

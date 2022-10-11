@@ -238,6 +238,7 @@ void netlink_parse_match(struct netlink_parse_ctx *ctx,
 	stmt->xt.name = strdup(name);
 	stmt->xt.type = NFT_XT_MATCH;
 #endif
+	ctx->table->has_xt_stmts = true;
 	rule_stmt_append(ctx->rule, stmt);
 }
 
@@ -283,6 +284,7 @@ void netlink_parse_target(struct netlink_parse_ctx *ctx,
 	stmt->xt.name = strdup(name);
 	stmt->xt.type = NFT_XT_TARGET;
 #endif
+	ctx->table->has_xt_stmts = true;
 	rule_stmt_append(ctx->rule, stmt);
 }
 
