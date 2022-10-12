@@ -2228,6 +2228,9 @@ static void binop_adjust(const struct expr *binop, struct expr *right,
 		binop_adjust_one(binop, right, shift);
 		break;
 	case EXPR_SET_REF:
+		if (!set_is_anonymous(right->set->flags))
+			break;
+
 		list_for_each_entry(i, &right->set->init->expressions, list) {
 			switch (i->key->etype) {
 			case EXPR_VALUE:
