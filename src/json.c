@@ -1911,6 +1911,7 @@ int do_command_list_json(struct netlink_ctx *ctx, struct cmd *cmd)
 	case CMD_OBJ_SET:
 		root = do_list_set_json(ctx, cmd, table);
 		break;
+	case CMD_OBJ_RULES:
 	case CMD_OBJ_RULESET:
 		root = do_list_ruleset_json(ctx, cmd);
 		break;

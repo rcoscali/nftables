@@ -481,7 +481,10 @@ RULES
 [verse]
 {*add* | *insert*} *rule* ['family'] 'table' 'chain' [*handle* 'handle' | *index* 'index'] 'statement' ... [*comment* 'comment']
 *replace rule* ['family'] 'table' 'chain' *handle* 'handle' 'statement' ... [*comment* 'comment']
-*delete rule* ['family'] 'table' 'chain' *handle* 'handle'
+{*delete* | *reset*} *rule* ['family'] 'table' 'chain' *handle* 'handle'
+*reset rules* ['family']
+*reset rules* *table* ['family'] 'table'
+*reset rules* *chain* ['family'] 'table' ['chain']
 
 Rules are added to chains in the given table. If the family is not specified, the
 ip family is used. Rules are constructed from two kinds of components according
@@ -509,6 +512,7 @@ case the rule is inserted after the specified rule.
 beginning of the chain or before the specified rule.
 *replace*:: Similar to *add*, but the rule replaces the specified rule.
 *delete*:: Delete the specified rule.
+*reset*:: Reset rule-contained state, i.e. counter and quota statement values.
 
 .*add a rule to ip table output chain*
 -------------

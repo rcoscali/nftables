@@ -402,6 +402,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 <SCANSTATE_CMD_LIST,SCANSTATE_CMD_RESET>{
 	"counters"		{ return COUNTERS; }
 	"quotas"		{ return QUOTAS; }
+	"rules"			{ return RULES; }
 }
 
 "log"			{ scanner_push_start_cond(yyscanner, SCANSTATE_STMT_LOG); return LOG; }

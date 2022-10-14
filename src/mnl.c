@@ -654,13 +654,21 @@ err_free:
 }
 
 struct nftnl_rule_list *mnl_nft_rule_dump(struct netlink_ctx *ctx, int family,
-					  const char *table, const char *chain)
+					  const char *table, const char *chain,
+					  uint64_t rule_handle,
+					  bool dump, bool reset)
 {
+	uint16_t nl_flags = dump ? NLM_F_DUMP : NLM_F_ACK;
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nftnl_rule_list *nlr_list;
 	struct nftnl_rule *nlr = NULL;
 	struct nlmsghdr *nlh;
-	int ret;
+	int msg_type, ret;
+
+	if (reset)
+		msg_type = NFT_MSG_GETRULE_RESET;
+	else
+		msg_type = NFT_MSG_GETRULE;
 
 	if (table) {
 		nlr = nftnl_rule_alloc();
@@ -670,14 +678,16 @@ struct nftnl_rule_list *mnl_nft_rule_dump(struct netlink_ctx *ctx, int family,
 		nftnl_rule_set_str(nlr, NFTNL_RULE_TABLE, table);
 		if (chain)
 			nftnl_rule_set_str(nlr, NFTNL_RULE_CHAIN, chain);
+		if (rule_handle)
+			nftnl_rule_set_u64(nlr, NFTNL_RULE_HANDLE, rule_handle);
 	}
 
 	nlr_list = nftnl_rule_list_alloc();
 	if (nlr_list == NULL)
 		memory_allocation_error();
 
-	nlh = nftnl_nlmsg_build_hdr(buf, NFT_MSG_GETRULE, family,
-				    NLM_F_DUMP, ctx->seqnum);
+	nlh = nftnl_nlmsg_build_hdr(buf, msg_type, family,
+				    nl_flags, ctx->seqnum);
 	if (nlr) {
 		nftnl_rule_nlmsg_build_payload(nlh, nlr);
 		nftnl_rule_free(nlr);

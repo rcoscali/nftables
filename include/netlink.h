@@ -183,6 +183,9 @@ extern int netlink_list_flowtables(struct netlink_ctx *ctx,
 extern struct flowtable *netlink_delinearize_flowtable(struct netlink_ctx *ctx,
 						       struct nftnl_flowtable *nlo);
 
+extern int netlink_reset_rules(struct netlink_ctx *ctx, const struct cmd *cmd,
+			       bool dump);
+
 extern void netlink_dump_chain(const struct nftnl_chain *nlc,
 			       struct netlink_ctx *ctx);
 extern void netlink_dump_rule(const struct nftnl_rule *nlr,

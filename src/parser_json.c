@@ -3763,6 +3763,39 @@ static struct cmd *json_parse_cmd_list(struct json_ctx *ctx,
 	return NULL;
 }
 
+static struct cmd *json_parse_cmd_reset_rule(struct json_ctx *ctx,
+					     json_t *root, enum cmd_ops op,
+					     enum cmd_obj obj)
+{
+	struct handle h = {
+		.family = NFPROTO_UNSPEC,
+	};
+	const char *family = NULL, *table = NULL, *chain = NULL;
+
+
+	if (obj == CMD_OBJ_RULE &&
+	    json_unpack_err(ctx, root, "{s:s, s:s, s:s, s:I}",
+			    "family", &family, "table", &table,
+			    "chain", &chain, "handle", &h.handle.id))
+		return NULL;
+	else if (obj == CMD_OBJ_RULES) {
+		json_unpack(root, "{s:s}", "family", &family);
+		json_unpack(root, "{s:s}", "table", &table);
+		json_unpack(root, "{s:s}", "chain", &chain);
+	}
+
+	if (family && parse_family(family, &h.family)) {
+		json_error(ctx, "Unknown family '%s'.", family);
+		return NULL;
+	}
+	if (table) {
+		h.table.name = xstrdup(table);
+		if (chain)
+			h.chain.name = xstrdup(chain);
+	}
+	return cmd_alloc(op, obj, &h, int_loc, NULL);
+}
+
 static struct cmd *json_parse_cmd_reset(struct json_ctx *ctx,
 				        json_t *root, enum cmd_ops op)
 {
@@ -3776,6 +3809,8 @@ static struct cmd *json_parse_cmd_reset(struct json_ctx *ctx,
 		{ "counters", CMD_OBJ_COUNTERS, json_parse_cmd_list_multiple },
 		{ "quota", CMD_OBJ_QUOTA, json_parse_cmd_add_object },
 		{ "quotas", CMD_OBJ_QUOTAS, json_parse_cmd_list_multiple },
+		{ "rule", CMD_OBJ_RULE, json_parse_cmd_reset_rule },
+		{ "rules", CMD_OBJ_RULES, json_parse_cmd_reset_rule },
 	};
 	unsigned int i;
 	json_t *tmp;

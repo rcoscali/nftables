@@ -2504,6 +2504,8 @@ static int do_command_list(struct netlink_ctx *ctx, struct cmd *cmd)
 	case CMD_OBJ_SET:
 		return do_list_set(ctx, cmd, table);
 	case CMD_OBJ_RULESET:
+	case CMD_OBJ_RULES:
+	case CMD_OBJ_RULE:
 		return do_list_ruleset(ctx, cmd);
 	case CMD_OBJ_METERS:
 		return do_list_sets(ctx, cmd);
@@ -2611,6 +2613,14 @@ static int do_command_reset(struct netlink_ctx *ctx, struct cmd *cmd)
 	case CMD_OBJ_QUOTA:
 		type = NFT_OBJECT_QUOTA;
 		break;
+	case CMD_OBJ_RULES:
+		ret = netlink_reset_rules(ctx, cmd, true);
+		if (ret < 0)
+			return ret;
+
+		return do_command_list(ctx, cmd);
+	case CMD_OBJ_RULE:
+		return netlink_reset_rules(ctx, cmd, false);
 	default:
 		BUG("invalid command object type %u\n", cmd->obj);
 	}

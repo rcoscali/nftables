@@ -1767,6 +1767,55 @@ int netlink_reset_objs(struct netlink_ctx *ctx, const struct cmd *cmd,
 	return err;
 }
 
+int netlink_reset_rules(struct netlink_ctx *ctx, const struct cmd *cmd,
+		        bool dump)
+{
+	const struct handle *h = &cmd->handle;
+	struct nft_cache_filter f = {
+		.list.table		= h->table.name,
+		.list.chain		= h->chain.name,
+		.list.rule_handle	= h->handle.id,
+	};
+	struct rule *rule, *next, *crule, *cnext;
+	struct table *table;
+	struct chain *chain;
+	int ret;
+
+	ret = rule_cache_dump(ctx, h, &f, dump, true);
+
+	list_for_each_entry_safe(rule, next, &ctx->list, list) {
+		table = table_cache_find(&ctx->nft->cache.table_cache,
+					 rule->handle.table.name,
+					 rule->handle.family);
+		if (!table)
+			continue;
+
+		chain = chain_cache_find(table, rule->handle.chain.name);
+		if (!chain)
+			continue;
+
+		list_del(&rule->list);
+		list_for_each_entry_safe(crule, cnext, &chain->rules, list) {
+			if (crule->handle.handle.id != rule->handle.handle.id)
+				continue;
+
+			list_replace(&crule->list, &rule->list);
+			rule_free(crule);
+			rule = NULL;
+			break;
+		}
+		if (rule) {
+			list_add_tail(&rule->list, &chain->rules);
+		}
+	}
+	list_for_each_entry_safe(rule, next, &ctx->list, list) {
+		list_del(&rule->list);
+		rule_free(rule);
+	}
+
+	return ret;
+}
+
 struct flowtable *
 netlink_delinearize_flowtable(struct netlink_ctx *ctx,
 			      struct nftnl_flowtable *nlo)
