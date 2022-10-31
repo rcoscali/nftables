@@ -2995,14 +2995,15 @@ static void stmt_payload_postprocess(struct rule_pp_ctx *ctx)
 {
 	struct stmt *stmt = ctx->stmt;
 
+	payload_expr_complete(stmt->payload.expr, &ctx->pctx);
+	if (!payload_is_known(stmt->payload.expr))
+		stmt_payload_binop_postprocess(ctx);
+
 	expr_postprocess(ctx, &stmt->payload.expr);
 
 	expr_set_type(stmt->payload.val,
 		      stmt->payload.expr->dtype,
 		      stmt->payload.expr->byteorder);
-
-	if (!payload_is_known(stmt->payload.expr))
-		stmt_payload_binop_postprocess(ctx);
 
 	expr_postprocess(ctx, &stmt->payload.val);
 }
