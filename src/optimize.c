@@ -578,6 +578,8 @@ static void __merge_concat_stmts(const struct optimize_ctx *ctx, uint32_t i,
 				break;
 			case EXPR_SYMBOL:
 			case EXPR_VALUE:
+			case EXPR_PREFIX:
+			case EXPR_RANGE:
 				clone = expr_clone(stmt_a->expr->right);
 				compound_expr_add(concat, clone);
 				break;
