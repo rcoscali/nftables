@@ -732,11 +732,19 @@ kernel modules, such as nf_conntrack.
 STATEFUL OBJECTS
 ----------------
 [verse]
-{*add* | *delete* | *list* | *reset*} 'type' ['family'] 'table' 'object'
-*delete* 'type' ['family'] 'table' *handle* 'handle'
+{*add* | *delete* | *list* | *reset*} *counter* ['family'] 'table' 'object'
+{*add* | *delete* | *list* | *reset*} *quota* ['family'] 'table' 'object'
+{*add* | *delete* | *list* | *reset*} *limit* ['family'] 'table' 'object'
+*delete* 'counter' ['family'] 'table' *handle* 'handle'
+*delete* 'quota' ['family'] 'table' *handle* 'handle'
+*delete* 'limit' ['family'] 'table' *handle* 'handle'
 *list counters* ['family']
 *list quotas* ['family']
 *list limits* ['family']
+*reset counters* ['family']
+*reset quotas* ['family']
+*reset counters* ['family'] *table* 'table'
+*reset quotas* ['family'] *table* 'table'
 
 Stateful objects are attached to tables and are identified by a unique name.
 They group stateful information from rules, to reference them in rules the
