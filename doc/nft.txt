@@ -734,7 +734,7 @@ STATEFUL OBJECTS
 [verse]
 {*add* | *delete* | *list* | *reset*} *counter* ['family'] 'table' 'object'
 {*add* | *delete* | *list* | *reset*} *quota* ['family'] 'table' 'object'
-{*add* | *delete* | *list* | *reset*} *limit* ['family'] 'table' 'object'
+{*add* | *delete* | *list*} *limit* ['family'] 'table' 'object'
 *delete* 'counter' ['family'] 'table' *handle* 'handle'
 *delete* 'quota' ['family'] 'table' *handle* 'handle'
 *delete* 'limit' ['family'] 'table' *handle* 'handle'
