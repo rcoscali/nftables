@@ -264,12 +264,11 @@ struct xtables_target;
 struct xt_stmt {
 	const char			*name;
 	enum nft_xt_type		type;
+	uint32_t			rev;
+	uint32_t			family;
+	size_t				infolen;
+	void				*info;
 	uint32_t			proto;
-	union {
-		struct xtables_match	*match;
-		struct xtables_target	*target;
-	};
-	void				*entry;
 };
 
 extern struct stmt *xt_stmt_alloc(const struct location *loc);
