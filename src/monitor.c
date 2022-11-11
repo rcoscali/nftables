@@ -428,6 +428,7 @@ static int netlink_events_setelem_cb(const struct nlmsghdr *nlh, int type,
 	 * used by named sets, so use a dummy set.
 	 */
 	dummyset = set_alloc(monh->loc);
+	handle_merge(&dummyset->handle, &set->handle);
 	dummyset->key = expr_clone(set->key);
 	if (set->data)
 		dummyset->data = expr_clone(set->data);
@@ -643,6 +644,7 @@ static void netlink_events_cache_addset(struct netlink_mon_handler *monh,
 	memset(&set_tmpctx, 0, sizeof(set_tmpctx));
 	init_list_head(&set_tmpctx.list);
 	init_list_head(&msgs);
+	set_tmpctx.nft = monh->ctx->nft;
 	set_tmpctx.msgs = &msgs;
 
 	nls = netlink_set_alloc(nlh);
