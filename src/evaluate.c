@@ -148,8 +148,29 @@ static int byteorder_conversion(struct eval_ctx *ctx, struct expr **expr,
 		return 0;
 
 	/* Conversion for EXPR_CONCAT is handled for single composing ranges */
-	if ((*expr)->etype == EXPR_CONCAT)
+	if ((*expr)->etype == EXPR_CONCAT) {
+		struct expr *i, *next, *unary;
+
+		list_for_each_entry_safe(i, next, &(*expr)->expressions, list) {
+			if (i->byteorder == BYTEORDER_BIG_ENDIAN)
+				continue;
+
+			basetype = expr_basetype(i)->type;
+			if (basetype == TYPE_STRING)
+				continue;
+
+			assert(basetype == TYPE_INTEGER);
+
+			op = byteorder_conversion_op(i, byteorder);
+			unary = unary_expr_alloc(&i->location, op, i);
+			if (expr_evaluate(ctx, &unary) < 0)
+				return -1;
+
+			list_replace(&i->list, &unary->list);
+		}
+
 		return 0;
+	}
 
 	basetype = expr_basetype(*expr)->type;
 	switch (basetype) {
