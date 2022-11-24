@@ -110,8 +110,6 @@ void xt_stmt_xlate(const struct stmt *stmt, struct output_ctx *octx)
 		}
 		xfree(t);
 		break;
-	default:
-		break;
 	}
 
 	xt_xlate_free(xl);

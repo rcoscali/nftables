@@ -255,8 +255,8 @@ enum nft_xt_type {
 	NFT_XT_MATCH = 0,
 	NFT_XT_TARGET,
 	NFT_XT_WATCHER,
-	NFT_XT_MAX
 };
+#define NFT_XT_MAX	(NFT_XT_WATCHER + 1)
 
 struct xtables_match;
 struct xtables_target;
