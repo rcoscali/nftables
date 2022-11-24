@@ -626,6 +626,8 @@ int nft_lex(void *, void *, void *);
 %token IN			"in"
 %token OUT			"out"
 
+%token XT		"xt"
+
 %type <limit_rate>		limit_rate_pkts
 %type <limit_rate>		limit_rate_bytes
 
@@ -900,6 +902,9 @@ int nft_lex(void *, void *, void *);
 %type <stmt>			optstrip_stmt
 %destructor { stmt_free($$); }	optstrip_stmt
 
+%type <stmt>			xt_stmt
+%destructor { stmt_free($$); }	xt_stmt
+
 %type <expr>			boolean_expr
 %destructor { expr_free($$); }	boolean_expr
 %type <val8>			boolean_keys
@@ -991,6 +996,7 @@ close_scope_udplite	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_UDPL
 
 close_scope_log		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_STMT_LOG); }
 close_scope_synproxy	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_STMT_SYNPROXY); }
+close_scope_xt		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_XT); }
 
 common_block		:	INCLUDE		QUOTED_STRING	stmt_separator
 			{
@@ -2879,6 +2885,18 @@ stmt			:	verdict_stmt
 			|	synproxy_stmt	close_scope_synproxy
 			|	chain_stmt
 			|	optstrip_stmt
+			|	xt_stmt		close_scope_xt
+			;
+
+xt_stmt			:	XT	STRING	STRING
+			{
+				$$ = NULL;
+				xfree($2);
+				xfree($3);
+				erec_queue(error(&@$, "unsupported xtables compat expression, use iptables-nft with this ruleset"),
+					   state->msgs);
+				YYERROR;
+			}
 			;
 
 chain_stmt_type		:	JUMP	{ $$ = NFT_JUMP; }

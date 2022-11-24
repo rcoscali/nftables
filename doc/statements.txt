@@ -800,3 +800,20 @@ ____
 # jump to different chains depending on layer 4 protocol type:
 nft add rule ip filter input ip protocol vmap { tcp : jump tcp-chain, udp : jump udp-chain , icmp : jump icmp-chain }
 ------------------------
+
+XT STATEMENT
+~~~~~~~~~~~~
+This represents an xt statement from xtables compat interface. It is a
+fallback if translation is not available or not complete.
+
+[verse]
+____
+*xt* 'TYPE' 'NAME'
+
+'TYPE' := *match* | *target* | *watcher*
+____
+
+Seeing this means the ruleset (or parts of it) were created by *iptables-nft*
+and one should use that to manage it.
+
+*BEWARE:* nftables won't restore these statements.

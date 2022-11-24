@@ -2764,6 +2764,11 @@ static struct stmt *json_parse_stmt(struct json_ctx *ctx, json_t *root)
 		return verdict_stmt_alloc(int_loc, expr);
 	}
 
+	if (!strcmp(type, "xt")) {
+		json_error(ctx, "unsupported xtables compat expression, use iptables-nft with this ruleset");
+		return NULL;
+	}
+
 	for (i = 0; i < array_size(stmt_parser_tbl); i++) {
 		if (!strcmp(type, stmt_parser_tbl[i].key))
 			return stmt_parser_tbl[i].cb(ctx, stmt_parser_tbl[i].key, tmp);

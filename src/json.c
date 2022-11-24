@@ -82,12 +82,6 @@ static json_t *stmt_print_json(const struct stmt *stmt, struct output_ctx *octx)
 	char buf[1024];
 	FILE *fp;
 
-	/* XXX: Can't be supported at this point:
-	 * xt_stmt_xlate() ignores output_fp.
-	 */
-	if (stmt->ops->type == STMT_XT)
-		return json_pack("{s:n}", "xt");
-
 	if (stmt->ops->json)
 		return stmt->ops->json(stmt, octx);
 
@@ -1622,6 +1616,19 @@ json_t *optstrip_stmt_json(const struct stmt *stmt, struct output_ctx *octx)
 {
 	return json_pack("{s:o}", "reset",
 			 expr_print_json(stmt->optstrip.expr, octx));
+}
+
+json_t *xt_stmt_json(const struct stmt *stmt, struct output_ctx *octx)
+{
+	static const char *xt_typename[NFT_XT_MAX] = {
+		[NFT_XT_MATCH]          = "match",
+		[NFT_XT_TARGET]         = "target",
+		[NFT_XT_WATCHER]        = "watcher",
+	};
+
+	return json_pack("{s:{s:s, s:s}}", "xt",
+			 "type", xt_typename[stmt->xt.type],
+			 "name", stmt->xt.name);
 }
 
 static json_t *table_print_json_full(struct netlink_ctx *ctx,

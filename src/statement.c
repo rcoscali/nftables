@@ -997,6 +997,7 @@ static const struct stmt_ops xt_stmt_ops = {
 	.name		= "xt",
 	.print		= xt_stmt_print,
 	.destroy	= xt_stmt_destroy,
+	.json		= xt_stmt_json,
 };
 
 struct stmt *xt_stmt_alloc(const struct location *loc)

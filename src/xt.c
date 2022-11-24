@@ -115,7 +115,13 @@ void xt_stmt_xlate(const struct stmt *stmt, struct output_ctx *octx)
 	xt_xlate_free(xl);
 	xfree(entry);
 #else
-	nft_print(octx, "# xt_%s", stmt->xt.name);
+	static const char *typename[NFT_XT_MAX] = {
+		[NFT_XT_MATCH]		= "match",
+		[NFT_XT_TARGET]		= "target",
+		[NFT_XT_WATCHER]	= "watcher",
+	};
+
+	nft_print(octx, "xt %s %s", typename[stmt->xt.type], stmt->xt.name);
 #endif
 }
 

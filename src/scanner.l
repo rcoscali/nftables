@@ -215,6 +215,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_TCP
 %s SCANSTATE_TYPE
 %s SCANSTATE_VLAN
+%s SCANSTATE_XT
 %s SCANSTATE_CMD_EXPORT
 %s SCANSTATE_CMD_IMPORT
 %s SCANSTATE_CMD_LIST
@@ -799,6 +800,8 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 }
 
 "secmark"		{ scanner_push_start_cond(yyscanner, SCANSTATE_SECMARK); return SECMARK; }
+
+"xt"			{ scanner_push_start_cond(yyscanner, SCANSTATE_XT); return XT; }
 
 {addrstring}		{
 				yylval->string = xstrdup(yytext);
