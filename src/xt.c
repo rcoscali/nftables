@@ -34,6 +34,12 @@ static void *xt_entry_alloc(const struct xt_stmt *xt, uint32_t af);
 
 void xt_stmt_xlate(const struct stmt *stmt, struct output_ctx *octx)
 {
+	static const char *typename[NFT_XT_MAX] = {
+		[NFT_XT_MATCH]		= "match",
+		[NFT_XT_TARGET]		= "target",
+		[NFT_XT_WATCHER]	= "watcher",
+	};
+	int rc = 0;
 #ifdef HAVE_LIBXTABLES
 	struct xt_xlate *xl = xt_xlate_alloc(10240);
 	struct xtables_target *tg;
@@ -69,11 +75,7 @@ void xt_stmt_xlate(const struct stmt *stmt, struct output_ctx *octx)
 				.numeric        = 1,
 			};
 
-			mt->xlate(xl, &params);
-			nft_print(octx, "%s", xt_xlate_get(xl));
-		} else if (mt->print) {
-			printf("#");
-			mt->print(&entry, m, 0);
+			rc = mt->xlate(xl, &params);
 		}
 		xfree(m);
 		break;
@@ -102,27 +104,20 @@ void xt_stmt_xlate(const struct stmt *stmt, struct output_ctx *octx)
 				.numeric        = 1,
 			};
 
-			tg->xlate(xl, &params);
-			nft_print(octx, "%s", xt_xlate_get(xl));
-		} else if (tg->print) {
-			printf("#");
-			tg->print(NULL, t, 0);
+			rc = tg->xlate(xl, &params);
 		}
 		xfree(t);
 		break;
 	}
 
+	if (rc == 1)
+		nft_print(octx, "%s", xt_xlate_get(xl));
 	xt_xlate_free(xl);
 	xfree(entry);
-#else
-	static const char *typename[NFT_XT_MAX] = {
-		[NFT_XT_MATCH]		= "match",
-		[NFT_XT_TARGET]		= "target",
-		[NFT_XT_WATCHER]	= "watcher",
-	};
-
-	nft_print(octx, "xt %s %s", typename[stmt->xt.type], stmt->xt.name);
 #endif
+	if (!rc)
+		nft_print(octx, "xt %s %s",
+			  typename[stmt->xt.type], stmt->xt.name);
 }
 
 void xt_stmt_destroy(struct stmt *stmt)
