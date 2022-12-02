@@ -3253,7 +3253,7 @@ static struct cmd *json_parse_cmd_add_flowtable(struct json_ctx *ctx,
 		return NULL;
 	}
 
-	json_unpack(root, "{s:o}", &devs);
+	json_unpack(root, "{s:o}", "dev", &devs);
 
 	hookstr = chain_hookname_lookup(hook);
 	if (!hookstr) {
