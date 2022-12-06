@@ -124,6 +124,7 @@ string		({letter}|[_.])({letter}|{digit}|[/\-_\.])*
 quotedstring	\"[^"]*\"
 asteriskstring	({string}\*|{string}\\\*|\\\*|{string}\\\*{string})
 comment		#.*$
+comment_line	^[ \t]*#.*\n
 slash		\/
 
 timestring	([0-9]+d)?([0-9]+h)?([0-9]+m)?([0-9]+s)?([0-9]+ms)?
@@ -858,6 +859,9 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 {tab}+
 {space}+
 {comment}
+{comment_line}		{
+				reset_pos(yyget_extra(yyscanner), yylloc);
+			}
 
 <<EOF>> 		{
 				update_pos(yyget_extra(yyscanner), yylloc, 1);
