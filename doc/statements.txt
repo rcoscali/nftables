@@ -683,7 +683,24 @@ The fwd statement is used to redirect a raw packet to another interface. It is
 only available in the netdev family ingress and egress hooks. It is similar to
 the dup statement except that no copy is made.
 
+You can also specify the address of the next hop and the device to forward the
+packet to. This updates the source and destination MAC address of the packet by
+transmitting it through the neighboring layer. This also decrements the ttl
+field of the IP packet. This provides a way to effectively bypass the classical
+forwarding path, thus skipping the fib (forwarding information base) lookup.
+
+[verse]
 *fwd to* 'device'
+*fwd* [*ip* | *ip6*] *to* 'address' *device* 'device'
+
+.Using the fwd statement
+------------------------
+# redirect raw packet to device
+netdev ingress fwd to "eth0"
+
+# forward packet to next hop 192.168.200.1 via eth0 device
+netdev ingress ether saddr set fwd ip to 192.168.200.1 device "eth0"
+-----------------------------------
 
 SET STATEMENT
 ~~~~~~~~~~~~~
