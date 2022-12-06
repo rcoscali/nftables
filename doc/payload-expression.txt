@@ -556,6 +556,8 @@ Link layer, for example the Ethernet header
 Network header, for example IPv4 or IPv6
 |th|
 Transport Header, for example TCP
+|ih|
+Inner Header / Payload, i.e. after the L4 transport level header
 |==============================
 
 .Matching destination port of both UDP and TCP
