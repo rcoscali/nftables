@@ -9,6 +9,12 @@ RULESET="table ip t {
 		counter
 		elements = { 1.0.0.1 . udp . 53 }
 	}
+	set s2 {
+		type ipv4_addr . mark
+		flags interval
+		elements = { 10.10.10.10 . 0x00000100,
+			     20.20.20.20 . 0x00000200 }
+	}
 }"
 
 $NFT -f - <<< $RULESET

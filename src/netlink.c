@@ -133,16 +133,23 @@ struct nftnl_set_elem *alloc_nftnl_setelem(const struct expr *set,
 	case EXPR_SET_ELEM_CATCHALL:
 		break;
 	default:
-		__netlink_gen_data(key, &nld, false);
-		nftnl_set_elem_set(nlse, NFTNL_SET_ELEM_KEY, &nld.value, nld.len);
 		if (set->set_flags & NFT_SET_INTERVAL &&
 		    key->etype == EXPR_CONCAT && key->field_count > 1) {
+			key->flags |= EXPR_F_INTERVAL;
+			__netlink_gen_data(key, &nld, false);
+			key->flags &= ~EXPR_F_INTERVAL;
+
+			nftnl_set_elem_set(nlse, NFTNL_SET_ELEM_KEY, &nld.value, nld.len);
+
 			key->flags |= EXPR_F_INTERVAL_END;
 			__netlink_gen_data(key, &nld, false);
 			key->flags &= ~EXPR_F_INTERVAL_END;
 
 			nftnl_set_elem_set(nlse, NFTNL_SET_ELEM_KEY_END,
 					   &nld.value, nld.len);
+		} else {
+			__netlink_gen_data(key, &nld, false);
+			nftnl_set_elem_set(nlse, NFTNL_SET_ELEM_KEY, &nld.value, nld.len);
 		}
 		break;
 	}
@@ -246,14 +253,14 @@ static int netlink_export_pad(unsigned char *data, const mpz_t v,
 	return netlink_padded_len(i->len) / BITS_PER_BYTE;
 }
 
-static int netlink_gen_concat_data_expr(int end, const struct expr *i,
+static int netlink_gen_concat_data_expr(uint32_t flags, const struct expr *i,
 					unsigned char *data)
 {
 	struct expr *expr;
 
 	switch (i->etype) {
 	case EXPR_RANGE:
-		if (end)
+		if (flags & EXPR_F_INTERVAL_END)
 			expr = i->right;
 		else
 			expr = i->left;
@@ -265,7 +272,7 @@ static int netlink_gen_concat_data_expr(int end, const struct expr *i,
 		i = expr;
 		break;
 	case EXPR_PREFIX:
-		if (end) {
+		if (flags & EXPR_F_INTERVAL_END) {
 			int count;
 			mpz_t v;
 
@@ -281,6 +288,16 @@ static int netlink_gen_concat_data_expr(int end, const struct expr *i,
 		}
 		return netlink_export_pad(data, i->prefix->value, i);
 	case EXPR_VALUE:
+		/* Switch byteorder only once for singleton values when the set
+		 * contains concatenation of intervals.
+		 */
+		if (!(flags & EXPR_F_INTERVAL))
+			break;
+
+		expr = (struct expr *)i;
+		if (expr_basetype(expr)->type == TYPE_INTEGER &&
+		    expr->byteorder == BYTEORDER_HOST_ENDIAN)
+			mpz_switch_byteorder(expr->value, expr->len / BITS_PER_BYTE);
 		break;
 	default:
 		BUG("invalid expression type '%s' in set", expr_ops(i)->name);
@@ -293,14 +310,13 @@ static void __netlink_gen_concat(const struct expr *expr,
 				 struct nft_data_linearize *nld)
 {
 	unsigned int len = expr->len / BITS_PER_BYTE, offset = 0;
-	int end = expr->flags & EXPR_F_INTERVAL_END;
 	unsigned char data[len];
 	const struct expr *i;
 
 	memset(data, 0, len);
 
 	list_for_each_entry(i, &expr->expressions, list)
-		offset += netlink_gen_concat_data_expr(end, i, data + offset);
+		offset += netlink_gen_concat_data_expr(expr->flags, i, data + offset);
 
 	memcpy(nld->value, data, len);
 	nld->len = len;
@@ -316,10 +332,10 @@ static void __netlink_gen_concat_expand(const struct expr *expr,
 	memset(data, 0, len);
 
 	list_for_each_entry(i, &expr->expressions, list)
-		offset += netlink_gen_concat_data_expr(false, i, data + offset);
+		offset += netlink_gen_concat_data_expr(0, i, data + offset);
 
 	list_for_each_entry(i, &expr->expressions, list)
-		offset += netlink_gen_concat_data_expr(true, i, data + offset);
+		offset += netlink_gen_concat_data_expr(EXPR_F_INTERVAL_END, i, data + offset);
 
 	memcpy(nld->value, data, len);
 	nld->len = len;
