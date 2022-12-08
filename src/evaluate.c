@@ -1318,19 +1318,27 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 	uint32_t type = dtype ? dtype->type : 0, ntype = 0;
 	int off = dtype ? dtype->subtypes : 0;
 	unsigned int flags = EXPR_F_CONSTANT | EXPR_F_SINGLETON;
+	const struct list_head *expressions;
 	struct expr *i, *next, *key = NULL;
 	const struct expr *key_ctx = NULL;
+	bool runaway = false;
 	uint32_t size = 0;
 
 	if (ctx->ectx.key && ctx->ectx.key->etype == EXPR_CONCAT) {
 		key_ctx = ctx->ectx.key;
 		assert(!list_empty(&ctx->ectx.key->expressions));
 		key = list_first_entry(&ctx->ectx.key->expressions, struct expr, list);
+		expressions = &ctx->ectx.key->expressions;
 	}
 
 	list_for_each_entry_safe(i, next, &(*expr)->expressions, list) {
 		enum byteorder bo = BYTEORDER_INVALID;
 		unsigned dsize_bytes, dsize = 0;
+
+		if (runaway) {
+			return expr_binary_error(ctx->msgs, *expr, key_ctx,
+						 "too many concatenation components");
+		}
 
 		if (i->etype == EXPR_CT &&
 		    (i->ct.key == NFT_CT_SRC ||
@@ -1387,8 +1395,12 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 		dsize_bytes = div_round_up(dsize, BITS_PER_BYTE);
 		(*expr)->field_len[(*expr)->field_count++] = dsize_bytes;
 		size += netlink_padded_len(dsize);
-		if (key)
+		if (key) {
+			if (list_is_last(&key->list, expressions))
+				runaway = true;
+
 			key = list_next_entry(key, list);
+		}
 	}
 
 	(*expr)->flags |= flags;
