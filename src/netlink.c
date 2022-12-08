@@ -254,8 +254,8 @@ static int netlink_export_pad(unsigned char *data, const mpz_t v,
 	return netlink_padded_len(i->len) / BITS_PER_BYTE;
 }
 
-static int netlink_gen_concat_data_expr(uint32_t flags, const struct expr *i,
-					unsigned char *data)
+static int __netlink_gen_concat_key(uint32_t flags, const struct expr *i,
+				    unsigned char *data)
 {
 	struct expr *expr;
 
@@ -307,8 +307,8 @@ static int netlink_gen_concat_data_expr(uint32_t flags, const struct expr *i,
 	return netlink_export_pad(data, i->value, i);
 }
 
-static void __netlink_gen_concat(const struct expr *expr,
-				 struct nft_data_linearize *nld)
+static void netlink_gen_concat_key(const struct expr *expr,
+				    struct nft_data_linearize *nld)
 {
 	unsigned int len = expr->len / BITS_PER_BYTE, offset = 0;
 	unsigned char data[len];
@@ -317,10 +317,38 @@ static void __netlink_gen_concat(const struct expr *expr,
 	memset(data, 0, len);
 
 	list_for_each_entry(i, &expr->expressions, list)
-		offset += netlink_gen_concat_data_expr(expr->flags, i, data + offset);
+		offset += __netlink_gen_concat_key(expr->flags, i, data + offset);
 
 	memcpy(nld->value, data, len);
 	nld->len = len;
+}
+
+static int __netlink_gen_concat_data(int end, const struct expr *i,
+				     unsigned char *data)
+{
+	switch (i->etype) {
+	case EXPR_RANGE:
+		i = end ? i->right : i->left;
+		break;
+	case EXPR_PREFIX:
+		if (end) {
+			int count;
+			mpz_t v;
+
+			mpz_init_bitmask(v, i->len - i->prefix_len);
+			mpz_add(v, i->prefix->value, v);
+			count = netlink_export_pad(data, v, i);
+			mpz_clear(v);
+			return count;
+		}
+		return netlink_export_pad(data, i->prefix->value, i);
+	case EXPR_VALUE:
+		break;
+	default:
+		BUG("invalid expression type '%s' in set", expr_ops(i)->name);
+	}
+
+	return netlink_export_pad(data, i->value, i);
 }
 
 static void __netlink_gen_concat_expand(const struct expr *expr,
@@ -333,18 +361,33 @@ static void __netlink_gen_concat_expand(const struct expr *expr,
 	memset(data, 0, len);
 
 	list_for_each_entry(i, &expr->expressions, list)
-		offset += netlink_gen_concat_data_expr(0, i, data + offset);
+		offset += __netlink_gen_concat_data(false, i, data + offset);
 
 	list_for_each_entry(i, &expr->expressions, list)
-		offset += netlink_gen_concat_data_expr(EXPR_F_INTERVAL_END, i, data + offset);
+		offset += __netlink_gen_concat_data(true, i, data + offset);
+
+	memcpy(nld->value, data, len);
+	nld->len = len;
+}
+
+static void __netlink_gen_concat(const struct expr *expr,
+				 struct nft_data_linearize *nld)
+{
+	unsigned int len = expr->len / BITS_PER_BYTE, offset = 0;
+	unsigned char data[len];
+	const struct expr *i;
+
+	memset(data, 0, len);
+
+	list_for_each_entry(i, &expr->expressions, list)
+		offset += __netlink_gen_concat_data(expr->flags, i, data + offset);
 
 	memcpy(nld->value, data, len);
 	nld->len = len;
 }
 
 static void netlink_gen_concat_data(const struct expr *expr,
-				    struct nft_data_linearize *nld,
-				    bool expand)
+				    struct nft_data_linearize *nld, bool expand)
 {
 	if (expand)
 		__netlink_gen_concat_expand(expr, nld);
@@ -438,7 +481,7 @@ static void netlink_gen_key(const struct expr *expr,
 	case EXPR_VALUE:
 		return netlink_gen_constant_data(expr, data);
 	case EXPR_CONCAT:
-		return netlink_gen_concat_data(expr, data, false);
+		return netlink_gen_concat_key(expr, data);
 	case EXPR_RANGE:
 		return netlink_gen_range(expr, data);
 	case EXPR_PREFIX:
