@@ -96,7 +96,8 @@ struct nftnl_expr *alloc_nft_expr(const char *name)
 
 	return nle;
 }
-
+static void netlink_gen_key(const struct expr *expr,
+			    struct nft_data_linearize *data);
 static void __netlink_gen_data(const struct expr *expr,
 			       struct nft_data_linearize *data, bool expand);
 
@@ -136,19 +137,19 @@ struct nftnl_set_elem *alloc_nftnl_setelem(const struct expr *set,
 		if (set->set_flags & NFT_SET_INTERVAL &&
 		    key->etype == EXPR_CONCAT && key->field_count > 1) {
 			key->flags |= EXPR_F_INTERVAL;
-			__netlink_gen_data(key, &nld, false);
+			netlink_gen_key(key, &nld);
 			key->flags &= ~EXPR_F_INTERVAL;
 
 			nftnl_set_elem_set(nlse, NFTNL_SET_ELEM_KEY, &nld.value, nld.len);
 
 			key->flags |= EXPR_F_INTERVAL_END;
-			__netlink_gen_data(key, &nld, false);
+			netlink_gen_key(key, &nld);
 			key->flags &= ~EXPR_F_INTERVAL_END;
 
 			nftnl_set_elem_set(nlse, NFTNL_SET_ELEM_KEY_END,
 					   &nld.value, nld.len);
 		} else {
-			__netlink_gen_data(key, &nld, false);
+			netlink_gen_key(key, &nld);
 			nftnl_set_elem_set(nlse, NFTNL_SET_ELEM_KEY, &nld.value, nld.len);
 		}
 		break;
@@ -428,6 +429,23 @@ static void netlink_gen_prefix(const struct expr *expr,
 
 	memcpy(nld->value, data, len);
 	nld->len = len;
+}
+
+static void netlink_gen_key(const struct expr *expr,
+			    struct nft_data_linearize *data)
+{
+	switch (expr->etype) {
+	case EXPR_VALUE:
+		return netlink_gen_constant_data(expr, data);
+	case EXPR_CONCAT:
+		return netlink_gen_concat_data(expr, data, false);
+	case EXPR_RANGE:
+		return netlink_gen_range(expr, data);
+	case EXPR_PREFIX:
+		return netlink_gen_prefix(expr, data);
+	default:
+		BUG("invalid data expression type %s\n", expr_name(expr));
+	}
 }
 
 static void __netlink_gen_data(const struct expr *expr,
