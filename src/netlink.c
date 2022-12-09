@@ -97,8 +97,8 @@ struct nftnl_expr *alloc_nft_expr(const char *name)
 	return nle;
 }
 
-void __netlink_gen_data(const struct expr *expr,
-			struct nft_data_linearize *data, bool expand);
+static void __netlink_gen_data(const struct expr *expr,
+			       struct nft_data_linearize *data, bool expand);
 
 struct nftnl_set_elem *alloc_nftnl_setelem(const struct expr *set,
 					   const struct expr *expr)
@@ -430,8 +430,8 @@ static void netlink_gen_prefix(const struct expr *expr,
 	nld->len = len;
 }
 
-void __netlink_gen_data(const struct expr *expr,
-			struct nft_data_linearize *data, bool expand)
+static void __netlink_gen_data(const struct expr *expr,
+			       struct nft_data_linearize *data, bool expand)
 {
 	switch (expr->etype) {
 	case EXPR_VALUE:
