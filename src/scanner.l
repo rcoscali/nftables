@@ -858,10 +858,10 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 
 {tab}+
 {space}+
-{comment}
 {comment_line}		{
 				reset_pos(yyget_extra(yyscanner), yylloc);
 			}
+{comment}
 
 <<EOF>> 		{
 				update_pos(yyget_extra(yyscanner), yylloc, 1);

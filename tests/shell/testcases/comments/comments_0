@@ -10,6 +10,7 @@ RULESET="table inet x {		# comment
                         2.2.2.2, # comment
                         # more comments
                         3.3.3.3,	# comment
+# comment
                 }
 		# comment
         }
@@ -23,6 +24,7 @@ RULESET="table inet x {		# comment
 		} accept
 
 		icmp type {
+# comment
 			1,
 			# comments also allowed here
 			2,
