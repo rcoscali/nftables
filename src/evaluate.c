@@ -3898,6 +3898,9 @@ static int stmt_evaluate_map(struct eval_ctx *ctx, struct stmt *stmt)
 	if (stmt->map.data->comment != NULL)
 		return expr_error(ctx->msgs, stmt->map.data,
 				  "Data expression comments are not supported");
+	if (stmt->map.data->timeout > 0)
+		return expr_error(ctx->msgs, stmt->map.data,
+				  "Data expression timeouts are not supported");
 
 	list_for_each_entry(this, &stmt->map.stmt_list, list) {
 		if (stmt_evaluate(ctx, this) < 0)
