@@ -1660,6 +1660,14 @@ static void netlink_parse_dynset(struct netlink_parse_ctx *ctx,
 	if (nftnl_expr_is_set(nle, NFTNL_EXPR_DYNSET_SREG_DATA)) {
 		sreg_data = netlink_parse_register(nle, NFTNL_EXPR_DYNSET_SREG_DATA);
 		expr_data = netlink_get_register(ctx, loc, sreg_data);
+
+		if (expr_data->len < set->data->len) {
+			expr_free(expr_data);
+			expr_data = netlink_parse_concat_expr(ctx, loc, sreg_data, set->data->len);
+			if (expr_data == NULL)
+				netlink_error(ctx, loc,
+					      "Could not parse dynset map data expressions");
+		}
 	}
 
 	if (expr_data != NULL) {
