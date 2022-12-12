@@ -1318,7 +1318,7 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 	uint32_t type = dtype ? dtype->type : 0, ntype = 0;
 	int off = dtype ? dtype->subtypes : 0;
 	unsigned int flags = EXPR_F_CONSTANT | EXPR_F_SINGLETON;
-	const struct list_head *expressions;
+	const struct list_head *expressions = NULL;
 	struct expr *i, *next, *key = NULL;
 	const struct expr *key_ctx = NULL;
 	bool runaway = false;
@@ -1395,7 +1395,7 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 		dsize_bytes = div_round_up(dsize, BITS_PER_BYTE);
 		(*expr)->field_len[(*expr)->field_count++] = dsize_bytes;
 		size += netlink_padded_len(dsize);
-		if (key) {
+		if (key && expressions) {
 			if (list_is_last(&key->list, expressions))
 				runaway = true;
 
