@@ -716,6 +716,10 @@ will not grow indefinitely) either from the set definition or from the statement
 that adds or updates them. The set statement can be used to e.g. create dynamic
 blacklists.
 
+Dynamic updates are also supported with maps. In this case, the *add* or
+*update* rule needs to provide both the key and the data element (value),
+separated via ':'.
+
 [verse]
 {*add* | *update*} *@*'setname' *{* 'expression' [*timeout* 'timeout'] [*comment* 'string'] *}*
 
