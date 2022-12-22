@@ -1357,7 +1357,7 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 			dsize = key->len;
 			bo = key->byteorder;
 			off--;
-		} else if (dtype == NULL) {
+		} else if (dtype == NULL || off == 0) {
 			tmp = datatype_lookup(TYPE_INVALID);
 		} else {
 			tmp = concat_subtype_lookup(type, --off);
