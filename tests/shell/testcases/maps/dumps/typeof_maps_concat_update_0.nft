@@ -8,5 +8,6 @@ table ip foo {
 
 	chain pr {
 		update @pinned { ip saddr . ct original proto-dst timeout 1m30s : ip daddr . tcp dport }
+		update @pinned { ip saddr . ct original proto-dst timeout 1m30s : ip daddr . tcp dport }
 	}
 }

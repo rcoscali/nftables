@@ -11,6 +11,7 @@ EXPECTED="table ip foo {
   }
   chain pr {
      update @pinned { ip saddr . ct original proto-dst timeout 1m30s : ip daddr . tcp dport }
+     meta l4proto tcp update @pinned { ip saddr . ct original proto-dst timeout 1m30s : ip daddr . tcp dport }
   }
 }"
 
