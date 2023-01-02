@@ -413,4 +413,7 @@ extern const struct datatype icmp6_type_type;
 extern const struct datatype dscp_type;
 extern const struct datatype ecn_type;
 
+struct eval_ctx;
+struct proto_ctx *eval_proto_ctx(struct eval_ctx *ctx);
+
 #endif /* NFTABLES_PROTO_H */
