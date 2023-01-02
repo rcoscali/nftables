@@ -625,6 +625,8 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "vxlan"			{ return VXLAN; }
 "vni"			{ return VNI; }
 
+"geneve"		{ return GENEVE; }
+
 "gre"			{ scanner_push_start_cond(yyscanner, SCANSTATE_GRE); return GRE; }
 
 "tcp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_TCP); return TCP; }

@@ -97,6 +97,7 @@ enum proto_desc_id {
 	PROTO_DESC_VLAN,
 	PROTO_DESC_ETHER,
 	PROTO_DESC_VXLAN,
+	PROTO_DESC_GENEVE,
 	PROTO_DESC_GRE,
 	__PROTO_DESC_MAX
 };
@@ -397,6 +398,17 @@ enum vxlan_hdr_fields {
 	VXLANHDR_FLAGS,
 };
 
+struct gnvhdr {
+	uint16_t flags;
+	uint16_t type;
+	uint32_t vni;
+};
+enum geneve_hdr_fields {
+	GNVHDR_INVALID,
+	GNVHDR_VNI,
+	GNVHDR_TYPE,
+};
+
 struct grehdr {
 	uint16_t flags;
 	uint16_t protocol;
@@ -410,6 +422,7 @@ enum gre_hdr_fields {
 };
 
 extern const struct proto_desc proto_vxlan;
+extern const struct proto_desc proto_geneve;
 extern const struct proto_desc proto_gre;
 
 extern const struct proto_desc proto_icmp;

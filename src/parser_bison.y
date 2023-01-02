@@ -444,6 +444,8 @@ int nft_lex(void *, void *, void *);
 
 %token GRE			"gre"
 
+%token GENEVE			"geneve"
+
 %token SCTP			"sctp"
 %token CHUNK			"chunk"
 %token DATA			"data"
@@ -904,9 +906,12 @@ int nft_lex(void *, void *, void *);
 %type <val>			tcpopt_field_maxseg	tcpopt_field_mptcp	tcpopt_field_sack	 tcpopt_field_tsopt	tcpopt_field_window
 %type <tcp_kind_field>		tcp_hdr_option_kind_and_field
 
-%type <expr>			inner_eth_expr inner_inet_expr inner_expr vxlan_hdr_expr gre_hdr_expr
-%destructor { expr_free($$); }	inner_eth_expr inner_inet_expr inner_expr vxlan_hdr_expr gre_hdr_expr
-%type <val>			vxlan_hdr_field gre_hdr_field
+%type <expr>			inner_eth_expr inner_inet_expr inner_expr
+%destructor { expr_free($$); }	inner_eth_expr inner_inet_expr inner_expr
+
+%type <expr>			vxlan_hdr_expr geneve_hdr_expr gre_hdr_expr
+%destructor { expr_free($$); }	vxlan_hdr_expr geneve_hdr_expr gre_hdr_expr
+%type <val>			vxlan_hdr_field geneve_hdr_field gre_hdr_field
 
 %type <stmt>			optstrip_stmt
 %destructor { stmt_free($$); }	optstrip_stmt
@@ -5347,6 +5352,7 @@ payload_expr		:	payload_raw_expr
 			|	sctp_hdr_expr
 			|	th_hdr_expr
 			|	vxlan_hdr_expr
+			|	geneve_hdr_expr
 			|	gre_hdr_expr
 			;
 
@@ -5642,6 +5648,26 @@ vxlan_hdr_expr		:	VXLAN	vxlan_hdr_field
 
 vxlan_hdr_field		:	VNI			{ $$ = VXLANHDR_VNI; }
 			|	FLAGS			{ $$ = VXLANHDR_FLAGS; }
+			;
+
+geneve_hdr_expr		:	GENEVE	geneve_hdr_field
+			{
+				struct expr *expr;
+
+				expr = payload_expr_alloc(&@$, &proto_geneve, $2);
+				expr->payload.inner_desc = &proto_geneve;
+				$$ = expr;
+			}
+			|	GENEVE	inner_expr
+			{
+				$$ = $2;
+				$$->location = @$;
+				$$->payload.inner_desc = &proto_geneve;
+			}
+			;
+
+geneve_hdr_field	:	VNI			{ $$ = GNVHDR_VNI; }
+			|	TYPE			{ $$ = GNVHDR_TYPE; }
 			;
 
 gre_hdr_expr		:	GRE	gre_hdr_field	close_scope_gre

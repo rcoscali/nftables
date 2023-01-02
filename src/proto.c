@@ -90,6 +90,7 @@ int proto_find_num(const struct proto_desc *base,
 
 static const struct proto_desc *inner_protocols[] = {
 	&proto_vxlan,
+	&proto_geneve,
 	&proto_gre,
 };
 
@@ -542,6 +543,7 @@ const struct proto_desc proto_udp = {
 	},
 	.protocols	= {
 		PROTO_LINK(0,	&proto_vxlan),
+		PROTO_LINK(0,	&proto_geneve),
 	},
 };
 
@@ -1214,6 +1216,32 @@ const struct proto_desc proto_vxlan = {
 		.type		= NFT_INNER_VXLAN,
 	},
 };
+
+/*
+ * GENEVE
+ */
+
+const struct proto_desc proto_geneve = {
+	.name		= "geneve",
+	.id		= PROTO_DESC_GENEVE,
+	.base		= PROTO_BASE_INNER_HDR,
+	.templates	= {
+		[GNVHDR_TYPE]	= HDR_TYPE("type", &ethertype_type, struct gnvhdr, type),
+		[GNVHDR_VNI]	= HDR_BITFIELD("vni", &integer_type, (4 * BITS_PER_BYTE), 24),
+	},
+	.protocols	= {
+		PROTO_LINK(__constant_htons(ETH_P_IP),		&proto_ip),
+		PROTO_LINK(__constant_htons(ETH_P_ARP),		&proto_arp),
+		PROTO_LINK(__constant_htons(ETH_P_IPV6),	&proto_ip6),
+		PROTO_LINK(__constant_htons(ETH_P_8021Q),	&proto_vlan),
+	},
+	.inner		= {
+		.hdrsize	= sizeof(struct gnvhdr),
+		.flags		= NFT_INNER_HDRSIZE | NFT_INNER_LL | NFT_INNER_NH | NFT_INNER_TH,
+		.type		= NFT_INNER_GENEVE,
+	},
+};
+
 
 /*
  * Dummy protocol for netdev tables.
