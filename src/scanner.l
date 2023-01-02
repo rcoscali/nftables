@@ -628,6 +628,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "geneve"		{ return GENEVE; }
 
 "gre"			{ scanner_push_start_cond(yyscanner, SCANSTATE_GRE); return GRE; }
+"gretap"		{ scanner_push_start_cond(yyscanner, SCANSTATE_GRE); return GRETAP; }
 
 "tcp"			{ scanner_push_start_cond(yyscanner, SCANSTATE_TCP); return TCP; }
 

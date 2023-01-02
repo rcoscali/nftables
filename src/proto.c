@@ -92,6 +92,7 @@ static const struct proto_desc *inner_protocols[] = {
 	&proto_vxlan,
 	&proto_geneve,
 	&proto_gre,
+	&proto_gretap,
 };
 
 const struct proto_desc *proto_find_inner(uint32_t type, uint32_t hdrsize,
@@ -796,6 +797,20 @@ const struct proto_desc proto_gre = {
 	},
 };
 
+const struct proto_desc proto_gretap = {
+	.name		= "gretap",
+	.id		= PROTO_DESC_GRETAP,
+	.base		= PROTO_BASE_TRANSPORT_HDR,
+	.templates	= {
+		[0] = PROTO_META_TEMPLATE("l4proto", &inet_protocol_type, NFT_META_L4PROTO, 8),
+	},
+	.inner		= {
+		.hdrsize	= sizeof(struct grehdr),
+		.flags		= NFT_INNER_LL | NFT_INNER_NH | NFT_INNER_TH,
+		.type		= NFT_INNER_GENEVE + 2,
+	},
+};
+
 #define IPHDR_FIELD(__name, __member) \
 	HDR_FIELD(__name, struct iphdr, __member)
 #define IPHDR_ADDR(__name, __member) \
@@ -820,6 +835,7 @@ const struct proto_desc proto_ip = {
 		PROTO_LINK(IPPROTO_DCCP,	&proto_dccp),
 		PROTO_LINK(IPPROTO_SCTP,	&proto_sctp),
 		PROTO_LINK(IPPROTO_GRE,		&proto_gre),
+		PROTO_LINK(IPPROTO_GRE,		&proto_gretap),
 	},
 	.templates	= {
 		[0]	= PROTO_META_TEMPLATE("l4proto", &inet_protocol_type, NFT_META_L4PROTO, 8),
@@ -947,6 +963,7 @@ const struct proto_desc proto_ip6 = {
 		PROTO_LINK(IPPROTO_IGMP,	&proto_igmp),
 		PROTO_LINK(IPPROTO_ICMPV6,	&proto_icmp6),
 		PROTO_LINK(IPPROTO_GRE,		&proto_gre),
+		PROTO_LINK(IPPROTO_GRE,		&proto_gretap),
 	},
 	.templates	= {
 		[0]	= PROTO_META_TEMPLATE("l4proto", &inet_protocol_type, NFT_META_L4PROTO, 8),
@@ -1013,6 +1030,7 @@ const struct proto_desc proto_inet_service = {
 		PROTO_LINK(IPPROTO_IGMP,	&proto_igmp),
 		PROTO_LINK(IPPROTO_ICMPV6,	&proto_icmp6),
 		PROTO_LINK(IPPROTO_GRE,		&proto_gre),
+		PROTO_LINK(IPPROTO_GRE,		&proto_gretap),
 	},
 	.templates	= {
 		[0]	= PROTO_META_TEMPLATE("l4proto", &inet_protocol_type, NFT_META_L4PROTO, 8),
@@ -1281,6 +1299,7 @@ static const struct proto_desc *proto_definitions[PROTO_DESC_MAX + 1] = {
 	[PROTO_DESC_ETHER]	= &proto_eth,
 	[PROTO_DESC_VXLAN]	= &proto_vxlan,
 	[PROTO_DESC_GRE]	= &proto_gre,
+	[PROTO_DESC_GRETAP]	= &proto_gretap,
 };
 
 const struct proto_desc *proto_find_desc(enum proto_desc_id desc_id)

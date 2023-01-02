@@ -99,6 +99,7 @@ enum proto_desc_id {
 	PROTO_DESC_VXLAN,
 	PROTO_DESC_GENEVE,
 	PROTO_DESC_GRE,
+	PROTO_DESC_GRETAP,
 	__PROTO_DESC_MAX
 };
 #define PROTO_DESC_MAX	(__PROTO_DESC_MAX - 1)
@@ -424,6 +425,7 @@ enum gre_hdr_fields {
 extern const struct proto_desc proto_vxlan;
 extern const struct proto_desc proto_geneve;
 extern const struct proto_desc proto_gre;
+extern const struct proto_desc proto_gretap;
 
 extern const struct proto_desc proto_icmp;
 extern const struct proto_desc proto_igmp;

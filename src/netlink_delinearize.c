@@ -1985,7 +1985,8 @@ static bool meta_outer_may_dependency_kill(struct rule_pp_ctx *ctx,
 
 	switch (l4proto) {
 	case IPPROTO_GRE:
-		if (expr->payload.inner_desc == &proto_gre)
+		if (expr->payload.inner_desc == &proto_gre ||
+		    expr->payload.inner_desc == &proto_gretap)
 			return true;
 		break;
 	default:

@@ -443,6 +443,7 @@ int nft_lex(void *, void *, void *);
 %token VNI			"vni"
 
 %token GRE			"gre"
+%token GRETAP			"gretap"
 
 %token GENEVE			"geneve"
 
@@ -909,8 +910,8 @@ int nft_lex(void *, void *, void *);
 %type <expr>			inner_eth_expr inner_inet_expr inner_expr
 %destructor { expr_free($$); }	inner_eth_expr inner_inet_expr inner_expr
 
-%type <expr>			vxlan_hdr_expr geneve_hdr_expr gre_hdr_expr
-%destructor { expr_free($$); }	vxlan_hdr_expr geneve_hdr_expr gre_hdr_expr
+%type <expr>			vxlan_hdr_expr geneve_hdr_expr gre_hdr_expr gretap_hdr_expr
+%destructor { expr_free($$); }	vxlan_hdr_expr geneve_hdr_expr gre_hdr_expr gretap_hdr_expr
 %type <val>			vxlan_hdr_field geneve_hdr_field gre_hdr_field
 
 %type <stmt>			optstrip_stmt
@@ -5354,6 +5355,7 @@ payload_expr		:	payload_raw_expr
 			|	vxlan_hdr_expr
 			|	geneve_hdr_expr
 			|	gre_hdr_expr
+			|	gretap_hdr_expr
 			;
 
 payload_raw_expr	:	AT	payload_base_spec	COMMA	NUM	COMMA	NUM	close_scope_at
@@ -5684,6 +5686,13 @@ gre_hdr_expr		:	GRE	gre_hdr_field	close_scope_gre
 gre_hdr_field		:	HDRVERSION		{ $$ = GREHDR_VERSION;	}
 			|	FLAGS			{ $$ = GREHDR_FLAGS; }
 			|	PROTOCOL		{ $$ = GREHDR_PROTOCOL; }
+			;
+
+gretap_hdr_expr		:	GRETAP	close_scope_gre inner_expr
+			{
+				$$ = $3;
+				$$->payload.inner_desc = &proto_gretap;
+			}
 			;
 
 optstrip_stmt		:	RESET	TCP	OPTION	tcp_hdr_option_type	close_scope_tcp
