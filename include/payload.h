@@ -67,4 +67,6 @@ extern void payload_expr_complete(struct expr *expr,
 
 bool payload_expr_cmp(const struct expr *e1, const struct expr *e2);
 
+const struct proto_desc *find_proto_desc(const struct nftnl_udata *ud);
+
 #endif /* NFTABLES_PAYLOAD_H */

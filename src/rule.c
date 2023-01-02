@@ -2902,7 +2902,8 @@ static void stmt_reduce(const struct rule *rule)
 			switch (stmt->expr->op) {
 			case OP_EQ:
 			case OP_IMPLICIT:
-				if (stmt->expr->left->meta.key == NFT_META_PROTOCOL) {
+				if (stmt->expr->left->meta.key == NFT_META_PROTOCOL &&
+				    !stmt->expr->left->meta.inner_desc) {
 					uint16_t protocol;
 
 					protocol = mpz_get_uint16(stmt->expr->right->value);

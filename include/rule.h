@@ -769,7 +769,8 @@ struct eval_ctx {
 	struct set		*set;
 	struct stmt		*stmt;
 	struct expr_ctx		ectx;
-	struct proto_ctx	_pctx;
+	struct proto_ctx	_pctx[2];
+	const struct proto_desc	*inner_desc;
 };
 
 extern int cmd_evaluate(struct eval_ctx *ctx, struct cmd *cmd);

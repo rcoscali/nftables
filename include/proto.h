@@ -96,6 +96,7 @@ enum proto_desc_id {
 	PROTO_DESC_ARP,
 	PROTO_DESC_VLAN,
 	PROTO_DESC_ETHER,
+	PROTO_DESC_VXLAN,
 	__PROTO_DESC_MAX
 };
 #define PROTO_DESC_MAX	(__PROTO_DESC_MAX - 1)
@@ -131,7 +132,11 @@ struct proto_desc {
 		uint32_t			filter;
 	}				format;
 	unsigned int			pseudohdr[PROTO_HDRS_MAX];
-
+	struct {
+		uint32_t		hdrsize;
+		uint32_t		flags;
+		enum nft_inner_type	type;
+	} inner;
 };
 
 #define PROTO_LINK(__num, __desc)	{ .num = (__num), .desc = (__desc), }
@@ -216,6 +221,8 @@ extern const struct proto_desc *proto_find_upper(const struct proto_desc *base,
 						 unsigned int num);
 extern int proto_find_num(const struct proto_desc *base,
 			  const struct proto_desc *desc);
+const struct proto_desc *proto_find_inner(uint32_t type, uint32_t hdrsize,
+					  uint32_t flags);
 
 extern const struct proto_desc *proto_find_desc(enum proto_desc_id desc_id);
 
@@ -263,6 +270,7 @@ enum ip_hdr_fields {
 	IPHDR_SADDR,
 	IPHDR_DADDR,
 };
+#define IPHDR_MAX	IPHDR_DADDR
 
 enum icmp_hdr_fields {
 	ICMPHDR_INVALID,
@@ -375,6 +383,19 @@ enum th_hdr_fields {
 	THDR_SPORT,
 	THDR_DPORT,
 };
+
+struct vxlanhdr {
+	uint32_t vx_flags;
+	uint32_t vx_vni;
+};
+
+enum vxlan_hdr_fields {
+	VXLANHDR_INVALID,
+	VXLANHDR_VNI,
+	VXLANHDR_FLAGS,
+};
+
+extern const struct proto_desc proto_vxlan;
 
 extern const struct proto_desc proto_icmp;
 extern const struct proto_desc proto_igmp;

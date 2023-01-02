@@ -178,9 +178,8 @@ static void netlink_gen_hash(struct netlink_linearize_ctx *ctx,
 	nft_rule_add_expr(ctx, nle, &expr->location);
 }
 
-static void netlink_gen_payload(struct netlink_linearize_ctx *ctx,
-				const struct expr *expr,
-				enum nft_registers dreg)
+static struct nftnl_expr *
+__netlink_gen_payload(const struct expr *expr, enum nft_registers dreg)
 {
 	struct nftnl_expr *nle;
 
@@ -193,6 +192,72 @@ static void netlink_gen_payload(struct netlink_linearize_ctx *ctx,
 	nftnl_expr_set_u32(nle, NFTNL_EXPR_PAYLOAD_LEN,
 			   div_round_up(expr->len, BITS_PER_BYTE));
 
+	return nle;
+}
+
+static struct nftnl_expr *
+__netlink_gen_meta(const struct expr *expr, enum nft_registers dreg)
+{
+	struct nftnl_expr *nle;
+
+	nle = alloc_nft_expr("meta");
+	netlink_put_register(nle, NFTNL_EXPR_META_DREG, dreg);
+	nftnl_expr_set_u32(nle, NFTNL_EXPR_META_KEY, expr->meta.key);
+
+	return nle;
+}
+
+static struct nftnl_expr *netlink_gen_inner_expr(const struct expr *expr,
+						 enum nft_registers dreg)
+{
+	struct expr *_expr = (struct expr *)expr;
+	struct nftnl_expr *nle;
+
+	switch (expr->etype) {
+	case EXPR_PAYLOAD:
+		if (expr->payload.base == NFT_PAYLOAD_INNER_HEADER + 1)
+			_expr->payload.base = NFT_PAYLOAD_TUN_HEADER + 1;
+
+		nle = __netlink_gen_payload(expr, dreg);
+		break;
+	case EXPR_META:
+		nle = __netlink_gen_meta(expr, dreg);
+		break;
+	default:
+		assert(0);
+		break;
+	}
+
+	return nle;
+}
+
+static void netlink_gen_inner(struct netlink_linearize_ctx *ctx,
+			      const struct expr *expr,
+			      enum nft_registers dreg,
+			      const struct proto_desc *desc)
+{
+	struct nftnl_expr *nle;
+
+	nle = alloc_nft_expr("inner");
+	nftnl_expr_set_u32(nle, NFTNL_EXPR_INNER_HDRSIZE, desc->inner.hdrsize);
+	nftnl_expr_set_u32(nle, NFTNL_EXPR_INNER_FLAGS, desc->inner.flags);
+	nftnl_expr_set_u32(nle, NFTNL_EXPR_INNER_TYPE, desc->inner.type);
+	nftnl_expr_set(nle, NFTNL_EXPR_INNER_EXPR, netlink_gen_inner_expr(expr, dreg), 0);
+	nft_rule_add_expr(ctx, nle, &expr->location);
+}
+
+static void netlink_gen_payload(struct netlink_linearize_ctx *ctx,
+				const struct expr *expr,
+				enum nft_registers dreg)
+{
+	struct nftnl_expr *nle;
+
+	if (expr->payload.inner_desc) {
+		netlink_gen_inner(ctx, expr, dreg, expr->payload.inner_desc);
+		return;
+	}
+
+	nle = __netlink_gen_payload(expr, dreg);
 	nft_rule_add_expr(ctx, nle, &expr->location);
 }
 
@@ -221,9 +286,12 @@ static void netlink_gen_meta(struct netlink_linearize_ctx *ctx,
 {
 	struct nftnl_expr *nle;
 
-	nle = alloc_nft_expr("meta");
-	netlink_put_register(nle, NFTNL_EXPR_META_DREG, dreg);
-	nftnl_expr_set_u32(nle, NFTNL_EXPR_META_KEY, expr->meta.key);
+	if (expr->meta.inner_desc) {
+		netlink_gen_inner(ctx, expr, dreg, expr->meta.inner_desc);
+		return;
+	}
+
+	nle = __netlink_gen_meta(expr, dreg);
 	nft_rule_add_expr(ctx, nle, &expr->location);
 }
 

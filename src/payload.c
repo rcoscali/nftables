@@ -47,6 +47,10 @@ static void payload_expr_print(const struct expr *expr, struct output_ctx *octx)
 	const struct proto_desc *desc;
 	const struct proto_hdr_template *tmpl;
 
+	if (expr->payload.inner_desc &&
+	    expr->payload.inner_desc != expr->payload.desc)
+		nft_print(octx, "%s ", expr->payload.inner_desc->name);
+
 	desc = expr->payload.desc;
 	tmpl = expr->payload.tmpl;
 	if (payload_is_known(expr))
@@ -67,6 +71,7 @@ bool payload_expr_cmp(const struct expr *e1, const struct expr *e2)
 
 static void payload_expr_clone(struct expr *new, const struct expr *expr)
 {
+	new->payload.inner_desc   = expr->payload.inner_desc;
 	new->payload.desc   = expr->payload.desc;
 	new->payload.tmpl   = expr->payload.tmpl;
 	new->payload.base   = expr->payload.base;
@@ -132,7 +137,8 @@ static void payload_expr_pctx_update(struct proto_ctx *ctx,
 #define NFTNL_UDATA_SET_KEY_PAYLOAD_BASE 2
 #define NFTNL_UDATA_SET_KEY_PAYLOAD_OFFSET 3
 #define NFTNL_UDATA_SET_KEY_PAYLOAD_LEN 4
-#define NFTNL_UDATA_SET_KEY_PAYLOAD_MAX 5
+#define NFTNL_UDATA_SET_KEY_PAYLOAD_INNER_DESC 5
+#define NFTNL_UDATA_SET_KEY_PAYLOAD_MAX 6
 
 static unsigned int expr_payload_type(const struct proto_desc *desc,
 				      const struct proto_hdr_template *tmpl)
@@ -162,10 +168,15 @@ static int payload_expr_build_udata(struct nftnl_udata_buf *udbuf,
 	if (expr->dtype->type == TYPE_INTEGER)
 		nftnl_udata_put_u32(udbuf, NFTNL_UDATA_SET_KEY_PAYLOAD_LEN, expr->len);
 
+	if (expr->payload.inner_desc) {
+		nftnl_udata_put_u32(udbuf, NFTNL_UDATA_SET_KEY_PAYLOAD_INNER_DESC,
+				    expr->payload.inner_desc->id);
+	}
+
 	return 0;
 }
 
-static const struct proto_desc *find_proto_desc(const struct nftnl_udata *ud)
+const struct proto_desc *find_proto_desc(const struct nftnl_udata *ud)
 {
 	return proto_find_desc(nftnl_udata_get_u32(ud));
 }
@@ -182,6 +193,7 @@ static int payload_parse_udata(const struct nftnl_udata *attr, void *data)
 	case NFTNL_UDATA_SET_KEY_PAYLOAD_BASE:
 	case NFTNL_UDATA_SET_KEY_PAYLOAD_OFFSET:
 	case NFTNL_UDATA_SET_KEY_PAYLOAD_LEN:
+	case NFTNL_UDATA_SET_KEY_PAYLOAD_INNER_DESC:
 		if (len != sizeof(uint32_t))
 			return -1;
 		break;
@@ -243,6 +255,11 @@ static struct expr *payload_expr_parse_udata(const struct nftnl_udata *attr)
 		dtype->byteorder = BYTEORDER_BIG_ENDIAN;
 		dtype->refcnt = 1;
 		expr->dtype = dtype;
+	}
+
+	if (ud[NFTNL_UDATA_SET_KEY_PAYLOAD_INNER_DESC]) {
+		desc = find_proto_desc(ud[NFTNL_UDATA_SET_KEY_PAYLOAD_INNER_DESC]);
+		expr->payload.inner_desc = desc;
 	}
 
 	return expr;
@@ -416,6 +433,13 @@ static int payload_add_dependency(struct eval_ctx *ctx,
 	if (stmt_evaluate(ctx, stmt) < 0) {
 		return expr_error(ctx->msgs, expr,
 					  "dependency statement is invalid");
+	}
+
+	if (ctx->inner_desc) {
+		if (tmpl->meta_key)
+			left->meta.inner_desc = ctx->inner_desc;
+		else
+			left->payload.inner_desc = ctx->inner_desc;
 	}
 
 	pctx = eval_proto_ctx(ctx);
@@ -1111,6 +1135,10 @@ raw:
 	new = payload_expr_alloc(&expr->location, NULL, 0);
 	payload_init_raw(new, expr->payload.base, payload_offset,
 			 expr->len);
+
+	if (expr->payload.inner_desc)
+		new->dtype = &integer_type;
+
 	list_add_tail(&new->list, list);
 }
 
@@ -1131,6 +1159,9 @@ static bool payload_is_adjacent(const struct expr *e1, const struct expr *e2)
 bool payload_can_merge(const struct expr *e1, const struct expr *e2)
 {
 	unsigned int total;
+
+	if (e1->payload.inner_desc != e2->payload.inner_desc)
+		return false;
 
 	if (!payload_is_adjacent(e1, e2))
 		return false;
@@ -1188,6 +1219,8 @@ struct expr *payload_expr_join(const struct expr *e1, const struct expr *e2)
 	expr->payload.base   = e1->payload.base;
 	expr->payload.offset = e1->payload.offset;
 	expr->len	     = e1->len + e2->len;
+	expr->payload.inner_desc = e1->payload.inner_desc;
+
 	return expr;
 }
 

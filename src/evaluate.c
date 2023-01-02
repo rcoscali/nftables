@@ -41,7 +41,9 @@
 
 struct proto_ctx *eval_proto_ctx(struct eval_ctx *ctx)
 {
-	return &ctx->_pctx;
+	uint8_t idx = ctx->inner_desc ? 1 : 0;
+
+	return &ctx->_pctx[idx];
 }
 
 static int expr_evaluate(struct eval_ctx *ctx, struct expr **expr);
@@ -473,6 +475,9 @@ conflict_resolution_gen_dependency(struct eval_ctx *ctx, int protocol,
 		return expr_error(ctx->msgs, expr,
 					  "dependency statement is invalid");
 
+	if (ctx->inner_desc)
+		left->payload.inner_desc = ctx->inner_desc;
+
 	*res = stmt;
 	return 0;
 }
@@ -672,6 +677,9 @@ static int meta_iiftype_gen_dependency(struct eval_ctx *ctx,
 		return expr_error(ctx->msgs, payload,
 				  "dependency statement is invalid");
 
+	if (ctx->inner_desc)
+		nstmt->expr->left->meta.inner_desc = ctx->inner_desc;
+
 	*res = nstmt;
 	return 0;
 }
@@ -694,12 +702,16 @@ static int resolve_protocol_conflict(struct eval_ctx *ctx,
 
 	if (payload->payload.base == PROTO_BASE_LL_HDR) {
 		if (proto_is_dummy(desc)) {
-			err = meta_iiftype_gen_dependency(ctx, payload, &nstmt);
-			if (err < 0)
-				return err;
+			if (ctx->inner_desc) {
+		                proto_ctx_update(pctx, PROTO_BASE_LL_HDR, &payload->location, &proto_eth);
+			} else {
+				err = meta_iiftype_gen_dependency(ctx, payload, &nstmt);
+				if (err < 0)
+					return err;
 
-			desc = payload->payload.desc;
-			rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
+				desc = payload->payload.desc;
+				rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
+			}
 		} else {
 			unsigned int i;
 
@@ -864,6 +876,48 @@ static int expr_evaluate_payload(struct eval_ctx *ctx, struct expr **exprp)
 	expr->payload.evaluated = true;
 
 	return 0;
+}
+
+static int expr_evaluate_inner(struct eval_ctx *ctx, struct expr **exprp)
+{
+	struct proto_ctx *pctx = eval_proto_ctx(ctx);
+	const struct proto_desc *desc;
+	struct expr *expr = *exprp;
+	int ret;
+
+	desc = pctx->protocol[expr->payload.inner_desc->base - 1].desc;
+	if (!desc) {
+		return expr_error(ctx->msgs, expr,
+				  "no transport protocol specified");
+	}
+
+	if (proto_find_num(desc, expr->payload.inner_desc) < 0) {
+		return expr_error(ctx->msgs, expr,
+				  "unexpected transport protocol %s",
+				  desc->name);
+	}
+
+	proto_ctx_update(pctx, PROTO_BASE_INNER_HDR, &expr->location,
+			 expr->payload.inner_desc);
+
+	if (expr->payload.base != PROTO_BASE_INNER_HDR)
+		ctx->inner_desc = expr->payload.inner_desc;
+
+	ret = expr_evaluate_payload(ctx, exprp);
+
+	return ret;
+}
+
+static int expr_evaluate_payload_inner(struct eval_ctx *ctx, struct expr **exprp)
+{
+	int ret;
+
+	if ((*exprp)->payload.inner_desc)
+		ret = expr_evaluate_inner(ctx, exprp);
+	else
+		ret = expr_evaluate_payload(ctx, exprp);
+
+	return ret;
 }
 
 /*
@@ -1423,6 +1477,8 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 
 			key = list_next_entry(key, list);
 		}
+
+		ctx->inner_desc = NULL;
 	}
 
 	(*expr)->flags |= flags;
@@ -2498,7 +2554,7 @@ static int expr_evaluate(struct eval_ctx *ctx, struct expr **expr)
 	case EXPR_FIB:
 		return expr_evaluate_fib(ctx, expr);
 	case EXPR_PAYLOAD:
-		return expr_evaluate_payload(ctx, expr);
+		return expr_evaluate_payload_inner(ctx, expr);
 	case EXPR_RT:
 		return expr_evaluate_rt(ctx, expr);
 	case EXPR_CT:
@@ -2705,6 +2761,11 @@ static int stmt_evaluate_payload(struct eval_ctx *ctx, struct stmt *stmt)
 	struct expr *payload;
 	mpz_t bitmask, ff;
 	bool need_csum;
+
+	if (stmt->payload.expr->payload.inner_desc) {
+		return expr_error(ctx->msgs, stmt->payload.expr,
+				  "payload statement for this expression is not supported");
+	}
 
 	if (__expr_evaluate_payload(ctx, stmt->payload.expr) < 0)
 		return -1;
@@ -4565,7 +4626,9 @@ static int rule_evaluate(struct eval_ctx *ctx, struct rule *rule,
 	struct stmt *stmt, *tstmt = NULL;
 	struct error_record *erec;
 
-	proto_ctx_init(&ctx->_pctx, rule->handle.family, ctx->nft->debug_mask);
+	proto_ctx_init(&ctx->_pctx[0], rule->handle.family, ctx->nft->debug_mask);
+	/* use NFPROTO_BRIDGE to set up proto_eth as base protocol. */
+	proto_ctx_init(&ctx->_pctx[1], NFPROTO_BRIDGE, ctx->nft->debug_mask);
 	memset(&ctx->ectx, 0, sizeof(ctx->ectx));
 
 	ctx->rule = rule;
@@ -4580,6 +4643,8 @@ static int rule_evaluate(struct eval_ctx *ctx, struct rule *rule,
 			return -1;
 		if (stmt->flags & STMT_F_TERMINAL)
 			tstmt = stmt;
+
+		ctx->inner_desc = NULL;
 	}
 
 	erec = rule_postprocess(rule);

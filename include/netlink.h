@@ -40,6 +40,8 @@ struct netlink_parse_ctx {
 	struct expr		*registers[MAX_REGS + 1];
 	unsigned int		debug_mask;
 	struct netlink_ctx	*nlctx;
+	bool			inner;
+	uint8_t			inner_reg;
 };
 
 
@@ -55,7 +57,8 @@ struct dl_proto_ctx {
 };
 
 struct rule_pp_ctx {
-	struct dl_proto_ctx	_dl;
+	struct dl_proto_ctx	_dl[2];
+	struct dl_proto_ctx	*dl;
 	struct stmt		*stmt;
 	unsigned int		flags;
 };

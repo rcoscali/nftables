@@ -32,7 +32,7 @@
 
 struct dl_proto_ctx *dl_proto_ctx(struct rule_pp_ctx *ctx)
 {
-	return &ctx->_dl;
+	return ctx->dl;
 }
 
 static int netlink_parse_expr(const struct nftnl_expr *nle,
@@ -618,6 +618,10 @@ static void netlink_parse_payload_expr(struct netlink_parse_ctx *ctx,
 	struct expr *expr;
 
 	base   = nftnl_expr_get_u32(nle, NFTNL_EXPR_PAYLOAD_BASE) + 1;
+
+	if (base == NFT_PAYLOAD_TUN_HEADER + 1)
+		base = NFT_PAYLOAD_INNER_HEADER + 1;
+
 	offset = nftnl_expr_get_u32(nle, NFTNL_EXPR_PAYLOAD_OFFSET) * BITS_PER_BYTE;
 	len    = nftnl_expr_get_u32(nle, NFTNL_EXPR_PAYLOAD_LEN) * BITS_PER_BYTE;
 
@@ -625,7 +629,78 @@ static void netlink_parse_payload_expr(struct netlink_parse_ctx *ctx,
 	payload_init_raw(expr, base, offset, len);
 
 	dreg = netlink_parse_register(nle, NFTNL_EXPR_PAYLOAD_DREG);
+
+	if (ctx->inner)
+		ctx->inner_reg = dreg;
+
 	netlink_set_register(ctx, dreg, expr);
+}
+
+static void netlink_parse_inner(struct netlink_parse_ctx *ctx,
+				const struct location *loc,
+				const struct nftnl_expr *nle)
+{
+	const struct proto_desc *inner_desc;
+	const struct nftnl_expr *inner_nle;
+	uint32_t hdrsize, flags, type;
+	struct expr *expr;
+
+	hdrsize = nftnl_expr_get_u32(nle, NFTNL_EXPR_INNER_HDRSIZE);
+	type    = nftnl_expr_get_u32(nle, NFTNL_EXPR_INNER_TYPE);
+	flags   = nftnl_expr_get_u32(nle, NFTNL_EXPR_INNER_FLAGS);
+
+	inner_nle = nftnl_expr_get(nle, NFTNL_EXPR_INNER_EXPR, NULL);
+	if (!inner_nle) {
+		netlink_error(ctx, loc, "Could not parse inner expression");
+		return;
+	}
+
+	inner_desc = proto_find_inner(type, hdrsize, flags);
+
+	ctx->inner = true;
+	if (netlink_parse_expr(inner_nle, ctx) < 0) {
+		ctx->inner = false;
+		return;
+	}
+	ctx->inner = false;
+
+	expr = netlink_get_register(ctx, loc, ctx->inner_reg);
+	assert(expr);
+
+	if (expr->etype == EXPR_PAYLOAD &&
+	    expr->payload.base == PROTO_BASE_INNER_HDR) {
+		const struct proto_hdr_template *tmpl;
+		unsigned int i;
+
+		for (i = 1; i < array_size(inner_desc->templates); i++) {
+			tmpl = &inner_desc->templates[i];
+
+			if (tmpl->len == 0)
+				return;
+
+			if (tmpl->offset != expr->payload.offset ||
+			    tmpl->len != expr->len)
+				continue;
+
+			expr->payload.desc = inner_desc;
+			expr->payload.tmpl = tmpl;
+			break;
+		}
+	}
+
+	switch (expr->etype) {
+	case EXPR_PAYLOAD:
+		expr->payload.inner_desc = inner_desc;
+		break;
+	case EXPR_META:
+		expr->meta.inner_desc = inner_desc;
+		break;
+	default:
+		assert(0);
+		break;
+	}
+
+	netlink_set_register(ctx, ctx->inner_reg, expr);
 }
 
 static void netlink_parse_payload_stmt(struct netlink_parse_ctx *ctx,
@@ -784,6 +859,9 @@ static void netlink_parse_meta_expr(struct netlink_parse_ctx *ctx,
 	expr = meta_expr_alloc(loc, key);
 
 	dreg = netlink_parse_register(nle, NFTNL_EXPR_META_DREG);
+	if (ctx->inner)
+		ctx->inner_reg = dreg;
+
 	netlink_set_register(ctx, dreg, expr);
 }
 
@@ -1785,6 +1863,7 @@ static const struct expr_handler netlink_parsers[] = {
 	{ .name = "bitwise",	.parse = netlink_parse_bitwise },
 	{ .name = "byteorder",	.parse = netlink_parse_byteorder },
 	{ .name = "payload",	.parse = netlink_parse_payload },
+	{ .name = "inner",	.parse = netlink_parse_inner },
 	{ .name = "exthdr",	.parse = netlink_parse_exthdr },
 	{ .name = "meta",	.parse = netlink_parse_meta },
 	{ .name = "socket",	.parse = netlink_parse_socket },
@@ -1917,6 +1996,14 @@ static void payload_match_expand(struct rule_pp_ctx *ctx,
 		assert(left->etype == EXPR_PAYLOAD);
 		assert(left->payload.base);
 		assert(base == left->payload.base);
+
+		if (expr->left->payload.inner_desc) {
+			if (expr->left->payload.inner_desc == expr->left->payload.desc) {
+				nexpr->left->payload.desc = expr->left->payload.desc;
+				nexpr->left->payload.tmpl = expr->left->payload.tmpl;
+			}
+			nexpr->left->payload.inner_desc = expr->left->payload.inner_desc;
+		}
 
 		if (payload_is_stacked(dl->pctx.protocol[base].desc, nexpr))
 			base--;
@@ -3066,19 +3153,75 @@ rule_maybe_reset_payload_deps(struct payload_dep_ctx *pdctx, enum stmt_types t)
 	payload_dependency_reset(pdctx);
 }
 
+static bool has_inner_desc(const struct expr *expr)
+{
+	struct expr *i;
+
+	switch (expr->etype) {
+	case EXPR_BINOP:
+		return has_inner_desc(expr->left);
+	case EXPR_CONCAT:
+		list_for_each_entry(i, &expr->expressions, list) {
+			if (has_inner_desc(i))
+				return true;
+		}
+		break;
+	case EXPR_META:
+		return expr->meta.inner_desc;
+	case EXPR_PAYLOAD:
+		return expr->payload.inner_desc;
+	case EXPR_SET_ELEM:
+		return has_inner_desc(expr->key);
+	default:
+		break;
+	}
+
+	return false;
+}
+
+static struct dl_proto_ctx *rule_update_dl_proto_ctx(struct rule_pp_ctx *rctx)
+{
+	const struct stmt *stmt = rctx->stmt;
+	bool inner = false;
+
+	switch (stmt->ops->type) {
+	case STMT_EXPRESSION:
+		if (has_inner_desc(stmt->expr->left))
+			inner = true;
+		break;
+	case STMT_SET:
+		if (has_inner_desc(stmt->set.key))
+			inner = true;
+		break;
+	default:
+		break;
+	}
+
+	if (inner)
+		rctx->dl = &rctx->_dl[1];
+	else
+		rctx->dl = &rctx->_dl[0];
+
+	return rctx->dl;
+}
+
 static void rule_parse_postprocess(struct netlink_parse_ctx *ctx, struct rule *rule)
 {
 	struct stmt *stmt, *next;
+	struct dl_proto_ctx *dl;
 	struct rule_pp_ctx rctx;
 	struct expr *expr;
 
 	memset(&rctx, 0, sizeof(rctx));
-	proto_ctx_init(&rctx._dl.pctx, rule->handle.family, ctx->debug_mask);
+	proto_ctx_init(&rctx._dl[0].pctx, rule->handle.family, ctx->debug_mask);
+	/* use NFPROTO_BRIDGE to set up proto_eth as base protocol. */
+	proto_ctx_init(&rctx._dl[1].pctx, NFPROTO_BRIDGE, ctx->debug_mask);
 
 	list_for_each_entry_safe(stmt, next, &rule->stmts, list) {
 		enum stmt_types type = stmt->ops->type;
 
 		rctx.stmt = stmt;
+		dl = rule_update_dl_proto_ctx(&rctx);
 
 		switch (type) {
 		case STMT_EXPRESSION:
@@ -3110,7 +3253,7 @@ static void rule_parse_postprocess(struct netlink_parse_ctx *ctx, struct rule *r
 			if (stmt->nat.addr != NULL)
 				expr_postprocess(&rctx, &stmt->nat.addr);
 			if (stmt->nat.proto != NULL) {
-				payload_dependency_reset(&rctx._dl.pdctx);
+				payload_dependency_reset(&dl->pdctx);
 				expr_postprocess(&rctx, &stmt->nat.proto);
 			}
 			break;
@@ -3118,7 +3261,7 @@ static void rule_parse_postprocess(struct netlink_parse_ctx *ctx, struct rule *r
 			if (stmt->tproxy.addr)
 				expr_postprocess(&rctx, &stmt->tproxy.addr);
 			if (stmt->tproxy.port) {
-				payload_dependency_reset(&rctx._dl.pdctx);
+				payload_dependency_reset(&dl->pdctx);
 				expr_postprocess(&rctx, &stmt->tproxy.port);
 			}
 			break;
@@ -3156,9 +3299,9 @@ static void rule_parse_postprocess(struct netlink_parse_ctx *ctx, struct rule *r
 			break;
 		}
 
-		rctx._dl.pdctx.prev = rctx.stmt;
+		dl->pdctx.prev = rctx.stmt;
 
-		rule_maybe_reset_payload_deps(&rctx._dl.pdctx, type);
+		rule_maybe_reset_payload_deps(&dl->pdctx, type);
 	}
 }
 

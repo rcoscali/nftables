@@ -439,6 +439,9 @@ int nft_lex(void *, void *, void *);
 
 %token DCCP			"dccp"
 
+%token VXLAN			"vxlan"
+%token VNI			"vni"
+
 %token SCTP			"sctp"
 %token CHUNK			"chunk"
 %token DATA			"data"
@@ -898,6 +901,10 @@ int nft_lex(void *, void *, void *);
 %type <val>			tcp_hdr_option_sack
 %type <val>			tcpopt_field_maxseg	tcpopt_field_mptcp	tcpopt_field_sack	 tcpopt_field_tsopt	tcpopt_field_window
 %type <tcp_kind_field>		tcp_hdr_option_kind_and_field
+
+%type <expr>			inner_eth_expr inner_inet_expr inner_expr vxlan_hdr_expr
+%destructor { expr_free($$); }	inner_eth_expr inner_inet_expr inner_expr vxlan_hdr_expr
+%type <val>			vxlan_hdr_field
 
 %type <stmt>			optstrip_stmt
 %destructor { stmt_free($$); }	optstrip_stmt
@@ -5329,6 +5336,7 @@ payload_expr		:	payload_raw_expr
 			|	dccp_hdr_expr
 			|	sctp_hdr_expr
 			|	th_hdr_expr
+			|	vxlan_hdr_expr
 			;
 
 payload_raw_expr	:	AT	payload_base_spec	COMMA	NUM	COMMA	NUM	close_scope_at
@@ -5578,6 +5586,51 @@ tcp_hdr_expr		:	TCP	tcp_hdr_field
 				$$ = tcpopt_expr_alloc(&@$, $5, 0);
 				tcpopt_init_raw($$, $5, $7, $9, 0);
 			}
+			;
+
+inner_inet_expr		:	ip_hdr_expr
+			|	icmp_hdr_expr
+			|	igmp_hdr_expr
+			|	ip6_hdr_expr
+			|	icmp6_hdr_expr
+			|	auth_hdr_expr
+			|	esp_hdr_expr
+			|	comp_hdr_expr
+			|	udp_hdr_expr
+			|	udplite_hdr_expr
+			|	tcp_hdr_expr	close_scope_tcp
+			|	dccp_hdr_expr
+			|	sctp_hdr_expr
+			|	th_hdr_expr
+			;
+
+inner_eth_expr		:	eth_hdr_expr
+			|	vlan_hdr_expr
+			|	arp_hdr_expr
+			;
+
+inner_expr		:	inner_eth_expr
+			|	inner_inet_expr
+			;
+
+vxlan_hdr_expr		:	VXLAN	vxlan_hdr_field
+			{
+				struct expr *expr;
+
+				expr = payload_expr_alloc(&@$, &proto_vxlan, $2);
+				expr->payload.inner_desc = &proto_vxlan;
+				$$ = expr;
+			}
+			|	VXLAN	inner_expr
+			{
+				$$ = $2;
+				$$->location = @$;
+				$$->payload.inner_desc = &proto_vxlan;
+			}
+			;
+
+vxlan_hdr_field		:	VNI			{ $$ = VXLANHDR_VNI; }
+			|	FLAGS			{ $$ = VXLANHDR_FLAGS; }
 			;
 
 optstrip_stmt		:	RESET	TCP	OPTION	tcp_hdr_option_type	close_scope_tcp
