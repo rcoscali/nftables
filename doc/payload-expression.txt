@@ -562,6 +562,39 @@ integer (16 bit)
 netdev filter ingress gre ip daddr 9.9.9.9 counter
 ------------------------------------------------------------
 
+GENEVE HEADER EXPRESSION
+~~~~~~~~~~~~~~~~~~~~~~~~
+[verse]
+*geneve* {*vni* | *flags*}
+*geneve* *ether* {*daddr* | *saddr* | *type*}
+*geneve* *vlan* {*id* | *dei* | *pcp* | *type*}
+*geneve* *ip* {*version* | *hdrlength* | *dscp* | *ecn* | *length* | *id* | *frag-off* | *ttl* | *protocol* | *checksum* | *saddr* | *daddr* }
+*geneve* *ip6* {*version* | *dscp* | *ecn* | *flowlabel* | *length* | *nexthdr* | *hoplimit* | *saddr* | *daddr*}
+*geneve* *tcp* {*sport* | *dport* | *sequence* | *ackseq* | *doff* | *reserved* | *flags* | *window* | *checksum* | *urgptr*}
+*geneve* *udp* {*sport* | *dport* | *length* | *checksum*}
+
+The geneve expression is used to match on the geneve header fields. The geneve
+header encapsulates a ethernet frame within a *udp* packet. This expression
+requires that you restrict the matching to *udp* packets (usually at
+port 6081 according to IANA-assigned ports).
+
+.GENEVE header expression
+[options="header"]
+|==================
+|Keyword| Description| Type
+|protocol|
+EtherType of encapsulated packet|
+integer (16 bit)
+|vni|
+Virtual Network ID (VNI)|
+integer (24 bit)
+|==================
+
+.Matching inner TCP destination port encapsulated in geneve
+----------------------------------------------------------
+netdev filter ingress udp dport 4789 geneve tcp dport 80 counter
+----------------------------------------------------------
+
 VXLAN HEADER EXPRESSION
 ~~~~~~~~~~~~~~~~~~~~~~~
 [verse]
