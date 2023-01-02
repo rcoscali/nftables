@@ -90,6 +90,7 @@ int proto_find_num(const struct proto_desc *base,
 
 static const struct proto_desc *inner_protocols[] = {
 	&proto_vxlan,
+	&proto_gre,
 };
 
 const struct proto_desc *proto_find_inner(uint32_t type, uint32_t hdrsize,
@@ -771,6 +772,28 @@ const struct datatype ecn_type = {
 	.sym_tbl	= &ecn_type_tbl,
 };
 
+#define GREHDR_TEMPLATE(__name, __dtype, __member) \
+	HDR_TEMPLATE(__name, __dtype, struct grehdr, __member)
+#define GREHDR_TYPE(__name, __member) \
+	GREHDR_TEMPLATE(__name, &ethertype_type, __member)
+
+const struct proto_desc proto_gre = {
+	.name		= "gre",
+	.id		= PROTO_DESC_GRE,
+	.base		= PROTO_BASE_TRANSPORT_HDR,
+	.templates	= {
+		[0] = PROTO_META_TEMPLATE("l4proto", &inet_protocol_type, NFT_META_L4PROTO, 8),
+		[GREHDR_FLAGS]		= HDR_BITFIELD("flags", &integer_type, 0, 5),
+		[GREHDR_VERSION]	= HDR_BITFIELD("version", &integer_type, 13, 3),
+		[GREHDR_PROTOCOL]	= HDR_BITFIELD("protocol", &ethertype_type, 16, 16),
+	},
+	.inner		= {
+		.hdrsize	= sizeof(struct grehdr),
+		.flags		= NFT_INNER_NH | NFT_INNER_TH,
+		.type		= NFT_INNER_GENEVE + 1,
+	},
+};
+
 #define IPHDR_FIELD(__name, __member) \
 	HDR_FIELD(__name, struct iphdr, __member)
 #define IPHDR_ADDR(__name, __member) \
@@ -794,6 +817,7 @@ const struct proto_desc proto_ip = {
 		PROTO_LINK(IPPROTO_TCP,		&proto_tcp),
 		PROTO_LINK(IPPROTO_DCCP,	&proto_dccp),
 		PROTO_LINK(IPPROTO_SCTP,	&proto_sctp),
+		PROTO_LINK(IPPROTO_GRE,		&proto_gre),
 	},
 	.templates	= {
 		[0]	= PROTO_META_TEMPLATE("l4proto", &inet_protocol_type, NFT_META_L4PROTO, 8),
@@ -920,6 +944,7 @@ const struct proto_desc proto_ip6 = {
 		PROTO_LINK(IPPROTO_ICMP,	&proto_icmp),
 		PROTO_LINK(IPPROTO_IGMP,	&proto_igmp),
 		PROTO_LINK(IPPROTO_ICMPV6,	&proto_icmp6),
+		PROTO_LINK(IPPROTO_GRE,		&proto_gre),
 	},
 	.templates	= {
 		[0]	= PROTO_META_TEMPLATE("l4proto", &inet_protocol_type, NFT_META_L4PROTO, 8),
@@ -985,6 +1010,7 @@ const struct proto_desc proto_inet_service = {
 		PROTO_LINK(IPPROTO_ICMP,	&proto_icmp),
 		PROTO_LINK(IPPROTO_IGMP,	&proto_igmp),
 		PROTO_LINK(IPPROTO_ICMPV6,	&proto_icmp6),
+		PROTO_LINK(IPPROTO_GRE,		&proto_gre),
 	},
 	.templates	= {
 		[0]	= PROTO_META_TEMPLATE("l4proto", &inet_protocol_type, NFT_META_L4PROTO, 8),
@@ -1226,6 +1252,7 @@ static const struct proto_desc *proto_definitions[PROTO_DESC_MAX + 1] = {
 	[PROTO_DESC_VLAN]	= &proto_vlan,
 	[PROTO_DESC_ETHER]	= &proto_eth,
 	[PROTO_DESC_VXLAN]	= &proto_vxlan,
+	[PROTO_DESC_GRE]	= &proto_gre,
 };
 
 const struct proto_desc *proto_find_desc(enum proto_desc_id desc_id)

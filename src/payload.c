@@ -487,6 +487,14 @@ payload_gen_special_dependency(struct eval_ctx *ctx, const struct expr *expr)
 					break;
 			}
 
+			/* this tunnel protocol does not encapsulate an inner
+			 * link layer, use proto_netdev which relies on
+			 * NFT_META_PROTOCOL for dependencies.
+			 */
+			if (expr->payload.inner_desc &&
+			    !(expr->payload.inner_desc->inner.flags & NFT_INNER_LL))
+				desc = &proto_netdev;
+
 			desc_upper = &proto_ip6;
 			if (expr->payload.desc == &proto_icmp ||
 			    expr->payload.desc == &proto_igmp)
@@ -1356,4 +1364,43 @@ done:
 bad_proto:
 	return expr_error(ctx->msgs, expr, "incompatible icmp match: rule has %d, need %u",
 			  pctx->th_dep.icmp.type, type);
+}
+
+int payload_gen_inner_dependency(struct eval_ctx *ctx, const struct expr *expr,
+				 struct stmt **res)
+{
+	struct proto_ctx *pctx = eval_proto_ctx(ctx);
+	const struct proto_hdr_template *tmpl;
+	const struct proto_desc *desc, *inner_desc;
+	struct expr *left, *right, *dep;
+	struct stmt *stmt = NULL;
+	int protocol;
+
+	assert(expr->etype == EXPR_PAYLOAD);
+
+	inner_desc = expr->payload.inner_desc;
+	desc = pctx->protocol[inner_desc->base - 1].desc;
+	if (desc == NULL)
+		desc = &proto_ip;
+
+	tmpl = &inner_desc->templates[0];
+	assert(tmpl);
+
+	protocol = proto_find_num(desc, inner_desc);
+	if (protocol < 0)
+                return expr_error(ctx->msgs, expr,
+                                  "conflicting protocols specified: %s vs. %s",
+                                  desc->name, inner_desc->name);
+
+	left = meta_expr_alloc(&expr->location, tmpl->meta_key);
+
+	right = constant_expr_alloc(&expr->location, tmpl->dtype,
+				    tmpl->dtype->byteorder, tmpl->len,
+				    constant_data_ptr(protocol, tmpl->len));
+
+	dep = relational_expr_alloc(&expr->location, OP_EQ, left, right);
+	stmt = expr_stmt_alloc(&dep->location, dep);
+
+	*res = stmt;
+	return 0;
 }

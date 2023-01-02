@@ -442,6 +442,8 @@ int nft_lex(void *, void *, void *);
 %token VXLAN			"vxlan"
 %token VNI			"vni"
 
+%token GRE			"gre"
+
 %token SCTP			"sctp"
 %token CHUNK			"chunk"
 %token DATA			"data"
@@ -902,9 +904,9 @@ int nft_lex(void *, void *, void *);
 %type <val>			tcpopt_field_maxseg	tcpopt_field_mptcp	tcpopt_field_sack	 tcpopt_field_tsopt	tcpopt_field_window
 %type <tcp_kind_field>		tcp_hdr_option_kind_and_field
 
-%type <expr>			inner_eth_expr inner_inet_expr inner_expr vxlan_hdr_expr
-%destructor { expr_free($$); }	inner_eth_expr inner_inet_expr inner_expr vxlan_hdr_expr
-%type <val>			vxlan_hdr_field
+%type <expr>			inner_eth_expr inner_inet_expr inner_expr vxlan_hdr_expr gre_hdr_expr
+%destructor { expr_free($$); }	inner_eth_expr inner_inet_expr inner_expr vxlan_hdr_expr gre_hdr_expr
+%type <val>			vxlan_hdr_field gre_hdr_field
 
 %type <stmt>			optstrip_stmt
 %destructor { stmt_free($$); }	optstrip_stmt
@@ -967,6 +969,7 @@ close_scope_export	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CMD_EXPORT
 close_scope_fib		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_FIB); };
 close_scope_frag	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_FRAG); };
 close_scope_fwd		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_STMT_FWD); };
+close_scope_gre		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_GRE); };
 close_scope_hash	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_HASH); };
 close_scope_hbh		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_HBH); };
 close_scope_ip		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_IP); };
@@ -4881,6 +4884,13 @@ primary_rhs_expr	:	symbol_expr		{ $$ = $1; }
 							 BYTEORDER_HOST_ENDIAN,
 							 sizeof(data) * BITS_PER_BYTE, &data);
 			}
+			|	GRE close_scope_gre
+			{
+				uint8_t data = IPPROTO_GRE;
+				$$ = constant_expr_alloc(&@$, &inet_protocol_type,
+							 BYTEORDER_HOST_ENDIAN,
+							 sizeof(data) * BITS_PER_BYTE, &data);
+			}
 			|	COMP	close_scope_comp
 			{
 				uint8_t data = IPPROTO_COMP;
@@ -5337,6 +5347,7 @@ payload_expr		:	payload_raw_expr
 			|	sctp_hdr_expr
 			|	th_hdr_expr
 			|	vxlan_hdr_expr
+			|	gre_hdr_expr
 			;
 
 payload_raw_expr	:	AT	payload_base_spec	COMMA	NUM	COMMA	NUM	close_scope_at
@@ -5631,6 +5642,22 @@ vxlan_hdr_expr		:	VXLAN	vxlan_hdr_field
 
 vxlan_hdr_field		:	VNI			{ $$ = VXLANHDR_VNI; }
 			|	FLAGS			{ $$ = VXLANHDR_FLAGS; }
+			;
+
+gre_hdr_expr		:	GRE	gre_hdr_field	close_scope_gre
+			{
+				$$ = payload_expr_alloc(&@$, &proto_gre, $2);
+			}
+			|	GRE	close_scope_gre inner_inet_expr
+			{
+				$$ = $3;
+				$$->payload.inner_desc = &proto_gre;
+			}
+			;
+
+gre_hdr_field		:	HDRVERSION		{ $$ = GREHDR_VERSION;	}
+			|	FLAGS			{ $$ = GREHDR_FLAGS; }
+			|	PROTOCOL		{ $$ = GREHDR_PROTOCOL; }
 			;
 
 optstrip_stmt		:	RESET	TCP	OPTION	tcp_hdr_option_type	close_scope_tcp

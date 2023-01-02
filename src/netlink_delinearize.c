@@ -35,6 +35,11 @@ struct dl_proto_ctx *dl_proto_ctx(struct rule_pp_ctx *ctx)
 	return ctx->dl;
 }
 
+static struct dl_proto_ctx *dl_proto_ctx_outer(struct rule_pp_ctx *ctx)
+{
+	return &ctx->_dl[0];
+}
+
 static int netlink_parse_expr(const struct nftnl_expr *nle,
 			      struct netlink_parse_ctx *ctx);
 
@@ -1960,6 +1965,36 @@ struct stmt *netlink_parse_set_expr(const struct set *set,
 	return pctx->stmt;
 }
 
+static bool meta_outer_may_dependency_kill(struct rule_pp_ctx *ctx,
+					   const struct expr *expr)
+{
+	struct dl_proto_ctx *dl_outer = dl_proto_ctx_outer(ctx);
+	struct stmt *stmt = dl_outer->pdctx.pdeps[expr->payload.inner_desc->base];
+	struct expr *dep;
+	uint8_t l4proto;
+
+	if (!stmt)
+		return false;
+
+	dep = stmt->expr;
+
+	if (dep->left->meta.key != NFT_META_L4PROTO)
+		return false;
+
+	l4proto = mpz_get_uint8(dep->right->value);
+
+	switch (l4proto) {
+	case IPPROTO_GRE:
+		if (expr->payload.inner_desc == &proto_gre)
+			return true;
+		break;
+	default:
+		break;
+	}
+
+	return false;
+}
+
 static void expr_postprocess(struct rule_pp_ctx *ctx, struct expr **exprp);
 
 static void payload_match_expand(struct rule_pp_ctx *ctx,
@@ -2003,6 +2038,12 @@ static void payload_match_expand(struct rule_pp_ctx *ctx,
 				nexpr->left->payload.tmpl = expr->left->payload.tmpl;
 			}
 			nexpr->left->payload.inner_desc = expr->left->payload.inner_desc;
+
+			if (meta_outer_may_dependency_kill(ctx, expr->left)) {
+				struct dl_proto_ctx *dl_outer = dl_proto_ctx_outer(ctx);
+
+				payload_dependency_release(&dl_outer->pdctx, expr->left->payload.inner_desc->base);
+			}
 		}
 
 		if (payload_is_stacked(dl->pctx.protocol[base].desc, nexpr))
@@ -2747,6 +2788,13 @@ static void expr_postprocess(struct rule_pp_ctx *ctx, struct expr **exprp)
 		break;
 	case EXPR_PAYLOAD:
 		payload_expr_complete(expr, &dl->pctx);
+		if (expr->payload.inner_desc) {
+			if (meta_outer_may_dependency_kill(ctx, expr)) {
+				struct dl_proto_ctx *dl_outer = dl_proto_ctx_outer(ctx);
+
+				payload_dependency_release(&dl_outer->pdctx, expr->payload.inner_desc->base);
+			}
+		}
 		payload_dependency_kill(&dl->pdctx, expr, dl->pctx.family);
 		break;
 	case EXPR_VALUE:

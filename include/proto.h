@@ -97,6 +97,7 @@ enum proto_desc_id {
 	PROTO_DESC_VLAN,
 	PROTO_DESC_ETHER,
 	PROTO_DESC_VXLAN,
+	PROTO_DESC_GRE,
 	__PROTO_DESC_MAX
 };
 #define PROTO_DESC_MAX	(__PROTO_DESC_MAX - 1)
@@ -396,7 +397,20 @@ enum vxlan_hdr_fields {
 	VXLANHDR_FLAGS,
 };
 
+struct grehdr {
+	uint16_t flags;
+	uint16_t protocol;
+};
+
+enum gre_hdr_fields {
+	GREHDR_INVALID,
+	GREHDR_VERSION,
+	GREHDR_FLAGS,
+	GREHDR_PROTOCOL,
+};
+
 extern const struct proto_desc proto_vxlan;
+extern const struct proto_desc proto_gre;
 
 extern const struct proto_desc proto_icmp;
 extern const struct proto_desc proto_igmp;

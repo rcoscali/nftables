@@ -881,24 +881,43 @@ static int expr_evaluate_payload(struct eval_ctx *ctx, struct expr **exprp)
 static int expr_evaluate_inner(struct eval_ctx *ctx, struct expr **exprp)
 {
 	struct proto_ctx *pctx = eval_proto_ctx(ctx);
-	const struct proto_desc *desc;
+	const struct proto_desc *desc = NULL;
 	struct expr *expr = *exprp;
 	int ret;
 
-	desc = pctx->protocol[expr->payload.inner_desc->base - 1].desc;
-	if (!desc) {
-		return expr_error(ctx->msgs, expr,
-				  "no transport protocol specified");
+	assert(expr->etype == EXPR_PAYLOAD);
+
+	pctx = eval_proto_ctx(ctx);
+	desc = pctx->protocol[PROTO_BASE_TRANSPORT_HDR].desc;
+
+	if (desc == NULL &&
+	    expr->payload.inner_desc->base < PROTO_BASE_INNER_HDR) {
+		struct stmt *nstmt;
+
+		if (payload_gen_inner_dependency(ctx, expr, &nstmt) < 0)
+			return -1;
+
+		rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
+
+		proto_ctx_update(pctx, PROTO_BASE_TRANSPORT_HDR, &expr->location, expr->payload.inner_desc);
 	}
 
-	if (proto_find_num(desc, expr->payload.inner_desc) < 0) {
-		return expr_error(ctx->msgs, expr,
-				  "unexpected transport protocol %s",
-				  desc->name);
-	}
+	if (expr->payload.inner_desc->base == PROTO_BASE_INNER_HDR) {
+		desc = pctx->protocol[expr->payload.inner_desc->base - 1].desc;
+		if (!desc) {
+			return expr_error(ctx->msgs, expr,
+					  "no transport protocol specified");
+		}
 
-	proto_ctx_update(pctx, PROTO_BASE_INNER_HDR, &expr->location,
-			 expr->payload.inner_desc);
+		if (proto_find_num(desc, expr->payload.inner_desc) < 0) {
+			return expr_error(ctx->msgs, expr,
+					  "unexpected transport protocol %s",
+					  desc->name);
+		}
+
+		proto_ctx_update(pctx, expr->payload.inner_desc->base, &expr->location,
+				 expr->payload.inner_desc);
+	}
 
 	if (expr->payload.base != PROTO_BASE_INNER_HDR)
 		ctx->inner_desc = expr->payload.inner_desc;
