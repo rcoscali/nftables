@@ -267,10 +267,12 @@ static bool is_watcher(uint32_t family, struct stmt *stmt)
 void stmt_xt_postprocess(struct rule_pp_ctx *rctx, struct stmt *stmt,
 			 struct rule *rule)
 {
-	if (is_watcher(rctx->pctx.family, stmt))
+	struct dl_proto_ctx *dl = dl_proto_ctx(rctx);
+
+	if (is_watcher(dl->pctx.family, stmt))
 		stmt->xt.type = NFT_XT_WATCHER;
 
-	stmt->xt.proto = xt_proto(&rctx->pctx);
+	stmt->xt.proto = xt_proto(&dl->pctx);
 }
 
 static int nft_xt_compatible_revision(const char *name, uint8_t rev, int opt)

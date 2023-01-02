@@ -49,9 +49,13 @@ struct netlink_parse_ctx {
 #define RULE_PP_REMOVE_OP_AND		(RULE_PP_IN_CONCATENATION | \
 					 RULE_PP_IN_SET_ELEM)
 
-struct rule_pp_ctx {
+struct dl_proto_ctx {
 	struct proto_ctx	pctx;
 	struct payload_dep_ctx	pdctx;
+};
+
+struct rule_pp_ctx {
+	struct dl_proto_ctx	_dl;
 	struct stmt		*stmt;
 	unsigned int		flags;
 };
@@ -245,5 +249,7 @@ struct nft_expr_loc {
 
 struct nft_expr_loc *nft_expr_loc_find(const struct nftnl_expr *nle,
 				       struct netlink_linearize_ctx *ctx);
+
+struct dl_proto_ctx *dl_proto_ctx(struct rule_pp_ctx *ctx);
 
 #endif /* NFTABLES_NETLINK_H */
