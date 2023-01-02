@@ -595,6 +595,26 @@ integer (24 bit)
 netdev filter ingress udp dport 4789 geneve tcp dport 80 counter
 ----------------------------------------------------------
 
+GRETAP HEADER EXPRESSION
+~~~~~~~~~~~~~~~~~~~~~~~~
+[verse]
+*gretap* {*vni* | *flags*}
+*gretap* *ether* {*daddr* | *saddr* | *type*}
+*gretap* *vlan* {*id* | *dei* | *pcp* | *type*}
+*gretap* *ip* {*version* | *hdrlength* | *dscp* | *ecn* | *length* | *id* | *frag-off* | *ttl* | *protocol* | *checksum* | *saddr* | *daddr* }
+*gretap* *ip6* {*version* | *dscp* | *ecn* | *flowlabel* | *length* | *nexthdr* | *hoplimit* | *saddr* | *daddr*}
+*gretap* *tcp* {*sport* | *dport* | *sequence* | *ackseq* | *doff* | *reserved* | *flags* | *window* | *checksum* | *urgptr*}
+*gretap* *udp* {*sport* | *dport* | *length* | *checksum*}
+
+The gretap expression is used to match on the encapsulated ethernet frame
+within the gre header. Use the *gre* expression to match on the *gre* header
+fields.
+
+.Matching inner TCP destination port encapsulated in gretap
+----------------------------------------------------------
+netdev filter ingress gretap tcp dport 80 counter
+----------------------------------------------------------
+
 VXLAN HEADER EXPRESSION
 ~~~~~~~~~~~~~~~~~~~~~~~
 [verse]
