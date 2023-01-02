@@ -190,6 +190,7 @@ extern const struct proto_desc *proto_dev_desc(uint16_t type);
 struct proto_ctx {
 	unsigned int			debug_mask;
 	uint8_t				family;
+	bool				inner;
 	union {
 		struct {
 			uint8_t			type;
@@ -209,7 +210,7 @@ struct proto_ctx {
 };
 
 extern void proto_ctx_init(struct proto_ctx *ctx, unsigned int family,
-			   unsigned int debug_mask);
+			   unsigned int debug_mask, bool inner);
 extern void proto_ctx_update(struct proto_ctx *ctx, enum proto_bases base,
 			     const struct location *loc,
 			     const struct proto_desc *desc);

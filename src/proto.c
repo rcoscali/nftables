@@ -181,7 +181,9 @@ static void proto_ctx_debug(const struct proto_ctx *ctx, enum proto_bases base,
 			pr_debug(" %s", ctx->stacked_ll[i]->name);
 	}
 
-	pr_debug("update %s protocol context:\n", proto_base_names[base]);
+	pr_debug("update %s protocol context%s:\n",
+		 proto_base_names[base], ctx->inner ? " (inner)" : "");
+
 	for (i = PROTO_BASE_LL_HDR; i <= PROTO_BASE_MAX; i++) {
 		pr_debug(" %-20s: %s",
 			 proto_base_names[i],
@@ -202,7 +204,7 @@ static void proto_ctx_debug(const struct proto_ctx *ctx, enum proto_bases base,
  * @debug_mask:	display debugging information
  */
 void proto_ctx_init(struct proto_ctx *ctx, unsigned int family,
-		    unsigned int debug_mask)
+		    unsigned int debug_mask, bool inner)
 {
 	const struct hook_proto_desc *h = &hook_proto_desc[family];
 
@@ -210,6 +212,7 @@ void proto_ctx_init(struct proto_ctx *ctx, unsigned int family,
 	ctx->family = family;
 	ctx->protocol[h->base].desc = h->desc;
 	ctx->debug_mask = debug_mask;
+	ctx->inner = inner;
 
 	proto_ctx_debug(ctx, h->base, debug_mask);
 }
