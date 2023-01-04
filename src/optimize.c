@@ -46,6 +46,8 @@ static bool __expr_cmp(const struct expr *expr_a, const struct expr *expr_b)
 			return false;
 		if (expr_a->payload.desc != expr_b->payload.desc)
 			return false;
+		if (expr_a->payload.inner_desc != expr_b->payload.inner_desc)
+			return false;
 		if (expr_a->payload.tmpl != expr_b->payload.tmpl)
 			return false;
 		break;
