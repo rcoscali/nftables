@@ -1111,10 +1111,11 @@ static int chain_optimize(struct nft_ctx *nft, struct list_head *rules)
 		ctx->num_rules++;
 	}
 
-	ctx->rule = xzalloc(sizeof(ctx->rule) * ctx->num_rules);
-	ctx->stmt_matrix = xzalloc(sizeof(struct stmt *) * ctx->num_rules);
+	ctx->rule = xzalloc(sizeof(*ctx->rule) * ctx->num_rules);
+	ctx->stmt_matrix = xzalloc(sizeof(*ctx->stmt_matrix) * ctx->num_rules);
 	for (i = 0; i < ctx->num_rules; i++)
-		ctx->stmt_matrix[i] = xzalloc(sizeof(struct stmt *) * MAX_STMTS);
+		ctx->stmt_matrix[i] = xzalloc_array(MAX_STMTS,
+						    sizeof(**ctx->stmt_matrix));
 
 	merge = xzalloc(sizeof(*merge) * ctx->num_rules);
 
