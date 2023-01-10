@@ -1790,7 +1790,8 @@ netlink_delinearize_flowtable(struct netlink_ctx *ctx,
 	while (dev_array[len])
 		len++;
 
-	flowtable->dev_array = calloc(1, len * sizeof(char *));
+	if (len)
+		flowtable->dev_array = xmalloc(len * sizeof(char *));
 	for (i = 0; i < len; i++)
 		flowtable->dev_array[i] = xstrdup(dev_array[i]);
 
