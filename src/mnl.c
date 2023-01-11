@@ -2217,16 +2217,23 @@ static int dump_nf_hooks(const struct nlmsghdr *nlh, void *_data)
 		struct nlattr *nested[NFNLA_HOOK_INFO_MAX + 1] = {};
 		uint32_t type;
 
-		if (mnl_attr_parse_nested(tb[NFNLA_HOOK_CHAIN_INFO], dump_nf_chain_info_cb, nested) < 0)
+		if (mnl_attr_parse_nested(tb[NFNLA_HOOK_CHAIN_INFO],
+					  dump_nf_chain_info_cb, nested) < 0) {
+			basehook_free(hook);
 			return -1;
+		}
 
 		type = ntohl(mnl_attr_get_u32(nested[NFNLA_HOOK_INFO_TYPE]));
 		if (type == NFNL_HOOK_TYPE_NFTABLES) {
 			struct nlattr *info[NFNLA_CHAIN_MAX + 1] = {};
 			const char *tablename, *chainname;
 
-			if (mnl_attr_parse_nested(nested[NFNLA_HOOK_INFO_DESC], dump_nf_attr_chain_cb, info) < 0)
+			if (mnl_attr_parse_nested(nested[NFNLA_HOOK_INFO_DESC],
+						  dump_nf_attr_chain_cb,
+						  info) < 0) {
+				basehook_free(hook);
 				return -1;
+			}
 
 			tablename = mnl_attr_get_str(info[NFNLA_CHAIN_TABLE]);
 			chainname = mnl_attr_get_str(info[NFNLA_CHAIN_NAME]);
