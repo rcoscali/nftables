@@ -433,7 +433,7 @@ success:
 	cur_tm = localtime(&ts);
 
 	if (ts == (time_t) -1 || cur_tm == NULL)
-		return ts;
+		return false;
 
 	/* Substract tm_gmtoff to get the current time */
 	*tstamp = ts - cur_tm->tm_gmtoff;
