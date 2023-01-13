@@ -1215,7 +1215,7 @@ static int cmd_optimize(struct nft_ctx *nft, struct cmd *cmd)
 int nft_optimize(struct nft_ctx *nft, struct list_head *cmds)
 {
 	struct cmd *cmd;
-	int ret;
+	int ret = 0;
 
 	list_for_each_entry(cmd, cmds, list) {
 		switch (cmd->op) {
