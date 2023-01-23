@@ -1593,6 +1593,14 @@ static int interval_set_eval(struct eval_ctx *ctx, struct set *set,
 	return ret;
 }
 
+static void expr_evaluate_set_ref(struct eval_ctx *ctx, struct expr *expr)
+{
+	struct set *set = expr->set;
+
+	expr_set_context(&ctx->ectx, set->key->dtype, set->key->len);
+	ctx->ectx.key = set->key;
+}
+
 static int expr_evaluate_set(struct eval_ctx *ctx, struct expr **expr)
 {
 	struct expr *set = *expr, *i, *next;
@@ -2455,6 +2463,7 @@ static int expr_evaluate(struct eval_ctx *ctx, struct expr **expr)
 	case EXPR_VARIABLE:
 		return expr_evaluate_variable(ctx, expr);
 	case EXPR_SET_REF:
+		expr_evaluate_set_ref(ctx, *expr);
 		return 0;
 	case EXPR_VALUE:
 		return expr_evaluate_value(ctx, expr);
@@ -2611,6 +2620,25 @@ static int stmt_evaluate_arg(struct eval_ctx *ctx, struct stmt *stmt,
 			     enum byteorder byteorder, struct expr **expr)
 {
 	__expr_set_context(&ctx->ectx, dtype, byteorder, len, 0);
+	if (expr_evaluate(ctx, expr) < 0)
+		return -1;
+
+	return __stmt_evaluate_arg(ctx, stmt, dtype, len, byteorder, expr);
+}
+
+/* like stmt_evaluate_arg, but keep existing context created
+ * by previous expr_evaluate().
+ *
+ * This is needed for add/update statements:
+ * ctx->ectx.key has the set key, which may be needed for 'typeof'
+ * sets: the 'add/update' expression might contain integer data types.
+ *
+ * Without the key we cannot derive the element size.
+ */
+static int stmt_evaluate_key(struct eval_ctx *ctx, struct stmt *stmt,
+			     const struct datatype *dtype, unsigned int len,
+			     enum byteorder byteorder, struct expr **expr)
+{
 	if (expr_evaluate(ctx, expr) < 0)
 		return -1;
 
@@ -3830,7 +3858,7 @@ static int stmt_evaluate_set(struct eval_ctx *ctx, struct stmt *stmt)
 		return expr_error(ctx->msgs, stmt->set.set,
 				  "Expression does not refer to a set");
 
-	if (stmt_evaluate_arg(ctx, stmt,
+	if (stmt_evaluate_key(ctx, stmt,
 			      stmt->set.set->set->key->dtype,
 			      stmt->set.set->set->key->len,
 			      stmt->set.set->set->key->byteorder,
@@ -3873,7 +3901,7 @@ static int stmt_evaluate_map(struct eval_ctx *ctx, struct stmt *stmt)
 		return expr_error(ctx->msgs, stmt->map.set,
 				  "Expression does not refer to a set");
 
-	if (stmt_evaluate_arg(ctx, stmt,
+	if (stmt_evaluate_key(ctx, stmt,
 			      stmt->map.set->set->key->dtype,
 			      stmt->map.set->set->key->len,
 			      stmt->map.set->set->key->byteorder,
