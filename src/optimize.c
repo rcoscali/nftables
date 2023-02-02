@@ -738,14 +738,32 @@ static void merge_stmts_vmap(const struct optimize_ctx *ctx,
 	stmt_free(verdict_a);
 }
 
+static void __merge_concat_stmts_vmap(const struct optimize_ctx *ctx,
+				      uint32_t i, const struct merge *merge,
+				      struct expr *set, struct stmt *verdict)
+{
+	struct expr *concat, *next, *elem, *mapping;
+	LIST_HEAD(concat_list);
+
+	__merge_concat(ctx, i, merge, &concat_list);
+
+	list_for_each_entry_safe(concat, next, &concat_list, list) {
+		list_del(&concat->list);
+		elem = set_elem_expr_alloc(&internal_location, concat);
+		mapping = mapping_expr_alloc(&internal_location, elem,
+					     expr_get(verdict->expr));
+		compound_expr_add(set, mapping);
+	}
+}
+
 static void merge_concat_stmts_vmap(const struct optimize_ctx *ctx,
 				    uint32_t from, uint32_t to,
 				    const struct merge *merge)
 {
 	struct stmt *orig_stmt = ctx->stmt_matrix[from][merge->stmt[0]];
-	struct expr *concat_a, *concat_b, *expr, *set;
-	struct stmt *stmt, *stmt_a, *stmt_b, *verdict;
-	uint32_t i, j;
+	struct stmt *stmt, *stmt_a, *verdict;
+	struct expr *concat_a, *expr, *set;
+	uint32_t i;
 	int k;
 
 	k = stmt_verdict_find(ctx);
@@ -763,15 +781,8 @@ static void merge_concat_stmts_vmap(const struct optimize_ctx *ctx,
 	set->set_flags |= NFT_SET_ANONYMOUS;
 
 	for (i = from; i <= to; i++) {
-		concat_b = concat_expr_alloc(&internal_location);
-		for (j = 0; j < merge->num_stmts; j++) {
-			stmt_b = ctx->stmt_matrix[i][merge->stmt[j]];
-			expr = stmt_b->expr->right;
-			compound_expr_add(concat_b, expr_get(expr));
-		}
 		verdict = ctx->stmt_matrix[i][k];
-		build_verdict_map(concat_b, verdict, set);
-		expr_free(concat_b);
+		__merge_concat_stmts_vmap(ctx, i, merge, set, verdict);
 	}
 
 	expr = map_expr_alloc(&internal_location, concat_a, set);
