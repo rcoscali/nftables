@@ -550,20 +550,19 @@ static void merge_stmts(const struct optimize_ctx *ctx,
 	}
 }
 
-static void __merge_concat_stmts(const struct optimize_ctx *ctx, uint32_t i,
-				 const struct merge *merge, struct expr *set)
+static void __merge_concat(const struct optimize_ctx *ctx, uint32_t i,
+			   const struct merge *merge, struct list_head *concat_list)
 {
-	struct expr *concat, *next, *expr, *concat_clone, *clone, *elem;
+	struct expr *concat, *next, *expr, *concat_clone, *clone;
 	LIST_HEAD(pending_list);
-	LIST_HEAD(concat_list);
 	struct stmt *stmt_a;
 	uint32_t k;
 
 	concat = concat_expr_alloc(&internal_location);
-	list_add(&concat->list, &concat_list);
+	list_add(&concat->list, concat_list);
 
 	for (k = 0; k < merge->num_stmts; k++) {
-		list_for_each_entry_safe(concat, next, &concat_list, list) {
+		list_for_each_entry_safe(concat, next, concat_list, list) {
 			stmt_a = ctx->stmt_matrix[i][merge->stmt[k]];
 			switch (stmt_a->expr->right->etype) {
 			case EXPR_SET:
@@ -588,8 +587,17 @@ static void __merge_concat_stmts(const struct optimize_ctx *ctx, uint32_t i,
 				break;
 			}
 		}
-		list_splice_init(&pending_list, &concat_list);
+		list_splice_init(&pending_list, concat_list);
 	}
+}
+
+static void __merge_concat_stmts(const struct optimize_ctx *ctx, uint32_t i,
+				 const struct merge *merge, struct expr *set)
+{
+	struct expr *concat, *next, *elem;
+	LIST_HEAD(concat_list);
+
+	__merge_concat(ctx, i, merge, &concat_list);
 
 	list_for_each_entry_safe(concat, next, &concat_list, list) {
 		list_del(&concat->list);
