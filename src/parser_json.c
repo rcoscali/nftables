@@ -2936,7 +2936,7 @@ static struct cmd *json_parse_cmd_add_rule(struct json_ctx *ctx, json_t *root,
 	if (op != CMD_DELETE &&
 	    json_unpack_err(ctx, root, "{s:o}", "expr", &tmp))
 		return NULL;
-	else if (op == CMD_DELETE &&
+	else if ((op == CMD_DELETE || op == CMD_DESTROY) &&
 		 json_unpack_err(ctx, root, "{s:I}", "handle", &h.handle.id))
 		return NULL;
 
@@ -2947,7 +2947,7 @@ static struct cmd *json_parse_cmd_add_rule(struct json_ctx *ctx, json_t *root,
 	h.table.name = xstrdup(h.table.name);
 	h.chain.name = xstrdup(h.chain.name);
 
-	if (op == CMD_DELETE)
+	if (op == CMD_DELETE || op == CMD_DESTROY)
 		return cmd_alloc(op, obj, &h, int_loc, NULL);
 
 	if (!json_is_array(tmp)) {
@@ -3043,7 +3043,7 @@ static struct cmd *json_parse_cmd_add_set(struct json_ctx *ctx, json_t *root,
 	if (op != CMD_DELETE &&
 	    json_unpack_err(ctx, root, "{s:s}", "name", &h.set.name)) {
 		return NULL;
-	} else if (op == CMD_DELETE &&
+	} else if ((op == CMD_DELETE || op == CMD_DESTROY) &&
 		   json_unpack(root, "{s:s}", "name", &h.set.name) &&
 		   json_unpack(root, "{s:I}", "handle", &h.handle.id)) {
 		json_error(ctx, "Either name or handle required to delete a set.");
@@ -3060,6 +3060,7 @@ static struct cmd *json_parse_cmd_add_set(struct json_ctx *ctx, json_t *root,
 
 	switch (op) {
 	case CMD_DELETE:
+	case CMD_DESTROY:
 	case CMD_LIST:
 	case CMD_FLUSH:
 		return cmd_alloc(op, obj, &h, int_loc, NULL);
@@ -3241,7 +3242,7 @@ static struct cmd *json_parse_cmd_add_flowtable(struct json_ctx *ctx,
 	if (op != CMD_DELETE &&
 	    json_unpack_err(ctx, root, "{s:s}", "name", &h.flowtable.name)) {
 		return NULL;
-	} else if (op == CMD_DELETE &&
+	} else if ((op == CMD_DELETE || op == CMD_DESTROY) &&
 		   json_unpack(root, "{s:s}", "name", &h.flowtable.name) &&
 		   json_unpack(root, "{s:I}", "handle", &h.handle.id)) {
 		json_error(ctx, "Either name or handle required to delete a flowtable.");
@@ -3256,7 +3257,7 @@ static struct cmd *json_parse_cmd_add_flowtable(struct json_ctx *ctx,
 	if (h.flowtable.name)
 		h.flowtable.name = xstrdup(h.flowtable.name);
 
-	if (op == CMD_DELETE || op == CMD_LIST)
+	if (op == CMD_DELETE || op == CMD_LIST || op == CMD_DESTROY)
 		return cmd_alloc(op, cmd_obj, &h, int_loc, NULL);
 
 	if (json_unpack_err(ctx, root, "{s:s, s:I}",
@@ -3345,7 +3346,7 @@ static struct cmd *json_parse_cmd_add_object(struct json_ctx *ctx,
 	     cmd_obj == NFT_OBJECT_CT_HELPER) &&
 	    json_unpack_err(ctx, root, "{s:s}", "name", &h.obj.name)) {
 		return NULL;
-	} else if (op == CMD_DELETE &&
+	} else if ((op == CMD_DELETE || op == CMD_DESTROY) &&
 		   cmd_obj != NFT_OBJECT_CT_HELPER &&
 		   json_unpack(root, "{s:s}", "name", &h.obj.name) &&
 		   json_unpack(root, "{s:I}", "handle", &h.handle.id)) {
@@ -3361,7 +3362,7 @@ static struct cmd *json_parse_cmd_add_object(struct json_ctx *ctx,
 	if (h.obj.name)
 		h.obj.name = xstrdup(h.obj.name);
 
-	if (op == CMD_DELETE || op == CMD_LIST) {
+	if (op == CMD_DELETE || op == CMD_LIST || op == CMD_DESTROY) {
 		if (cmd_obj == NFT_OBJECT_CT_HELPER)
 			return cmd_alloc_obj_ct(op, NFT_OBJECT_CT_HELPER,
 						&h, int_loc, obj_alloc(int_loc));
@@ -3909,6 +3910,7 @@ static struct cmd *json_parse_cmd(struct json_ctx *ctx, json_t *root)
 		{ "reset", CMD_RESET, json_parse_cmd_reset },
 		{ "flush", CMD_FLUSH, json_parse_cmd_flush },
 		{ "rename", CMD_RENAME, json_parse_cmd_rename },
+		{ "destroy", CMD_DESTROY, json_parse_cmd_add },
 		//{ "export", CMD_EXPORT, json_parse_cmd_export },
 		//{ "monitor", CMD_MONITOR, json_parse_cmd_monitor },
 		//{ "describe", CMD_DESCRIBE, json_parse_cmd_describe }

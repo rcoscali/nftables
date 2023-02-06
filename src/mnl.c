@@ -592,6 +592,7 @@ int mnl_nft_rule_replace(struct netlink_ctx *ctx, struct cmd *cmd)
 
 int mnl_nft_rule_del(struct netlink_ctx *ctx, struct cmd *cmd)
 {
+	enum nf_tables_msg_types msg_type = NFT_MSG_DELRULE;
 	struct handle *h = &cmd->handle;
 	struct nftnl_rule *nlr;
 	struct nlmsghdr *nlh;
@@ -602,8 +603,11 @@ int mnl_nft_rule_del(struct netlink_ctx *ctx, struct cmd *cmd)
 
 	nftnl_rule_set_u32(nlr, NFTNL_RULE_FAMILY, h->family);
 
+	if (cmd->op == CMD_DESTROY)
+		msg_type = NFT_MSG_DESTROYRULE;
+
 	nlh = nftnl_nlmsg_build_hdr(nftnl_batch_buffer(ctx->batch),
-				    NFT_MSG_DELRULE,
+				    msg_type,
 				    nftnl_rule_get_u32(nlr, NFTNL_RULE_FAMILY),
 				    0, ctx->seqnum);
 
@@ -857,6 +861,7 @@ int mnl_nft_chain_rename(struct netlink_ctx *ctx, const struct cmd *cmd,
 
 int mnl_nft_chain_del(struct netlink_ctx *ctx, struct cmd *cmd)
 {
+	enum nf_tables_msg_types msg_type = NFT_MSG_DELCHAIN;
 	struct nftnl_chain *nlc;
 	struct nlmsghdr *nlh;
 
@@ -866,8 +871,11 @@ int mnl_nft_chain_del(struct netlink_ctx *ctx, struct cmd *cmd)
 
 	nftnl_chain_set_u32(nlc, NFTNL_CHAIN_FAMILY, cmd->handle.family);
 
+	if (cmd->op == CMD_DESTROY)
+		msg_type = NFT_MSG_DESTROYCHAIN;
+
 	nlh = nftnl_nlmsg_build_hdr(nftnl_batch_buffer(ctx->batch),
-				    NFT_MSG_DELCHAIN,
+				    msg_type,
 				    cmd->handle.family,
 				    0, ctx->seqnum);
 
@@ -1002,6 +1010,7 @@ int mnl_nft_table_add(struct netlink_ctx *ctx, struct cmd *cmd,
 
 int mnl_nft_table_del(struct netlink_ctx *ctx, struct cmd *cmd)
 {
+	enum nf_tables_msg_types msg_type = NFT_MSG_DELTABLE;
 	struct nftnl_table *nlt;
 	struct nlmsghdr *nlh;
 
@@ -1011,10 +1020,11 @@ int mnl_nft_table_del(struct netlink_ctx *ctx, struct cmd *cmd)
 
 	nftnl_table_set_u32(nlt, NFTNL_TABLE_FAMILY, cmd->handle.family);
 
-	nlh = nftnl_nlmsg_build_hdr(nftnl_batch_buffer(ctx->batch),
-				    NFT_MSG_DELTABLE,
-				    cmd->handle.family,
-				    0, ctx->seqnum);
+	if (cmd->op == CMD_DESTROY)
+		msg_type = NFT_MSG_DESTROYTABLE;
+
+	nlh = nftnl_nlmsg_build_hdr(nftnl_batch_buffer(ctx->batch), msg_type,
+			            cmd->handle.family, 0, ctx->seqnum);
 
 	if (cmd->handle.table.name) {
 		cmd_add_loc(cmd, nlh->nlmsg_len, &cmd->handle.table.location);
@@ -1248,6 +1258,7 @@ int mnl_nft_set_add(struct netlink_ctx *ctx, struct cmd *cmd,
 
 int mnl_nft_set_del(struct netlink_ctx *ctx, struct cmd *cmd)
 {
+	enum nf_tables_msg_types msg_type = NFT_MSG_DELSET;
 	const struct handle *h = &cmd->handle;
 	struct nftnl_set *nls;
 	struct nlmsghdr *nlh;
@@ -1258,8 +1269,11 @@ int mnl_nft_set_del(struct netlink_ctx *ctx, struct cmd *cmd)
 
 	nftnl_set_set_u32(nls, NFTNL_SET_FAMILY, h->family);
 
+	if (cmd->op == CMD_DESTROY)
+		msg_type = NFT_MSG_DESTROYSET;
+
 	nlh = nftnl_nlmsg_build_hdr(nftnl_batch_buffer(ctx->batch),
-				    NFT_MSG_DELSET,
+				    msg_type,
 				    h->family,
 				    0, ctx->seqnum);
 
@@ -1463,6 +1477,7 @@ int mnl_nft_obj_add(struct netlink_ctx *ctx, struct cmd *cmd,
 
 int mnl_nft_obj_del(struct netlink_ctx *ctx, struct cmd *cmd, int type)
 {
+	enum nf_tables_msg_types msg_type = NFT_MSG_DELOBJ;
 	struct nftnl_obj *nlo;
 	struct nlmsghdr *nlh;
 
@@ -1473,8 +1488,11 @@ int mnl_nft_obj_del(struct netlink_ctx *ctx, struct cmd *cmd, int type)
 	nftnl_obj_set_u32(nlo, NFTNL_OBJ_FAMILY, cmd->handle.family);
 	nftnl_obj_set_u32(nlo, NFTNL_OBJ_TYPE, type);
 
+	if (cmd->op == CMD_DESTROY)
+		msg_type = NFT_MSG_DESTROYOBJ;
+
 	nlh = nftnl_nlmsg_build_hdr(nftnl_batch_buffer(ctx->batch),
-				    NFT_MSG_DELOBJ, cmd->handle.family,
+				    msg_type, cmd->handle.family,
 				    0, ctx->seqnum);
 
 	cmd_add_loc(cmd, nlh->nlmsg_len, &cmd->handle.table.location);
@@ -1747,6 +1765,7 @@ int mnl_nft_setelem_flush(struct netlink_ctx *ctx, const struct cmd *cmd)
 int mnl_nft_setelem_del(struct netlink_ctx *ctx, struct cmd *cmd,
 			const struct handle *h, const struct expr *init)
 {
+	enum nf_tables_msg_types msg_type = NFT_MSG_DELSETELEM;
 	struct nftnl_set *nls;
 	int err;
 
@@ -1763,7 +1782,10 @@ int mnl_nft_setelem_del(struct netlink_ctx *ctx, struct cmd *cmd,
 
 	netlink_dump_set(nls, ctx);
 
-	err = mnl_nft_setelem_batch(nls, cmd, ctx->batch, NFT_MSG_DELSETELEM, 0,
+	if (cmd->op == CMD_DESTROY)
+		msg_type = NFT_MSG_DESTROYSETELEM;
+
+	err = mnl_nft_setelem_batch(nls, cmd, ctx->batch, msg_type, 0,
 				    ctx->seqnum, init, ctx);
 	nftnl_set_free(nls);
 
@@ -1970,6 +1992,7 @@ int mnl_nft_flowtable_add(struct netlink_ctx *ctx, struct cmd *cmd,
 
 int mnl_nft_flowtable_del(struct netlink_ctx *ctx, struct cmd *cmd)
 {
+	enum nf_tables_msg_types msg_type = NFT_MSG_DELFLOWTABLE;
 	struct nftnl_flowtable *flo;
 	const char **dev_array;
 	struct nlmsghdr *nlh;
@@ -1991,8 +2014,11 @@ int mnl_nft_flowtable_del(struct netlink_ctx *ctx, struct cmd *cmd)
 		nft_flowtable_dev_array_free(dev_array);
 	}
 
+	if (cmd->op == CMD_DESTROY)
+		msg_type = NFT_MSG_DESTROYFLOWTABLE;
+
 	nlh = nftnl_nlmsg_build_hdr(nftnl_batch_buffer(ctx->batch),
-				    NFT_MSG_DELFLOWTABLE, cmd->handle.family,
+				    msg_type, cmd->handle.family,
 				    0, ctx->seqnum);
 
 	cmd_add_loc(cmd, nlh->nlmsg_len, &cmd->handle.table.location);
