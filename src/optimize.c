@@ -985,21 +985,21 @@ static void rule_optimize_print(struct output_ctx *octx,
 	fprintf(octx->error_fp, "%s\n", line);
 }
 
-static enum stmt_types merge_stmt_type(const struct optimize_ctx *ctx)
+static enum stmt_types merge_stmt_type(const struct optimize_ctx *ctx,
+				       uint32_t from, uint32_t to)
 {
-	uint32_t i;
+	uint32_t i, j;
 
-	for (i = 0; i < ctx->num_stmts; i++) {
-		switch (ctx->stmt[i]->ops->type) {
-		case STMT_VERDICT:
-		case STMT_NAT:
-			return ctx->stmt[i]->ops->type;
-		default:
-			continue;
+	for (i = from; i <= to; i++) {
+		for (j = 0; j < ctx->num_stmts; j++) {
+			if (!ctx->stmt_matrix[i][j])
+				continue;
+			if (ctx->stmt_matrix[i][j]->ops->type == STMT_NAT)
+				return STMT_NAT;
 		}
 	}
 
-	/* actually no verdict, this assumes rules have the same verdict. */
+	/* merge by verdict, even if no verdict is specified. */
 	return STMT_VERDICT;
 }
 
@@ -1012,7 +1012,7 @@ static void merge_rules(const struct optimize_ctx *ctx,
 	bool same_verdict;
 	uint32_t i;
 
-	stmt_type = merge_stmt_type(ctx);
+	stmt_type = merge_stmt_type(ctx, from, to);
 
 	switch (stmt_type) {
 	case STMT_VERDICT:
