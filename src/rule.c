@@ -1312,11 +1312,12 @@ void cmd_add_loc(struct cmd *cmd, uint16_t offset, const struct location *loc)
 
 static void nft_cmd_expand_chain(struct chain *chain, struct list_head *new_cmds)
 {
-	struct rule *rule;
+	struct rule *rule, *next;
 	struct handle h;
 	struct cmd *new;
 
-	list_for_each_entry(rule, &chain->rules, list) {
+	list_for_each_entry_safe(rule, next, &chain->rules, list) {
+		list_del(&rule->list);
 		memset(&h, 0, sizeof(h));
 		handle_merge(&h, &rule->handle);
 		if (chain->flags & CHAIN_F_BINDING) {
@@ -1324,7 +1325,7 @@ static void nft_cmd_expand_chain(struct chain *chain, struct list_head *new_cmds
 			rule->handle.chain.location = chain->location;
 		}
 		new = cmd_alloc(CMD_ADD, CMD_OBJ_RULE, &h,
-				&rule->location, rule_get(rule));
+				&rule->location, rule);
 		list_add_tail(&new->list, new_cmds);
 	}
 }
@@ -1383,6 +1384,14 @@ void nft_cmd_expand(struct cmd *cmd)
 		list_for_each_entry(chain, &table->chains, list)
 			nft_cmd_expand_chain(chain, &new_cmds);
 
+		list_splice(&new_cmds, &cmd->list);
+		break;
+	case CMD_OBJ_CHAIN:
+		chain = cmd->chain;
+		if (!chain || list_empty(&chain->rules))
+			break;
+
+		nft_cmd_expand_chain(chain, &new_cmds);
 		list_splice(&new_cmds, &cmd->list);
 		break;
 	case CMD_OBJ_SET:
