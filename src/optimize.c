@@ -368,6 +368,13 @@ static int rule_collect_stmts(struct optimize_ctx *ctx, struct rule *rule)
 				clone->log.prefix = expr_get(stmt->log.prefix);
 			break;
 		case STMT_NAT:
+			if ((stmt->nat.addr &&
+			     stmt->nat.addr->etype == EXPR_MAP) ||
+			    (stmt->nat.proto &&
+			     stmt->nat.proto->etype == EXPR_MAP)) {
+				clone->ops = &unsupported_stmt_ops;
+				break;
+			}
 			clone->nat.type = stmt->nat.type;
 			clone->nat.family = stmt->nat.family;
 			if (stmt->nat.addr)
