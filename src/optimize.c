@@ -21,6 +21,7 @@
 #include <statement.h>
 #include <utils.h>
 #include <erec.h>
+#include <linux/netfilter.h>
 
 #define MAX_STMTS	32
 
@@ -872,9 +873,9 @@ static void merge_nat(const struct optimize_ctx *ctx,
 		      const struct merge *merge)
 {
 	struct expr *expr, *set, *elem, *nat_expr, *mapping, *left;
+	int k, family = NFPROTO_UNSPEC;
 	struct stmt *stmt, *nat_stmt;
 	uint32_t i;
-	int k;
 
 	k = stmt_nat_find(ctx);
 	assert(k >= 0);
@@ -896,9 +897,18 @@ static void merge_nat(const struct optimize_ctx *ctx,
 
 	stmt = ctx->stmt_matrix[from][merge->stmt[0]];
 	left = expr_get(stmt->expr->left);
+	if (left->etype == EXPR_PAYLOAD) {
+		if (left->payload.desc == &proto_ip)
+			family = NFPROTO_IPV4;
+		else if (left->payload.desc == &proto_ip6)
+			family = NFPROTO_IPV6;
+	}
 	expr = map_expr_alloc(&internal_location, left, set);
 
 	nat_stmt = ctx->stmt_matrix[from][k];
+	if (nat_stmt->nat.family == NFPROTO_UNSPEC)
+		nat_stmt->nat.family = family;
+
 	expr_free(nat_stmt->nat.addr);
 	nat_stmt->nat.addr = expr;
 
@@ -912,9 +922,9 @@ static void merge_concat_nat(const struct optimize_ctx *ctx,
 			     const struct merge *merge)
 {
 	struct expr *expr, *set, *elem, *nat_expr, *mapping, *left, *concat;
+	int k, family = NFPROTO_UNSPEC;
 	struct stmt *stmt, *nat_stmt;
 	uint32_t i, j;
-	int k;
 
 	k = stmt_nat_find(ctx);
 	assert(k >= 0);
@@ -943,11 +953,20 @@ static void merge_concat_nat(const struct optimize_ctx *ctx,
 	for (j = 0; j < merge->num_stmts; j++) {
 		stmt = ctx->stmt_matrix[from][merge->stmt[j]];
 		left = stmt->expr->left;
+		if (left->etype == EXPR_PAYLOAD) {
+			if (left->payload.desc == &proto_ip)
+				family = NFPROTO_IPV4;
+			else if (left->payload.desc == &proto_ip6)
+				family = NFPROTO_IPV6;
+		}
 		compound_expr_add(concat, expr_get(left));
 	}
 	expr = map_expr_alloc(&internal_location, concat, set);
 
 	nat_stmt = ctx->stmt_matrix[from][k];
+	if (nat_stmt->nat.family == NFPROTO_UNSPEC)
+		nat_stmt->nat.family = family;
+
 	expr_free(nat_stmt->nat.addr);
 	nat_stmt->nat.addr = expr;
 

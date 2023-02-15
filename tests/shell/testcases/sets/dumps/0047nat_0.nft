@@ -11,3 +11,14 @@ table ip x {
 		snat ip to ip saddr map @y
 	}
 }
+table inet x {
+	chain x {
+		type nat hook prerouting priority dstnat; policy accept;
+		dnat ip to ip daddr . tcp dport map { 10.141.10.1 . 22 : 192.168.2.2, 10.141.11.2 . 2222 : 192.168.4.2 }
+	}
+
+	chain y {
+		type nat hook postrouting priority srcnat; policy accept;
+		snat ip to ip saddr map { 10.141.10.0/24 : 192.168.2.2-192.168.2.4, 10.141.11.0/24 : 192.168.4.2/31 }
+	}
+}
