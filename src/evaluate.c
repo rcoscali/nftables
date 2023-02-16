@@ -3483,6 +3483,28 @@ static int nat_evaluate_transport(struct eval_ctx *ctx, struct stmt *stmt,
 				 BYTEORDER_BIG_ENDIAN, expr);
 }
 
+static const char *stmt_name(const struct stmt *stmt)
+{
+	switch (stmt->ops->type) {
+	case STMT_NAT:
+		switch (stmt->nat.type) {
+		case NFT_NAT_SNAT:
+			return "snat";
+		case NFT_NAT_DNAT:
+			return "dnat";
+		case NFT_NAT_REDIR:
+			return "redirect";
+		case NFT_NAT_MASQ:
+			return "masquerade";
+		}
+		break;
+	default:
+		break;
+	}
+
+	return stmt->ops->name;
+}
+
 static int stmt_evaluate_l3proto(struct eval_ctx *ctx,
 				 struct stmt *stmt, uint8_t family)
 {
@@ -3512,9 +3534,11 @@ static int stmt_evaluate_addr(struct eval_ctx *ctx, struct stmt *stmt,
 
 	if (pctx->family == NFPROTO_INET) {
 		dtype = get_addr_dtype(family);
-		if (dtype->size == 0)
+		if (dtype->size == 0) {
 			return stmt_error(ctx, stmt,
-					  "ip or ip6 must be specified with address for inet tables.");
+					  "specify `%s ip' or '%s ip6' in %s table to disambiguate",
+					  stmt_name(stmt), stmt_name(stmt), family2str(pctx->family));
+		}
 
 		err = stmt_evaluate_arg(ctx, stmt, dtype, dtype->size,
 					BYTEORDER_BIG_ENDIAN, addr);
@@ -3540,7 +3564,9 @@ static int stmt_evaluate_nat_map(struct eval_ctx *ctx, struct stmt *stmt)
 		addr_type = TYPE_IP6ADDR;
 		break;
 	default:
-		return -1;
+		return stmt_error(ctx, stmt,
+				  "specify `%s ip' or '%s ip6' in %s table to disambiguate",
+				  stmt_name(stmt), stmt_name(stmt), family2str(pctx->family));
 	}
 	dtype = concat_type_alloc((addr_type << TYPE_BITS) | TYPE_INET_SERVICE);
 
