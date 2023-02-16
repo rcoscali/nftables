@@ -216,6 +216,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_TYPE
 %s SCANSTATE_VLAN
 %s SCANSTATE_XT
+%s SCANSTATE_CMD_DESTROY
 %s SCANSTATE_CMD_EXPORT
 %s SCANSTATE_CMD_IMPORT
 %s SCANSTATE_CMD_LIST
@@ -359,7 +360,8 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "import"                { scanner_push_start_cond(yyscanner, SCANSTATE_CMD_IMPORT); return IMPORT; }
 "export"		{ scanner_push_start_cond(yyscanner, SCANSTATE_CMD_EXPORT); return EXPORT; }
 "monitor"		{ scanner_push_start_cond(yyscanner, SCANSTATE_CMD_MONITOR); return MONITOR; }
-"destroy"		{ return DESTROY; }
+"destroy"		{ scanner_push_start_cond(yyscanner, SCANSTATE_CMD_DESTROY); return DESTROY; }
+
 
 "position"		{ return POSITION; }
 "index"			{ return INDEX; }
