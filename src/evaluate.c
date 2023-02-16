@@ -3524,16 +3524,48 @@ static int stmt_evaluate_l3proto(struct eval_ctx *ctx,
 	return 0;
 }
 
+static void expr_family_infer(struct proto_ctx *pctx, const struct expr *expr,
+			      uint8_t *family)
+{
+	struct expr *i;
+
+	if (expr->etype == EXPR_MAP) {
+		switch (expr->map->etype) {
+		case EXPR_CONCAT:
+			list_for_each_entry(i, &expr->map->expressions, list) {
+				if (i->etype == EXPR_PAYLOAD) {
+					if (i->payload.desc == &proto_ip)
+						*family = NFPROTO_IPV4;
+					else if (i->payload.desc == &proto_ip6)
+						*family = NFPROTO_IPV6;
+				}
+			}
+			break;
+		case EXPR_PAYLOAD:
+			if (expr->map->payload.desc == &proto_ip)
+				*family = NFPROTO_IPV4;
+			else if (expr->map->payload.desc == &proto_ip6)
+				*family = NFPROTO_IPV6;
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 static int stmt_evaluate_addr(struct eval_ctx *ctx, struct stmt *stmt,
-			      uint8_t family,
-			      struct expr **addr)
+			      uint8_t *family, struct expr **addr)
 {
 	struct proto_ctx *pctx = eval_proto_ctx(ctx);
 	const struct datatype *dtype;
 	int err;
 
 	if (pctx->family == NFPROTO_INET) {
-		dtype = get_addr_dtype(family);
+		if (*family == NFPROTO_INET ||
+		    *family == NFPROTO_UNSPEC)
+			expr_family_infer(pctx, *addr, family);
+
+		dtype = get_addr_dtype(*family);
 		if (dtype->size == 0) {
 			return stmt_error(ctx, stmt,
 					  "specify `%s ip' or '%s ip6' in %s table to disambiguate",
@@ -3555,6 +3587,9 @@ static int stmt_evaluate_nat_map(struct eval_ctx *ctx, struct stmt *stmt)
 	struct expr *one, *two, *data, *tmp;
 	const struct datatype *dtype;
 	int addr_type, err;
+
+	if (stmt->nat.family == NFPROTO_INET)
+		expr_family_infer(pctx, stmt->nat.addr, &stmt->nat.family);
 
 	switch (stmt->nat.family) {
 	case NFPROTO_IPV4:
@@ -3682,7 +3717,7 @@ static int stmt_evaluate_nat(struct eval_ctx *ctx, struct stmt *stmt)
 			return 0;
 		}
 
-		err = stmt_evaluate_addr(ctx, stmt, stmt->nat.family,
+		err = stmt_evaluate_addr(ctx, stmt, &stmt->nat.family,
 					 &stmt->nat.addr);
 		if (err < 0)
 			return err;
@@ -3733,7 +3768,7 @@ static int stmt_evaluate_tproxy(struct eval_ctx *ctx, struct stmt *stmt)
 		if (stmt->tproxy.addr->etype == EXPR_RANGE)
 			return stmt_error(ctx, stmt, "Address ranges are not supported for tproxy.");
 
-		err = stmt_evaluate_addr(ctx, stmt, stmt->tproxy.family,
+		err = stmt_evaluate_addr(ctx, stmt, &stmt->tproxy.family,
 					 &stmt->tproxy.addr);
 
 		if (err < 0)
