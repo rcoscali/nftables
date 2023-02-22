@@ -1105,7 +1105,7 @@ base_cmd		:	/* empty */	add_cmd		{ $$ = $1; }
 			|	EXPORT		export_cmd	close_scope_export	{ $$ = $2; }
 			|	MONITOR		monitor_cmd	close_scope_monitor	{ $$ = $2; }
 			|	DESCRIBE	describe_cmd	{ $$ = $2; }
-			|	DESTROY		destroy_cmd	{ $$ = $2; }
+			|	DESTROY		destroy_cmd	close_scope_destroy	{ $$ = $2; }
 			;
 
 add_cmd			:	TABLE		table_spec
