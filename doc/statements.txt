@@ -296,7 +296,7 @@ A meta statement sets the value of a meta expression. The existing meta fields
 are: priority, mark, pkttype, nftrace. +
 
 [verse]
-*meta* {*mark* | *priority* | *pkttype* | *nftrace*} *set* 'value'
+*meta* {*mark* | *priority* | *pkttype* | *nftrace* | *broute*} *set* 'value'
 
 A meta statement sets meta data associated with a packet. +
 
@@ -315,6 +315,9 @@ packet type |
 pkt_type
 |nftrace |
 ruleset packet tracing on/off. Use *monitor trace* command to watch traces|
+0, 1
+|broute |
+broute on/off. packets are routed instead of being bridged|
 0, 1
 |==========================
 
