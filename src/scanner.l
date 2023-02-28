@@ -206,6 +206,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_IGMP
 %s SCANSTATE_IP
 %s SCANSTATE_IP6
+%s SCANSTATE_LAST
 %s SCANSTATE_LIMIT
 %s SCANSTATE_META
 %s SCANSTATE_POLICY
@@ -402,6 +403,11 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 <SCANSTATE_COUNTER,SCANSTATE_CT,SCANSTATE_LIMIT>"packets"		{ return PACKETS; }
 <SCANSTATE_COUNTER,SCANSTATE_CT,SCANSTATE_LIMIT,SCANSTATE_QUOTA>"bytes"	{ return BYTES; }
 
+"last"				{ scanner_push_start_cond(yyscanner, SCANSTATE_LAST); return LAST; }
+<SCANSTATE_LAST>{
+	"never"			{ return NEVER; }
+}
+
 <SCANSTATE_CMD_LIST,SCANSTATE_CMD_RESET>{
 	"counters"		{ return COUNTERS; }
 	"quotas"		{ return QUOTAS; }
@@ -437,9 +443,10 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 
 "quota"			{ scanner_push_start_cond(yyscanner, SCANSTATE_QUOTA); return QUOTA; }
 <SCANSTATE_QUOTA>{
-	"used"		{ return USED; }
 	"until"		{ return UNTIL; }
 }
+
+<SCANSTATE_QUOTA,SCANSTATE_LAST>"used"		{ return USED; }
 
 "hour"			{ return HOUR; }
 "day"			{ return DAY; }

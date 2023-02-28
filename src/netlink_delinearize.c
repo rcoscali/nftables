@@ -1067,6 +1067,19 @@ static void netlink_parse_counter(struct netlink_parse_ctx *ctx,
 	ctx->stmt = stmt;
 }
 
+static void netlink_parse_last(struct netlink_parse_ctx *ctx,
+			       const struct location *loc,
+			       const struct nftnl_expr *nle)
+{
+	struct stmt *stmt;
+
+	stmt = last_stmt_alloc(loc);
+	stmt->last.used = nftnl_expr_get_u64(nle, NFTNL_EXPR_LAST_MSECS);
+	stmt->last.set = nftnl_expr_get_u32(nle, NFTNL_EXPR_LAST_SET);
+
+	ctx->stmt = stmt;
+}
+
 static void netlink_parse_log(struct netlink_parse_ctx *ctx,
 			      const struct location *loc,
 			      const struct nftnl_expr *nle)
@@ -1877,6 +1890,7 @@ static const struct expr_handler netlink_parsers[] = {
 	{ .name = "ct",		.parse = netlink_parse_ct },
 	{ .name = "connlimit",	.parse = netlink_parse_connlimit },
 	{ .name = "counter",	.parse = netlink_parse_counter },
+	{ .name = "last",	.parse = netlink_parse_last },
 	{ .name = "log",	.parse = netlink_parse_log },
 	{ .name = "limit",	.parse = netlink_parse_limit },
 	{ .name = "range",	.parse = netlink_parse_range },

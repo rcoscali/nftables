@@ -554,6 +554,9 @@ int nft_lex(void *, void *, void *);
 %token BYTES			"bytes"
 %token AVGPKT			"avgpkt"
 
+%token LAST			"last"
+%token NEVER			"never"
+
 %token COUNTERS			"counters"
 %token QUOTAS			"quotas"
 %token LIMITS			"limits"
@@ -710,8 +713,8 @@ int nft_lex(void *, void *, void *);
 %destructor { stmt_list_free($$); xfree($$); } stmt_list stateful_stmt_list set_elem_stmt_list
 %type <stmt>			stmt match_stmt verdict_stmt set_elem_stmt
 %destructor { stmt_free($$); }	stmt match_stmt verdict_stmt set_elem_stmt
-%type <stmt>			counter_stmt counter_stmt_alloc stateful_stmt
-%destructor { stmt_free($$); }	counter_stmt counter_stmt_alloc stateful_stmt
+%type <stmt>			counter_stmt counter_stmt_alloc stateful_stmt last_stmt
+%destructor { stmt_free($$); }	counter_stmt counter_stmt_alloc stateful_stmt last_stmt
 %type <stmt>			payload_stmt
 %destructor { stmt_free($$); }	payload_stmt
 %type <stmt>			ct_stmt
@@ -968,6 +971,7 @@ close_scope_at		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_AT); };
 close_scope_comp	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_COMP); };
 close_scope_ct		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CT); };
 close_scope_counter	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_COUNTER); };
+close_scope_last	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_LAST); };
 close_scope_dccp	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_DCCP); };
 close_scope_destroy	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CMD_DESTROY); };
 close_scope_dst		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_DST); };
@@ -2686,6 +2690,7 @@ chain_policy		:	ACCEPT		{ $$ = NF_ACCEPT; }
 			;
 
 identifier		:	STRING
+			|	LAST		{ $$ = xstrdup("last"); }
 			;
 
 string			:	STRING
@@ -2966,6 +2971,7 @@ stateful_stmt		:	counter_stmt	close_scope_counter
 			|	limit_stmt
 			|	quota_stmt
 			|	connlimit_stmt
+			|	last_stmt	close_scope_last
 			;
 
 stmt			:	verdict_stmt
@@ -3101,6 +3107,22 @@ counter_arg		:	PACKETS			NUM
 			|	BYTES			NUM
 			{
 				$<stmt>0->counter.bytes	 = $2;
+			}
+			;
+
+last_stmt		:	LAST
+			{
+				$$ = last_stmt_alloc(&@$);
+			}
+			|	LAST USED	NEVER
+			{
+				$$ = last_stmt_alloc(&@$);
+			}
+			|	LAST USED	time_spec
+			{
+				$$ = last_stmt_alloc(&@$);
+				$$->last.used = $3;
+				$$->last.set = true;
 			}
 			;
 
@@ -4530,6 +4552,16 @@ set_elem_stmt		:	COUNTER	close_scope_counter
 				$$->connlimit.count = $4;
 				$$->connlimit.flags = NFT_CONNLIMIT_F_INV;
 			}
+			|	LAST USED	NEVER	close_scope_last
+			{
+				$$ = last_stmt_alloc(&@$);
+			}
+			|	LAST USED	time_spec	close_scope_last
+			{
+				$$ = last_stmt_alloc(&@$);
+				$$->last.used = $3;
+				$$->last.set = true;
+			}
 			;
 
 set_elem_expr_option	:	TIMEOUT			time_spec
@@ -4917,6 +4949,7 @@ keyword_expr		:	ETHER   close_scope_eth { $$ = symbol_value(&@$, "ether"); }
 			|	ORIGINAL		{ $$ = symbol_value(&@$, "original"); }
 			|	REPLY			{ $$ = symbol_value(&@$, "reply"); }
 			|	LABEL			{ $$ = symbol_value(&@$, "label"); }
+			|	LAST	close_scope_last	{ $$ = symbol_value(&@$, "last"); }
 			;
 
 primary_rhs_expr	:	symbol_expr		{ $$ = $1; }
