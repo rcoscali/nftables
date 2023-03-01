@@ -268,6 +268,7 @@ static unsigned int evaluate_cache_reset(struct cmd *cmd, unsigned int flags,
 {
 	switch (cmd->obj) {
 	case CMD_OBJ_RULES:
+	case CMD_OBJ_RULE:
 		if (filter) {
 			if (cmd->handle.table.name) {
 				filter->list.family = cmd->handle.family;
