@@ -4426,6 +4426,22 @@ set_elem_stmt		:	COUNTER	close_scope_counter
 				$$->connlimit.count = $4;
 				$$->connlimit.flags = NFT_CONNLIMIT_F_INV;
 			}
+			|	QUOTA	quota_mode NUM quota_unit quota_used	close_scope_quota
+			{
+				struct error_record *erec;
+				uint64_t rate;
+
+				erec = data_unit_parse(&@$, $4, &rate);
+				xfree($4);
+				if (erec != NULL) {
+					erec_queue(erec, state->msgs);
+					YYERROR;
+				}
+				$$ = quota_stmt_alloc(&@$);
+				$$->quota.bytes	= $3 * rate;
+				$$->quota.used = $5;
+				$$->quota.flags	= $2;
+			}
 			;
 
 set_elem_expr_option	:	TIMEOUT			time_spec
