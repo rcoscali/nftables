@@ -610,7 +610,7 @@ static struct expr *json_parse_tcp_option_expr(struct json_ctx *ctx,
 	struct expr *expr;
 
 	if (!json_unpack(root, "{s:i, s:i, s:i}",
-			"base", &kind, "offset", &offset, "len", &len)) {
+			 "base", &kind, "offset", &offset, "len", &len)) {
 		uint32_t flag = 0;
 
 		if (kind < 0 || kind > 255)
@@ -681,7 +681,7 @@ static int json_parse_ip_option_field(int type, const char *name, int *val)
 }
 
 static struct expr *json_parse_ip_option_expr(struct json_ctx *ctx,
-					       const char *type, json_t *root)
+					      const char *type, json_t *root)
 {
 	const char *desc, *field;
 	int descval, fieldval;
@@ -697,7 +697,7 @@ static struct expr *json_parse_ip_option_expr(struct json_ctx *ctx,
 
 	if (json_unpack(root, "{s:s}", "field", &field)) {
 		expr = ipopt_expr_alloc(int_loc, descval,
-					 IPOPT_FIELD_TYPE);
+					IPOPT_FIELD_TYPE);
 		expr->exthdr.flags = NFT_EXTHDR_F_PRESENT;
 
 		return expr;
@@ -1084,13 +1084,13 @@ static struct expr *json_parse_fib_expr(struct json_ctx *ctx,
 	}
 
 	if ((flagval & (NFTA_FIB_F_SADDR|NFTA_FIB_F_DADDR)) ==
-			(NFTA_FIB_F_SADDR|NFTA_FIB_F_DADDR)) {
+	    (NFTA_FIB_F_SADDR|NFTA_FIB_F_DADDR)) {
 		json_error(ctx, "fib: saddr and daddr are mutually exclusive");
 		return NULL;
 	}
 
 	if ((flagval & (NFTA_FIB_F_IIF|NFTA_FIB_F_OIF)) ==
-			(NFTA_FIB_F_IIF|NFTA_FIB_F_OIF)) {
+	    (NFTA_FIB_F_IIF|NFTA_FIB_F_OIF)) {
 		json_error(ctx, "fib: iif and oif are mutually exclusive");
 		return NULL;
 	}
@@ -1686,7 +1686,7 @@ static struct stmt *json_parse_match_stmt(struct json_ctx *ctx,
 }
 
 static struct stmt *json_parse_counter_stmt(struct json_ctx *ctx,
-					  const char *key, json_t *value)
+					    const char *key, json_t *value)
 {
 	uint64_t packets, bytes;
 	struct stmt *stmt;
@@ -1695,8 +1695,8 @@ static struct stmt *json_parse_counter_stmt(struct json_ctx *ctx,
 		return counter_stmt_alloc(int_loc);
 
 	if (!json_unpack(value, "{s:I, s:I}",
-			    "packets", &packets,
-			    "bytes", &bytes)) {
+			 "packets", &packets,
+			 "bytes", &bytes)) {
 		stmt = counter_stmt_alloc(int_loc);
 		stmt->counter.packets = packets;
 		stmt->counter.bytes = bytes;
@@ -1727,14 +1727,14 @@ static struct stmt *json_parse_verdict_stmt(struct json_ctx *ctx,
 }
 
 static struct stmt *json_parse_mangle_stmt(struct json_ctx *ctx,
-					const char *type, json_t *root)
+					   const char *type, json_t *root)
 {
 	json_t *jkey, *jvalue;
 	struct expr *key, *value;
 	struct stmt *stmt;
 
 	if (json_unpack_err(ctx, root, "{s:o, s:o}",
-			   "key", &jkey, "value", &jvalue))
+			    "key", &jkey, "value", &jvalue))
 		return NULL;
 
 	key = json_parse_mangle_lhs_expr(ctx, jkey);
@@ -1787,7 +1787,7 @@ static uint64_t rate_to_bytes(uint64_t val, const char *unit)
 }
 
 static struct stmt *json_parse_quota_stmt(struct json_ctx *ctx,
-					const char *key, json_t *value)
+					  const char *key, json_t *value)
 {
 	struct stmt *stmt;
 	int inv = 0;
@@ -1937,7 +1937,7 @@ static struct stmt *json_parse_flow_offload_stmt(struct json_ctx *ctx,
 }
 
 static struct stmt *json_parse_notrack_stmt(struct json_ctx *ctx,
-					const char *key, json_t *value)
+					    const char *key, json_t *value)
 {
 	return notrack_stmt_alloc(int_loc);
 }
@@ -1975,7 +1975,7 @@ static struct stmt *json_parse_dup_stmt(struct json_ctx *ctx,
 }
 
 static struct stmt *json_parse_secmark_stmt(struct json_ctx *ctx,
-					     const char *key, json_t *value)
+					    const char *key, json_t *value)
 {
 	struct stmt *stmt;
 
@@ -2047,7 +2047,7 @@ static int json_parse_nat_flags(struct json_ctx *ctx, json_t *root)
 }
 
 static int json_parse_nat_type_flag(struct json_ctx *ctx,
-			       json_t *root, int *flags)
+				    json_t *root, int *flags)
 {
 	const struct {
 		const char *flag;
@@ -2162,7 +2162,6 @@ static struct stmt *json_parse_nat_stmt(struct json_ctx *ctx,
 		}
 		stmt->nat.flags = flags;
 	}
-
 	if (!json_unpack(value, "{s:o}", "type_flags", &tmp)) {
 		int flags = json_parse_nat_type_flags(ctx, tmp);
 
@@ -2177,7 +2176,7 @@ static struct stmt *json_parse_nat_stmt(struct json_ctx *ctx,
 }
 
 static struct stmt *json_parse_tproxy_stmt(struct json_ctx *ctx,
-					const char *key, json_t *value)
+					   const char *key, json_t *value)
 {
 	json_t *jaddr, *tmp;
 	struct stmt *stmt;
@@ -2213,7 +2212,7 @@ out_free:
 }
 
 static struct stmt *json_parse_reject_stmt(struct json_ctx *ctx,
-					  const char *key, json_t *value)
+					   const char *key, json_t *value)
 {
 	struct stmt *stmt = reject_stmt_alloc(int_loc);
 	const struct datatype *dtype = NULL;
@@ -2256,8 +2255,8 @@ static struct stmt *json_parse_reject_stmt(struct json_ctx *ctx,
 }
 
 static void json_parse_set_stmt_list(struct json_ctx *ctx,
-				      struct list_head *stmt_list,
-				      json_t *stmt_json)
+				     struct list_head *stmt_list,
+				     json_t *stmt_json)
 {
 	struct list_head *head;
 	struct stmt *tmp;
@@ -2279,7 +2278,7 @@ static void json_parse_set_stmt_list(struct json_ctx *ctx,
 }
 
 static struct stmt *json_parse_set_stmt(struct json_ctx *ctx,
-					  const char *key, json_t *value)
+					const char *key, json_t *value)
 {
 	const char *opstr, *set;
 	struct expr *expr, *expr2;
@@ -2562,7 +2561,7 @@ static struct stmt *json_parse_cthelper_stmt(struct json_ctx *ctx,
 }
 
 static struct stmt *json_parse_cttimeout_stmt(struct json_ctx *ctx,
-					     const char *key, json_t *value)
+					      const char *key, json_t *value)
 {
 	struct stmt *stmt = objref_stmt_alloc(int_loc);
 
