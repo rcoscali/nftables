@@ -2888,7 +2888,7 @@ stmt			:	verdict_stmt
 			|	xt_stmt		close_scope_xt
 			;
 
-xt_stmt			:	XT	STRING	STRING
+xt_stmt			:	XT	STRING	string
 			{
 				$$ = NULL;
 				xfree($2);

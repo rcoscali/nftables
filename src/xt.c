@@ -116,7 +116,7 @@ void xt_stmt_xlate(const struct stmt *stmt, struct output_ctx *octx)
 	xfree(entry);
 #endif
 	if (!rc)
-		nft_print(octx, "xt %s %s",
+		nft_print(octx, "xt %s \"%s\"",
 			  typename[stmt->xt.type], stmt->xt.name);
 }
 
