@@ -439,6 +439,9 @@ name which specifies the order in which chains with the same *hook* value are
 traversed. The ordering is ascending, i.e. lower priority values have precedence
 over higher ones.
 
+With *nat* type chains, there's a lower excluding limit of -200 for *priority*
+values, because conntrack hooks at this priority and NAT requires it.
+
 Standard priority values can be replaced with easily memorizable names.  Not all
 names make sense in every family with every hook (see the compatibility matrices
 below) but their numerical value can still be used for prioritizing chains.
