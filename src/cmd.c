@@ -241,6 +241,33 @@ static void nft_cmd_enoent(struct netlink_ctx *ctx, const struct cmd *cmd,
 	netlink_io_error(ctx, loc, "Could not process rule: %s", strerror(err));
 }
 
+static int nft_cmd_chain_error(struct netlink_ctx *ctx, struct cmd *cmd,
+			       struct mnl_err *err)
+{
+	struct chain *chain = cmd->chain;
+	int priority;
+
+	switch (err->err) {
+	case EOPNOTSUPP:
+		if (!(chain->flags & CHAIN_F_BASECHAIN))
+			break;
+
+		mpz_export_data(&priority, chain->priority.expr->value,
+				BYTEORDER_HOST_ENDIAN, sizeof(int));
+		if (priority <= -200 && !strcmp(chain->type.str, "nat"))
+			return netlink_io_error(ctx, &chain->priority.loc,
+						"Chains of type \"nat\" must have a priority value above -200");
+
+		return netlink_io_error(ctx, &chain->loc,
+					"Chain of type \"%s\" is not supported, perhaps kernel support is missing?",
+					chain->type.str);
+	default:
+		break;
+	}
+
+	return 0;
+}
+
 void nft_cmd_error(struct netlink_ctx *ctx, struct cmd *cmd,
 		   struct mnl_err *err)
 {
@@ -261,6 +288,15 @@ void nft_cmd_error(struct netlink_ctx *ctx, struct cmd *cmd,
 		}
 	} else {
 		loc = &cmd->location;
+	}
+
+	switch (cmd->obj) {
+	case CMD_OBJ_CHAIN:
+		if (nft_cmd_chain_error(ctx, cmd, err) < 0)
+			return;
+		break;
+	default:
+		break;
 	}
 
 	netlink_io_error(ctx, loc, "Could not process rule: %s",
