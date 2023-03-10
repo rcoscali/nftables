@@ -735,16 +735,10 @@ struct cmd {
 extern struct cmd *cmd_alloc(enum cmd_ops op, enum cmd_obj obj,
 			     const struct handle *h, const struct location *loc,
 			     void *data);
-extern void nft_cmd_expand(struct cmd *cmd);
-extern void nft_cmd_post_expand(struct cmd *cmd);
-extern bool nft_cmd_collapse(struct list_head *cmds);
-extern void nft_cmd_uncollapse(struct list_head *cmds);
 extern struct cmd *cmd_alloc_obj_ct(enum cmd_ops op, int type,
 				    const struct handle *h,
 				    const struct location *loc, struct obj *obj);
 extern void cmd_free(struct cmd *cmd);
-
-void cmd_add_loc(struct cmd *cmd, uint16_t offset, const struct location *loc);
 
 #include <payload.h>
 #include <expression.h>

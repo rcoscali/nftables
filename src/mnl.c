@@ -26,6 +26,7 @@
 #include <linux/netfilter/nf_tables.h>
 
 #include <mnl.h>
+#include <cmd.h>
 #include <string.h>
 #include <net/if.h>
 #include <sys/socket.h>
