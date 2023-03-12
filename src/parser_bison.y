@@ -6180,7 +6180,7 @@ exthdr_exists_expr	:	EXTHDR	exthdr_key
 				desc = exthdr_find_proto($2);
 
 				/* Assume that NEXTHDR template is always
-				 * the fist one in list of templates.
+				 * the first one in list of templates.
 				 */
 				$$ = exthdr_expr_alloc(&@$, desc, 1);
 				$$->exthdr.flags = NFT_EXTHDR_F_PRESENT;
