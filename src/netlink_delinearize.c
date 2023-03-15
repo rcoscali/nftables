@@ -920,7 +920,9 @@ static void netlink_parse_meta_stmt(struct netlink_parse_ctx *ctx,
 
 	key  = nftnl_expr_get_u32(nle, NFTNL_EXPR_META_KEY);
 	stmt = meta_stmt_alloc(loc, key, expr);
-	expr_set_type(expr, stmt->meta.tmpl->dtype, stmt->meta.tmpl->byteorder);
+
+	if (stmt->meta.tmpl)
+		expr_set_type(expr, stmt->meta.tmpl->dtype, stmt->meta.tmpl->byteorder);
 
 	ctx->stmt = stmt;
 }
