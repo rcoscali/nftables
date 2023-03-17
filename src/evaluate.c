@@ -1326,13 +1326,32 @@ static int expr_evaluate_shift(struct eval_ctx *ctx, struct expr **expr)
 static int expr_evaluate_bitwise(struct eval_ctx *ctx, struct expr **expr)
 {
 	struct expr *op = *expr, *left = op->left;
+	const struct datatype *dtype;
+	unsigned int max_len;
+	int byteorder;
 
-	if (byteorder_conversion(ctx, &op->right, left->byteorder) < 0)
+	if (ctx->stmt_len > left->len) {
+		max_len = ctx->stmt_len;
+		byteorder = BYTEORDER_HOST_ENDIAN;
+		dtype = &integer_type;
+
+		/* Both sides need to be in host byte order */
+		if (byteorder_conversion(ctx, &op->left, BYTEORDER_HOST_ENDIAN) < 0)
+			return -1;
+
+		left = op->left;
+	} else {
+		max_len = left->len;
+		byteorder = left->byteorder;
+		dtype = left->dtype;
+	}
+
+	if (byteorder_conversion(ctx, &op->right, byteorder) < 0)
 		return -1;
 
-	op->dtype     = left->dtype;
-	op->byteorder = left->byteorder;
-	op->len	      = left->len;
+	datatype_set(op, dtype);
+	op->byteorder = byteorder;
+	op->len	      = max_len;
 
 	if (expr_is_constant(left))
 		return constant_binop_simplify(ctx, expr);
