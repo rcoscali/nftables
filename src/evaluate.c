@@ -186,7 +186,7 @@ static int byteorder_conversion(struct eval_ctx *ctx, struct expr **expr,
 				  byteorder_names[(*expr)->byteorder]);
 	}
 
-	if (expr_is_constant(*expr) || (*expr)->len / BITS_PER_BYTE < 2)
+	if (expr_is_constant(*expr) || div_round_up((*expr)->len, BITS_PER_BYTE) < 2)
 		(*expr)->byteorder = byteorder;
 	else {
 		op = byteorder_conversion_op(*expr, byteorder);
