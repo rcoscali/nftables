@@ -325,3 +325,61 @@
         }
     }
 ]
+
+# ct mark set ip dscp << 2 | 0x10
+[
+    {
+        "mangle": {
+            "key": {
+                "ct": {
+                    "key": "mark"
+                }
+            },
+            "value": {
+                "|": [
+                    {
+                        "<<": [
+                            {
+                                "payload": {
+                                    "field": "dscp",
+                                    "protocol": "ip"
+                                }
+                            },
+                            2
+                        ]
+                    },
+                    16
+                ]
+            }
+        }
+    }
+]
+
+# ct mark set ip dscp << 26 | 0x10
+[
+    {
+        "mangle": {
+            "key": {
+                "ct": {
+                    "key": "mark"
+                }
+            },
+            "value": {
+                "|": [
+                    {
+                        "<<": [
+                            {
+                                "payload": {
+                                    "field": "dscp",
+                                    "protocol": "ip"
+                                }
+                            },
+                            26
+                        ]
+                    },
+                    16
+                ]
+            }
+        }
+    }
+]
