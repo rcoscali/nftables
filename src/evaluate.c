@@ -1289,14 +1289,19 @@ static int constant_binop_simplify(struct eval_ctx *ctx, struct expr **expr)
 static int expr_evaluate_shift(struct eval_ctx *ctx, struct expr **expr)
 {
 	struct expr *op = *expr, *left = op->left, *right = op->right;
+	unsigned int shift = mpz_get_uint32(right->value);
+	unsigned int max_shift_len;
 
-	if (mpz_get_uint32(right->value) >= left->len)
+	if (ctx->stmt_len > left->len)
+		max_shift_len = ctx->stmt_len;
+	else
+		max_shift_len = left->len;
+
+	if (shift >= max_shift_len)
 		return expr_binary_error(ctx->msgs, right, left,
-					 "%s shift of %u bits is undefined "
-					 "for type of %u bits width",
+					 "%s shift of %u bits is undefined for type of %u bits width",
 					 op->op == OP_LSHIFT ? "Left" : "Right",
-					 mpz_get_uint32(right->value),
-					 left->len);
+					 shift, max_shift_len);
 
 	/* Both sides need to be in host byte order */
 	if (byteorder_conversion(ctx, &op->left, BYTEORDER_HOST_ENDIAN) < 0)
@@ -1306,7 +1311,7 @@ static int expr_evaluate_shift(struct eval_ctx *ctx, struct expr **expr)
 		return -1;
 
 	op->byteorder = BYTEORDER_HOST_ENDIAN;
-	op->len       = left->len;
+	op->len	      = max_shift_len;
 
 	if (expr_is_constant(left))
 		return constant_binop_simplify(ctx, expr);
@@ -1339,14 +1344,20 @@ static int expr_evaluate_binop(struct eval_ctx *ctx, struct expr **expr)
 {
 	struct expr *op = *expr, *left, *right;
 	const char *sym = expr_op_symbols[op->op];
+	unsigned int max_shift_len = ctx->ectx.len;
 
 	if (expr_evaluate(ctx, &op->left) < 0)
 		return -1;
 	left = op->left;
 
-	if (op->op == OP_LSHIFT || op->op == OP_RSHIFT)
+	if (op->op == OP_LSHIFT || op->op == OP_RSHIFT) {
+		if (left->len > max_shift_len)
+			max_shift_len = left->len;
+
 		__expr_set_context(&ctx->ectx, &integer_type,
-				   left->byteorder, ctx->ectx.len, 0);
+				   left->byteorder, max_shift_len, 0);
+	}
+
 	if (expr_evaluate(ctx, &op->right) < 0)
 		return -1;
 	right = op->right;
@@ -1865,6 +1876,7 @@ static int expr_evaluate_map(struct eval_ctx *ctx, struct expr **expr)
 	}
 
 	expr_set_context(&ctx->ectx, NULL, 0);
+	ctx->stmt_len = 0;
 	if (expr_evaluate(ctx, &map->map) < 0)
 		return -1;
 	if (expr_is_constant(map->map))
@@ -3000,20 +3012,34 @@ static int stmt_evaluate_meter(struct eval_ctx *ctx, struct stmt *stmt)
 
 static int stmt_evaluate_meta(struct eval_ctx *ctx, struct stmt *stmt)
 {
-	return stmt_evaluate_arg(ctx, stmt,
-				 stmt->meta.tmpl->dtype,
-				 stmt->meta.tmpl->len,
-				 stmt->meta.tmpl->byteorder,
-				 &stmt->meta.expr);
+	int ret;
+
+	ctx->stmt_len = stmt->meta.tmpl->len;
+
+	ret = stmt_evaluate_arg(ctx, stmt,
+				stmt->meta.tmpl->dtype,
+				stmt->meta.tmpl->len,
+				stmt->meta.tmpl->byteorder,
+				&stmt->meta.expr);
+	ctx->stmt_len = 0;
+
+	return ret;
 }
 
 static int stmt_evaluate_ct(struct eval_ctx *ctx, struct stmt *stmt)
 {
-	if (stmt_evaluate_arg(ctx, stmt,
-			      stmt->ct.tmpl->dtype,
-			      stmt->ct.tmpl->len,
-			      stmt->ct.tmpl->byteorder,
-			      &stmt->ct.expr) < 0)
+	int ret;
+
+	ctx->stmt_len = stmt->ct.tmpl->len;
+
+	ret = stmt_evaluate_arg(ctx, stmt,
+				stmt->ct.tmpl->dtype,
+				stmt->ct.tmpl->len,
+				stmt->ct.tmpl->byteorder,
+				&stmt->ct.expr);
+	ctx->stmt_len = 0;
+
+	if (ret < 0)
 		return -1;
 
 	if (stmt->ct.key == NFT_CT_SECMARK && expr_is_constant(stmt->ct.expr))
