@@ -2184,14 +2184,9 @@ static int do_list_ruleset(struct netlink_ctx *ctx, struct cmd *cmd)
 		    table->handle.family != family)
 			continue;
 
-		cmd->handle.family = table->handle.family;
-		cmd->handle.table.name = table->handle.table.name;
-
 		if (do_list_table(ctx, table) < 0)
 			return -1;
 	}
-
-	cmd->handle.table.name = NULL;
 
 	return 0;
 }
