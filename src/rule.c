@@ -1553,8 +1553,7 @@ static int do_command_delete(struct netlink_ctx *ctx, struct cmd *cmd)
 	}
 }
 
-static int do_list_table(struct netlink_ctx *ctx, struct cmd *cmd,
-			 struct table *table)
+static int do_list_table(struct netlink_ctx *ctx, struct table *table)
 {
 	table_print(table, &ctx->nft->output);
 	return 0;
@@ -2188,7 +2187,7 @@ static int do_list_ruleset(struct netlink_ctx *ctx, struct cmd *cmd)
 		cmd->handle.family = table->handle.family;
 		cmd->handle.table.name = table->handle.table.name;
 
-		if (do_list_table(ctx, cmd, table) < 0)
+		if (do_list_table(ctx, table) < 0)
 			return -1;
 	}
 
@@ -2319,7 +2318,7 @@ static int do_command_list(struct netlink_ctx *ctx, struct cmd *cmd)
 	case CMD_OBJ_TABLE:
 		if (!cmd->handle.table.name)
 			return do_list_tables(ctx, cmd);
-		return do_list_table(ctx, cmd, table);
+		return do_list_table(ctx, table);
 	case CMD_OBJ_CHAIN:
 		return do_list_chain(ctx, cmd, table);
 	case CMD_OBJ_CHAINS:
