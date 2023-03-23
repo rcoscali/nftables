@@ -2786,8 +2786,13 @@ static void expr_postprocess(struct rule_pp_ctx *ctx, struct expr **exprp)
 				      BYTEORDER_HOST_ENDIAN);
 			break;
 		case OP_AND:
-			expr_set_type(expr->right, expr->left->dtype,
-				      expr->left->byteorder);
+			if (expr->right->len > expr->left->len) {
+				expr_set_type(expr->right, expr->left->dtype,
+					      BYTEORDER_HOST_ENDIAN);
+			} else {
+				expr_set_type(expr->right, expr->left->dtype,
+					      expr->left->byteorder);
+			}
 
 			/* Do not process OP_AND in ordinary rule context.
 			 *
@@ -2807,8 +2812,13 @@ static void expr_postprocess(struct rule_pp_ctx *ctx, struct expr **exprp)
 			}
 			break;
 		default:
-			expr_set_type(expr->right, expr->left->dtype,
-				      expr->left->byteorder);
+			if (expr->right->len > expr->left->len) {
+				expr_set_type(expr->right, expr->left->dtype,
+					      BYTEORDER_HOST_ENDIAN);
+			} else {
+				expr_set_type(expr->right, expr->left->dtype,
+					      expr->left->byteorder);
+			}
 		}
 		expr_postprocess(ctx, &expr->right);
 
