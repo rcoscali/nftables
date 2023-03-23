@@ -2822,8 +2822,17 @@ static void expr_postprocess(struct rule_pp_ctx *ctx, struct expr **exprp)
 		}
 		expr_postprocess(ctx, &expr->right);
 
-		expr_set_type(expr, expr->left->dtype,
-			      expr->left->byteorder);
+		switch (expr->op) {
+		case OP_LSHIFT:
+		case OP_RSHIFT:
+			expr_set_type(expr, &xinteger_type,
+				      BYTEORDER_HOST_ENDIAN);
+			break;
+		default:
+			expr_set_type(expr, expr->left->dtype,
+				      expr->left->byteorder);
+		}
+
 		break;
 	case EXPR_RELATIONAL:
 		switch (expr->left->etype) {
