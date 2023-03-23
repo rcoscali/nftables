@@ -389,6 +389,7 @@ static int expr_evaluate_integer(struct eval_ctx *ctx, struct expr **exprp)
 {
 	struct expr *expr = *exprp;
 	char *valstr, *rangestr;
+	uint32_t masklen;
 	mpz_t mask;
 
 	if (ctx->ectx.maxval > 0 &&
@@ -401,7 +402,12 @@ static int expr_evaluate_integer(struct eval_ctx *ctx, struct expr **exprp)
 		return -1;
 	}
 
-	mpz_init_bitmask(mask, ctx->ectx.len);
+	if (ctx->stmt_len > ctx->ectx.len)
+		masklen = ctx->stmt_len;
+	else
+		masklen = ctx->ectx.len;
+
+	mpz_init_bitmask(mask, masklen);
 	if (mpz_cmp(expr->value, mask) > 0) {
 		valstr = mpz_get_str(NULL, 10, expr->value);
 		rangestr = mpz_get_str(NULL, 10, mask);
@@ -414,7 +420,7 @@ static int expr_evaluate_integer(struct eval_ctx *ctx, struct expr **exprp)
 		return -1;
 	}
 	expr->byteorder = ctx->ectx.byteorder;
-	expr->len = ctx->ectx.len;
+	expr->len = masklen;
 	mpz_clear(mask);
 	return 0;
 }
