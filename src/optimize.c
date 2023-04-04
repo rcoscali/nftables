@@ -853,6 +853,8 @@ static struct expr *stmt_nat_expr(struct stmt *nat_stmt)
 {
 	struct expr *nat_expr;
 
+	assert(nat_stmt->ops->type == STMT_NAT);
+
 	if (nat_stmt->nat.proto) {
 		nat_expr = concat_expr_alloc(&internal_location);
 		compound_expr_add(nat_expr, expr_get(nat_stmt->nat.addr));
@@ -862,6 +864,8 @@ static struct expr *stmt_nat_expr(struct stmt *nat_stmt)
 	} else {
 		nat_expr = expr_get(nat_stmt->nat.addr);
 	}
+
+	assert(nat_expr);
 
 	return nat_expr;
 }
