@@ -3392,6 +3392,13 @@ static int nat_evaluate_transport(struct eval_ctx *ctx, struct stmt *stmt,
 				  struct expr **expr)
 {
 	struct proto_ctx *pctx = &ctx->pctx;
+	int err;
+
+	err = stmt_evaluate_arg(ctx, stmt,
+				&inet_service_type, 2 * BITS_PER_BYTE,
+				BYTEORDER_BIG_ENDIAN, expr);
+	if (err < 0)
+		return err;
 
 	if (pctx->protocol[PROTO_BASE_TRANSPORT_HDR].desc == NULL &&
 	    !nat_evaluate_addr_has_th_expr(stmt->nat.addr))
@@ -3399,9 +3406,7 @@ static int nat_evaluate_transport(struct eval_ctx *ctx, struct stmt *stmt,
 					 "transport protocol mapping is only "
 					 "valid after transport protocol match");
 
-	return stmt_evaluate_arg(ctx, stmt,
-				 &inet_service_type, 2 * BITS_PER_BYTE,
-				 BYTEORDER_BIG_ENDIAN, expr);
+	return 0;
 }
 
 static const char *stmt_name(const struct stmt *stmt)
