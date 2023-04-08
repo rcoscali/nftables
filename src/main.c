@@ -405,9 +405,19 @@ int main(int argc, char * const *argv)
 			nft_ctx_set_dry_run(nft, true);
 			break;
 		case OPT_FILE:
+			if (interactive) {
+				fprintf(stderr,
+					"Error: -i/--interactive and -f/--file options cannot be combined\n");
+				exit(EXIT_FAILURE);
+			}
 			filename = optarg;
 			break;
 		case OPT_INTERACTIVE:
+			if (filename) {
+				fprintf(stderr,
+					"Error: -i/--interactive and -f/--file options cannot be combined\n");
+				exit(EXIT_FAILURE);
+			}
 			interactive = true;
 			break;
 		case OPT_INCLUDEPATH:
