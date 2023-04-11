@@ -1226,6 +1226,17 @@ If the *field* property is not given, the expression is to be used as an SCTP
 chunk existence check in a *match* statement with a boolean on the right hand
 side.
 
+=== DCCP OPTION
+[verse]
+*{ "dccp option": {
+	"type":* 'NUMBER'*
+*}}*
+
+Create a reference to a DCCP option (*type*).
+
+The expression is to be used as a DCCP option existence check in a *match*
+statement with a boolean on the right hand side.
+
 === META
 [verse]
 ____

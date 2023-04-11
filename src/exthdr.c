@@ -84,6 +84,9 @@ static void exthdr_expr_print(const struct expr *expr, struct output_ctx *octx)
 		if (expr->exthdr.flags & NFT_EXTHDR_F_PRESENT)
 			return;
 		nft_print(octx, " %s", expr->exthdr.tmpl->token);
+	} else if (expr->exthdr.op == NFT_EXTHDR_OP_DCCP) {
+		nft_print(octx, "dccp option %d", expr->exthdr.raw_type);
+		return;
 	} else {
 		if (expr->exthdr.flags & NFT_EXTHDR_F_PRESENT)
 			nft_print(octx, "exthdr %s", name);
@@ -177,6 +180,8 @@ static struct expr *exthdr_expr_parse_udata(const struct nftnl_udata *attr)
 	case NFT_EXTHDR_OP_SCTP:
 		return sctp_chunk_expr_alloc(&internal_location,
 					     desc_id, type);
+	case NFT_EXTHDR_OP_DCCP:
+		return dccpopt_expr_alloc(&internal_location, type);
 	case __NFT_EXTHDR_OP_MAX:
 		return NULL;
 	}
@@ -206,6 +211,7 @@ static int exthdr_expr_build_udata(struct nftnl_udata_buf *udbuf,
 	case NFT_EXTHDR_OP_TCPOPT:
 	case NFT_EXTHDR_OP_IPV4:
 	case NFT_EXTHDR_OP_SCTP:
+	case NFT_EXTHDR_OP_DCCP:
 		nftnl_udata_put_u32(udbuf, NFTNL_UDATA_EXTHDR_OP, op);
 		nftnl_udata_put_u32(udbuf, NFTNL_UDATA_EXTHDR_DESC, expr->exthdr.raw_type);
 		break;
@@ -332,6 +338,8 @@ void exthdr_init_raw(struct expr *expr, uint8_t type,
 		return ipopt_init_raw(expr, type, offset, len, flags, true);
 	if (op == NFT_EXTHDR_OP_SCTP)
 		return sctp_chunk_init_raw(expr, type, offset, len, flags);
+	if (op == NFT_EXTHDR_OP_DCCP)
+		return dccpopt_init_raw(expr, type, offset, len);
 
 	expr->len = len;
 	expr->exthdr.flags = flags;

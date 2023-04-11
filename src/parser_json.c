@@ -756,6 +756,22 @@ static struct expr *json_parse_sctp_chunk_expr(struct json_ctx *ctx,
 	return sctp_chunk_expr_alloc(int_loc, desc->type, fieldval);
 }
 
+static struct expr *json_parse_dccp_option_expr(struct json_ctx *ctx,
+						const char *type, json_t *root)
+{
+	const int opt_type;
+
+	if (json_unpack_err(ctx, root, "{s:i}", "type", &opt_type))
+		return NULL;
+
+	if (opt_type < DCCPOPT_TYPE_MIN || opt_type > DCCPOPT_TYPE_MAX) {
+		json_error(ctx, "Unknown dccp option type '%d'.", opt_type);
+		return NULL;
+	}
+
+	return dccpopt_expr_alloc(int_loc, opt_type);
+}
+
 static const struct exthdr_desc *exthdr_lookup_byname(const char *name)
 {
 	const struct exthdr_desc *exthdr_tbl[] = {
@@ -1462,6 +1478,7 @@ static struct expr *json_parse_expr(struct json_ctx *ctx, json_t *root)
 		{ "tcp option", json_parse_tcp_option_expr, CTX_F_PRIMARY | CTX_F_SET_RHS | CTX_F_MANGLE | CTX_F_SES | CTX_F_CONCAT },
 		{ "ip option", json_parse_ip_option_expr, CTX_F_PRIMARY | CTX_F_SET_RHS | CTX_F_MANGLE | CTX_F_SES | CTX_F_CONCAT },
 		{ "sctp chunk", json_parse_sctp_chunk_expr, CTX_F_PRIMARY | CTX_F_SET_RHS | CTX_F_MANGLE | CTX_F_SES | CTX_F_CONCAT },
+		{ "dccp option", json_parse_dccp_option_expr, CTX_F_PRIMARY },
 		{ "meta", json_parse_meta_expr, CTX_F_STMT | CTX_F_PRIMARY | CTX_F_SET_RHS | CTX_F_MANGLE | CTX_F_SES | CTX_F_MAP | CTX_F_CONCAT },
 		{ "osf", json_parse_osf_expr, CTX_F_STMT | CTX_F_PRIMARY | CTX_F_MAP | CTX_F_CONCAT },
 		{ "ipsec", json_parse_xfrm_expr, CTX_F_PRIMARY | CTX_F_MAP | CTX_F_CONCAT },

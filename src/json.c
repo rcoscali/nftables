@@ -751,6 +751,11 @@ json_t *exthdr_expr_json(const struct expr *expr, struct output_ctx *octx)
 		return json_pack("{s:o}", "tcp option", root);
 	}
 
+	if (expr->exthdr.op == NFT_EXTHDR_OP_DCCP) {
+		root = json_pack("{s:i}", "type", expr->exthdr.raw_type);
+		return json_pack("{s:o}", "dccp option", root);
+	}
+
 	root = json_pack("{s:s}", "name", desc);
 	if (!is_exists)
 		json_object_set_new(root, "field", json_string(field));

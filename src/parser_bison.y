@@ -5968,6 +5968,15 @@ dccp_hdr_expr		:	DCCP	dccp_hdr_field	close_scope_dccp
 			{
 				$$ = payload_expr_alloc(&@$, &proto_dccp, $2);
 			}
+			|	DCCP	OPTION		NUM	close_scope_dccp
+			{
+				if ($3 > DCCPOPT_TYPE_MAX) {
+					erec_queue(error(&@1, "value too large"),
+						   state->msgs);
+					YYERROR;
+				}
+				$$ = dccpopt_expr_alloc(&@$, $3);
+			}
 			;
 
 dccp_hdr_field		:	SPORT		{ $$ = DCCPHDR_SPORT; }
