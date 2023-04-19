@@ -1091,8 +1091,21 @@ void chain_print_plain(const struct chain *chain, struct output_ctx *octx)
 	if (chain->flags & CHAIN_F_BASECHAIN) {
 		mpz_export_data(&policy, chain->policy->value,
 				BYTEORDER_HOST_ENDIAN, sizeof(int));
-		nft_print(octx, " { type %s hook %s priority %s; policy %s; }",
-			  chain->type.str, chain->hook.name,
+		nft_print(octx, " { type %s hook %s ",
+			  chain->type.str, chain->hook.name);
+
+		if (chain->dev_array_len > 0) {
+			int i;
+
+			nft_print(octx, "devices = { ");
+			for (i = 0; i < chain->dev_array_len; i++) {
+				nft_print(octx, "%s", chain->dev_array[i]);
+				if (i + 1 != chain->dev_array_len)
+					nft_print(octx, ", ");
+			}
+			nft_print(octx, " } ");
+		}
+		nft_print(octx, "priority %s; policy %s; }",
 			  prio2str(octx, priobuf, sizeof(priobuf),
 				   chain->handle.family, chain->hook.num,
 				   chain->priority.expr),

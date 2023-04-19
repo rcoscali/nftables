@@ -1358,6 +1358,13 @@ delete_cmd		:	TABLE		table_or_id_spec
 			{
 				$$ = cmd_alloc(CMD_DELETE, CMD_OBJ_CHAIN, &$2, &@$, NULL);
 			}
+			|	CHAIN		chain_spec	chain_block_alloc
+						'{'	chain_block	'}'
+			{
+				$5->location = @5;
+				handle_merge(&$3->handle, &$2);
+				$$ = cmd_alloc(CMD_DELETE, CMD_OBJ_CHAIN, &$2, &@$, $5);
+			}
 			|	RULE		ruleid_spec
 			{
 				$$ = cmd_alloc(CMD_DELETE, CMD_OBJ_RULE, &$2, &@$, NULL);
@@ -2003,6 +2010,15 @@ chain_block		:	/* empty */	{ $$ = $<chain>-1; }
 			{
 				list_add_tail(&$2->list, &$1->rules);
 				$$ = $1;
+			}
+			|	chain_block	DEVICES		'='	flowtable_expr	stmt_separator
+			{
+				if ($$->dev_expr) {
+					list_splice_init(&$4->expressions, &$$->dev_expr->expressions);
+					expr_free($4);
+					break;
+				}
+				$$->dev_expr = $4;
 			}
 			|	chain_block	comment_spec	stmt_separator
 			{

@@ -4964,15 +4964,17 @@ static int chain_evaluate(struct eval_ctx *ctx, struct chain *chain)
 				return chain_error(ctx, chain, "invalid policy expression %s",
 						   expr_name(chain->policy));
 		}
+	}
+
+	if (chain->dev_expr) {
+		if (!(chain->flags & CHAIN_F_BASECHAIN))
+			chain->flags |= CHAIN_F_BASECHAIN;
 
 		if (chain->handle.family == NFPROTO_NETDEV ||
 		    (chain->handle.family == NFPROTO_INET &&
 		     chain->hook.num == NF_INET_INGRESS)) {
-			if (!chain->dev_expr)
-				return __stmt_binary_error(ctx, &chain->loc, NULL,
-							   "Missing `device' in this chain definition");
-
-			if (!evaluate_device_expr(ctx, &chain->dev_expr))
+			if (chain->dev_expr &&
+			    !evaluate_device_expr(ctx, &chain->dev_expr))
 				return -1;
 		} else if (chain->dev_expr) {
 			return __stmt_binary_error(ctx, &chain->dev_expr->location, NULL,
