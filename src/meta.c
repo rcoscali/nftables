@@ -773,6 +773,11 @@ static void meta_expr_pctx_update(struct proto_ctx *ctx,
 		break;
 	case NFT_META_NFPROTO:
 		protonum = mpz_get_uint8(right->value);
+		if (protonum == NFPROTO_IPV4 && h->desc == &proto_ip)
+			break;
+		else if (protonum == NFPROTO_IPV6 && h->desc == &proto_ip6)
+			break;
+
 		desc = proto_find_upper(h->desc, protonum);
 		if (desc == NULL) {
 			desc = &proto_unknown;
