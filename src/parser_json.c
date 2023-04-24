@@ -2789,17 +2789,21 @@ static struct stmt *json_parse_stmt(struct json_ctx *ctx, json_t *root)
 static struct cmd *json_parse_cmd_add_table(struct json_ctx *ctx, json_t *root,
 					    enum cmd_ops op, enum cmd_obj obj)
 {
+	const char *family = "", *comment = NULL;
 	struct handle h = {
 		.table.location = *int_loc,
 	};
-	const char *family = "";
+	struct table *table = NULL;
 
 	if (json_unpack_err(ctx, root, "{s:s}",
 			    "family", &family))
 		return NULL;
-	if (op != CMD_DELETE &&
-	    json_unpack_err(ctx, root, "{s:s}", "name", &h.table.name)) {
-		return NULL;
+
+	if (op != CMD_DELETE) {
+		if (json_unpack_err(ctx, root, "{s:s}", "name", &h.table.name))
+			return NULL;
+
+		json_unpack(root, "{s:s}", "comment", &comment);
 	} else if (op == CMD_DELETE &&
 		   json_unpack(root, "{s:s}", "name", &h.table.name) &&
 		   json_unpack(root, "{s:I}", "handle", &h.handle.id)) {
@@ -2813,10 +2817,16 @@ static struct cmd *json_parse_cmd_add_table(struct json_ctx *ctx, json_t *root,
 	if (h.table.name)
 		h.table.name = xstrdup(h.table.name);
 
+	if (comment) {
+		table = table_alloc();
+		handle_merge(&table->handle, &h);
+		table->comment = xstrdup(comment);
+	}
+
 	if (op == CMD_ADD)
 		json_object_del(root, "handle");
 
-	return cmd_alloc(op, obj, &h, int_loc, NULL);
+	return cmd_alloc(op, obj, &h, int_loc, table);
 }
 
 static struct expr *parse_policy(const char *policy)

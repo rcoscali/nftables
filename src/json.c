@@ -510,6 +510,9 @@ static json_t *table_print_json(const struct table *table)
 	if (tmp)
 		json_object_set_new(root, "flags", tmp);
 
+	if (table->comment)
+		json_object_set_new(root, "comment", json_string(table->comment));
+
 	return json_pack("{s:o}", "table", root);
 }
 
