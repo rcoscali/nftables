@@ -263,6 +263,9 @@ static json_t *chain_print_json(const struct chain *chain)
 			 "name", chain->handle.chain.name,
 			 "handle", chain->handle.handle.id);
 
+	if (chain->comment)
+		json_object_set_new(root, "comment", json_string(chain->comment));
+
 	if (chain->flags & CHAIN_F_BASECHAIN) {
 		mpz_export_data(&priority, chain->priority.expr->value,
 				BYTEORDER_HOST_ENDIAN, sizeof(int));

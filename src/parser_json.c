@@ -2851,17 +2851,19 @@ static struct cmd *json_parse_cmd_add_chain(struct json_ctx *ctx, json_t *root,
 	struct handle h = {
 		.table.location = *int_loc,
 	};
-	const char *family = "", *policy = "", *type, *hookstr, *name;
-	struct chain *chain;
+	const char *family = "", *policy = "", *type, *hookstr, *name, *comment = NULL;
+	struct chain *chain = NULL;
 	int prio;
 
 	if (json_unpack_err(ctx, root, "{s:s, s:s}",
 			    "family", &family,
 			    "table", &h.table.name))
 		return NULL;
-	if (op != CMD_DELETE &&
-	    json_unpack_err(ctx, root, "{s:s}", "name", &h.chain.name)) {
-		return NULL;
+	if (op != CMD_DELETE) {
+		if (json_unpack_err(ctx, root, "{s:s}", "name", &h.chain.name))
+			return NULL;
+
+		json_unpack(root, "{s:s}", "comment", &comment);
 	} else if (op == CMD_DELETE &&
 		   json_unpack(root, "{s:s}", "name", &h.chain.name) &&
 		   json_unpack(root, "{s:I}", "handle", &h.handle.id)) {
@@ -2876,14 +2878,22 @@ static struct cmd *json_parse_cmd_add_chain(struct json_ctx *ctx, json_t *root,
 	if (h.chain.name)
 		h.chain.name = xstrdup(h.chain.name);
 
+	if (comment) {
+		chain = chain_alloc(NULL);
+		handle_merge(&chain->handle, &h);
+		chain->comment = xstrdup(comment);
+	}
+
 	if (op == CMD_DELETE ||
 	    op == CMD_LIST ||
 	    op == CMD_FLUSH ||
 	    json_unpack(root, "{s:s, s:s, s:i}",
 			"type", &type, "hook", &hookstr, "prio", &prio))
-		return cmd_alloc(op, obj, &h, int_loc, NULL);
+		return cmd_alloc(op, obj, &h, int_loc, chain);
 
-	chain = chain_alloc(NULL);
+	if (!chain)
+		chain = chain_alloc(NULL);
+
 	chain->flags |= CHAIN_F_BASECHAIN;
 	chain->type.str = xstrdup(type);
 	chain->priority.expr = constant_expr_alloc(int_loc, &integer_type,
