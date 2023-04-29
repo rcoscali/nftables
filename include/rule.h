@@ -519,7 +519,7 @@ struct obj *obj_lookup_fuzzy(const char *obj_name,
 void obj_print(const struct obj *n, struct output_ctx *octx);
 void obj_print_plain(const struct obj *obj, struct output_ctx *octx);
 const char *obj_type_name(uint32_t type);
-uint32_t obj_type_to_cmd(uint32_t type);
+enum cmd_obj obj_type_to_cmd(uint32_t type);
 
 struct flowtable {
 	struct list_head	list;

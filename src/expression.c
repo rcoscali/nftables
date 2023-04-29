@@ -1540,7 +1540,7 @@ const struct expr_ops *expr_ops(const struct expr *e)
 	return __expr_ops_by_type(e->etype);
 }
 
-const struct expr_ops *expr_ops_by_type(uint32_t value)
+const struct expr_ops *expr_ops_by_type(enum expr_types value)
 {
 	/* value might come from unreliable source, such as "udata"
 	 * annotation of set keys.  Avoid BUG() assertion.

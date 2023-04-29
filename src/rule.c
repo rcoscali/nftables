@@ -1912,7 +1912,7 @@ static const char * const obj_type_name_array[] = {
 	[NFT_OBJECT_CT_EXPECT]	= "ct expectation",
 };
 
-const char *obj_type_name(enum stmt_types type)
+const char *obj_type_name(unsigned int type)
 {
 	assert(type <= NFT_OBJECT_MAX && obj_type_name_array[type]);
 
@@ -1930,7 +1930,7 @@ static uint32_t obj_type_cmd_array[NFT_OBJECT_MAX + 1] = {
 	[NFT_OBJECT_CT_EXPECT]	= CMD_OBJ_CT_EXPECT,
 };
 
-uint32_t obj_type_to_cmd(uint32_t type)
+enum cmd_obj obj_type_to_cmd(uint32_t type)
 {
 	assert(type <= NFT_OBJECT_MAX && obj_type_cmd_array[type]);
 
