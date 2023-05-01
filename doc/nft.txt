@@ -597,8 +597,7 @@ string: ipv4_addr, ipv6_addr, ether_addr, inet_proto, inet_service, mark
 data type of set element |
 expression to derive the data type from
 |flags |
-set flags |
-string: constant, dynamic, interval, timeout
+set flags | string: constant, dynamic, interval, timeout.  Used to describe the sets properties.
 |timeout |
 time an element stays in the set, mandatory if set is added to from the packet path (ruleset)|
 string, decimal followed by unit. Units are: d, h, m, s
@@ -650,7 +649,7 @@ data type of set element |
 expression to derive the data type from
 |flags |
 map flags |
-string: constant, interval
+string, same as set flags
 |elements |
 elements contained by the map |
 map data type
@@ -662,6 +661,22 @@ map policy |
 string: performance [default], memory
 |=================
 
+Users can specifiy the properties/features that the set/map must support.
+This allows the kernel to pick an optimal internal representation.
+If a required flag is missing, the ruleset might still work, as
+nftables will auto-enable features if it can infer this from the ruleset.
+This may not work for all cases, however, so it is recommended to
+specify all required features in the set/map definition manually.
+
+.Set and Map flags
+[options="header"]
+|=================
+|Flag		| Description
+|constant	| Set contents will never change after creation
+|dynamic	| Set must support updates from the packet path with the *add*, *update* or *delete* keywords.
+|interval	| Set must be able to store intervals (ranges)
+|timeout	| Set must support element timeouts (auto-removal of elements once they expire).
+|=================
 
 ELEMENTS
 --------
