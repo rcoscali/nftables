@@ -1024,10 +1024,15 @@ struct set *netlink_delinearize_set(struct netlink_ctx *ctx,
 	list_splice_tail(&set_parse_ctx.stmt_list, &set->stmt_list);
 
 	if (datatype) {
+		uint32_t dlen;
+
 		dtype = set_datatype_alloc(datatype, databyteorder);
 		klen = nftnl_set_get_u32(nls, NFTNL_SET_DATA_LEN) * BITS_PER_BYTE;
 
-		if (set_udata_key_valid(typeof_expr_data, klen)) {
+		dlen = data_interval ?  klen / 2 : klen;
+
+		if (set_udata_key_valid(typeof_expr_data, dlen)) {
+			typeof_expr_data->len = klen;
 			datatype_free(datatype_get(dtype));
 			set->data = typeof_expr_data;
 		} else {
