@@ -28,6 +28,7 @@
 #include <erec.h>
 #include <netlink.h>
 #include <json.h>
+#include <misspell.h>
 
 #include <netinet/ip_icmp.h>
 
@@ -141,6 +142,43 @@ struct error_record *symbol_parse(struct parse_ctx *ctx, const struct expr *sym,
 		     sym->dtype->desc);
 }
 
+static struct error_record *__symbol_parse_fuzzy(const struct expr *sym,
+						 const struct symbol_table *tbl)
+{
+	const struct symbolic_constant *s;
+	struct string_misspell_state st;
+
+	string_misspell_init(&st);
+
+	for (s = tbl->symbols; s->identifier != NULL; s++) {
+		string_misspell_update(sym->identifier, s->identifier,
+				       (void *)s->identifier, &st);
+	}
+
+	if (st.obj) {
+		return error(&sym->location,
+			     "Could not parse %s expression; did you you mean `%s`?",
+			     sym->dtype->desc, st.obj);
+	}
+
+	return NULL;
+}
+
+static struct error_record *symbol_parse_fuzzy(const struct expr *sym,
+					       const struct symbol_table *tbl)
+{
+	struct error_record *erec;
+
+	if (!tbl)
+		return NULL;
+
+	erec = __symbol_parse_fuzzy(sym, tbl);
+	if (erec)
+		return erec;
+
+	return NULL;
+}
+
 struct error_record *symbolic_constant_parse(struct parse_ctx *ctx,
 					     const struct expr *sym,
 					     const struct symbol_table *tbl,
@@ -163,8 +201,16 @@ struct error_record *symbolic_constant_parse(struct parse_ctx *ctx,
 	do {
 		if (dtype->basetype->parse) {
 			erec = dtype->basetype->parse(ctx, sym, res);
-			if (erec != NULL)
-				return erec;
+			if (erec != NULL) {
+				struct error_record *fuzzy_erec;
+
+				fuzzy_erec = symbol_parse_fuzzy(sym, tbl);
+				if (!fuzzy_erec)
+					return erec;
+
+				erec_destroy(erec);
+				return fuzzy_erec;
+			}
 			if (*res)
 				return NULL;
 			goto out;
