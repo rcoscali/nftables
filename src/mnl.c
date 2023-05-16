@@ -2273,6 +2273,27 @@ static int dump_nf_attr_chain_cb(const struct nlattr *attr, void *data)
 	return MNL_CB_OK;
 }
 
+static int dump_nf_attr_bpf_cb(const struct nlattr *attr, void *data)
+{
+	int type = mnl_attr_get_type(attr);
+	const struct nlattr **tb = data;
+
+	if (mnl_attr_type_valid(attr, NFNLA_HOOK_BPF_MAX) < 0)
+		return MNL_CB_OK;
+
+	switch(type) {
+	case NFNLA_HOOK_BPF_ID:
+                if (mnl_attr_validate(attr, MNL_TYPE_U32) < 0)
+                        return MNL_CB_ERROR;
+		break;
+	default:
+		return MNL_CB_OK;
+	}
+
+	tb[type] = attr;
+	return MNL_CB_OK;
+}
+
 struct dump_nf_hook_data {
 	struct list_head *hook_list;
 	int family;
@@ -2332,6 +2353,23 @@ static int dump_nf_hooks(const struct nlmsghdr *nlh, void *_data)
 				hook->chain = xstrdup(chainname);
 			}
 			hook->chain_family = mnl_attr_get_u8(info[NFNLA_CHAIN_FAMILY]);
+		} else if (type == NFNL_HOOK_TYPE_BPF) {
+			struct nlattr *info[NFNLA_HOOK_BPF_MAX + 1] = {};
+
+			if (mnl_attr_parse_nested(nested[NFNLA_HOOK_INFO_DESC],
+						  dump_nf_attr_bpf_cb, info) < 0) {
+				basehook_free(hook);
+				return -1;
+			}
+
+			if (info[NFNLA_HOOK_BPF_ID]) {
+				char tmpbuf[16];
+
+				snprintf(tmpbuf, sizeof(tmpbuf), "id %u",
+					 ntohl(mnl_attr_get_u32(info[NFNLA_HOOK_BPF_ID])));
+
+				hook->chain = xstrdup(tmpbuf);
+			}
 		}
 	}
 	if (tb[NFNLA_HOOK_HOOKNUM])
@@ -2453,6 +2491,8 @@ static void print_hooks(struct netlink_ctx *ctx, int family, struct list_head *h
 
 		if (hook->table && hook->chain)
 			fprintf(fp, " chain %s %s %s", family2str(hook->chain_family), hook->table, hook->chain);
+		else if (hook->hookfn && hook->chain)
+			fprintf(fp, " %s %s", hook->hookfn, hook->chain);
 		else if (hook->hookfn) {
 			fprintf(fp, " %s", hook->hookfn);
 		}
