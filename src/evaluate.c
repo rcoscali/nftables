@@ -4333,6 +4333,14 @@ static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 		existing_set = set_cache_find(table, set->handle.set.name);
 		if (!existing_set)
 			set_cache_add(set_get(set), table);
+
+		if (existing_set && existing_set->flags & NFT_SET_EVAL) {
+			uint32_t existing_flags = existing_set->flags & ~NFT_SET_EVAL;
+			uint32_t new_flags = set->flags & ~NFT_SET_EVAL;
+
+			if (existing_flags == new_flags)
+				set->flags |= NFT_SET_EVAL;
+		}
 	}
 
 	if (!(set->flags & NFT_SET_INTERVAL) && set->automerge)
