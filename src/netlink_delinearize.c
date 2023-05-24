@@ -2839,6 +2839,15 @@ static void expr_postprocess(struct rule_pp_ctx *ctx, struct expr **exprp)
 		case EXPR_PAYLOAD:
 			payload_match_postprocess(ctx, expr, expr->left);
 			return;
+		case EXPR_CONCAT:
+			if (expr->right->etype == EXPR_SET_REF) {
+				assert(expr->left->dtype == &invalid_type);
+				assert(expr->right->dtype != &invalid_type);
+
+				datatype_set(expr->left, expr->right->dtype);
+			}
+			expr_postprocess(ctx, &expr->left);
+			break;
 		default:
 			expr_postprocess(ctx, &expr->left);
 			break;

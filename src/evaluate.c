@@ -2336,6 +2336,12 @@ static int expr_evaluate_relational(struct eval_ctx *ctx, struct expr **expr)
 	struct expr *range;
 	int ret;
 
+	right = rel->right;
+	if (right->etype == EXPR_SYMBOL &&
+	    right->symtype == SYMBOL_SET &&
+	    expr_evaluate(ctx, &rel->right) < 0)
+		return -1;
+
 	if (expr_evaluate(ctx, &rel->left) < 0)
 		return -1;
 	left = rel->left;
