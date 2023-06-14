@@ -5356,21 +5356,7 @@ static int cmd_evaluate_list(struct eval_ctx *ctx, struct cmd *cmd)
 
 		return 0;
 	case CMD_OBJ_SET:
-		table = table_cache_find(&ctx->nft->cache.table_cache,
-					 cmd->handle.table.name,
-					 cmd->handle.family);
-		if (!table)
-			return table_not_found(ctx);
-
-		set = set_cache_find(table, cmd->handle.set.name);
-		if (set == NULL)
-			return set_not_found(ctx, &ctx->cmd->handle.set.location,
-					     ctx->cmd->handle.set.name);
-		else if (!set_is_literal(set->flags))
-			return cmd_error(ctx, &ctx->cmd->handle.set.location,
-					 "%s", strerror(ENOENT));
-
-		return 0;
+	case CMD_OBJ_MAP:
 	case CMD_OBJ_METER:
 		table = table_cache_find(&ctx->nft->cache.table_cache,
 					 cmd->handle.table.name,
@@ -5382,23 +5368,9 @@ static int cmd_evaluate_list(struct eval_ctx *ctx, struct cmd *cmd)
 		if (set == NULL)
 			return set_not_found(ctx, &ctx->cmd->handle.set.location,
 					     ctx->cmd->handle.set.name);
-		else if (!set_is_meter(set->flags))
-			return cmd_error(ctx, &ctx->cmd->handle.set.location,
-					 "%s", strerror(ENOENT));
-
-		return 0;
-	case CMD_OBJ_MAP:
-		table = table_cache_find(&ctx->nft->cache.table_cache,
-					 cmd->handle.table.name,
-					 cmd->handle.family);
-		if (!table)
-			return table_not_found(ctx);
-
-		set = set_cache_find(table, cmd->handle.set.name);
-		if (set == NULL)
-			return set_not_found(ctx, &ctx->cmd->handle.set.location,
-					     ctx->cmd->handle.set.name);
-		else if (!map_is_literal(set->flags))
+		if ((cmd->obj == CMD_OBJ_SET && !set_is_literal(set->flags)) ||
+		    (cmd->obj == CMD_OBJ_MAP && !map_is_literal(set->flags)) ||
+		    (cmd->obj == CMD_OBJ_METER && !set_is_meter(set->flags)))
 			return cmd_error(ctx, &ctx->cmd->handle.set.location,
 					 "%s", strerror(ENOENT));
 
