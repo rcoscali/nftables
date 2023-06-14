@@ -1799,10 +1799,13 @@ static json_t *do_list_chains_json(struct netlink_ctx *ctx, struct cmd *cmd)
 static json_t *do_list_set_json(struct netlink_ctx *ctx,
 				struct cmd *cmd, struct table *table)
 {
-	struct set *set = set_cache_find(table, cmd->handle.set.name);
+	struct set *set = cmd->set;
 
-	if (set == NULL)
-		return json_null();
+	if (!set) {
+		set = set_cache_find(table, cmd->handle.set.name);
+		if (set == NULL)
+			return json_null();
+	}
 
 	return json_pack("[o]", set_print_json(&ctx->nft->output, set));
 }

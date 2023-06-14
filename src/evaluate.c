@@ -5374,6 +5374,7 @@ static int cmd_evaluate_list(struct eval_ctx *ctx, struct cmd *cmd)
 			return cmd_error(ctx, &ctx->cmd->handle.set.location,
 					 "%s", strerror(ENOENT));
 
+		cmd->set = set_get(set);
 		return 0;
 	case CMD_OBJ_CHAIN:
 		table = table_cache_find(&ctx->nft->cache.table_cache,

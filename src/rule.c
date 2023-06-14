@@ -1356,6 +1356,8 @@ void cmd_free(struct cmd *cmd)
 				set_free(cmd->elem.set);
 			break;
 		case CMD_OBJ_SET:
+		case CMD_OBJ_MAP:
+		case CMD_OBJ_METER:
 		case CMD_OBJ_SETELEMS:
 			set_free(cmd->set);
 			break;
@@ -2283,11 +2285,13 @@ static void __do_list_set(struct netlink_ctx *ctx, struct cmd *cmd,
 static int do_list_set(struct netlink_ctx *ctx, struct cmd *cmd,
 		       struct table *table)
 {
-	struct set *set;
+	struct set *set = cmd->set;
 
-	set = set_cache_find(table, cmd->handle.set.name);
-	if (set == NULL)
-		return -1;
+	if (!set) {
+		set = set_cache_find(table, cmd->handle.set.name);
+		if (set == NULL)
+			return -1;
+	}
 
 	__do_list_set(ctx, cmd, set);
 
