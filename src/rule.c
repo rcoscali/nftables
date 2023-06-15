@@ -2381,7 +2381,7 @@ static int do_command_list(struct netlink_ctx *ctx, struct cmd *cmd)
 	return 0;
 }
 
-static int do_get_setelems(struct netlink_ctx *ctx, struct cmd *cmd)
+static int do_get_setelems(struct netlink_ctx *ctx, struct cmd *cmd, bool reset)
 {
 	struct set *set, *new_set;
 	struct expr *init;
@@ -2399,7 +2399,7 @@ static int do_get_setelems(struct netlink_ctx *ctx, struct cmd *cmd)
 
 	/* Fetch from kernel the elements that have been requested .*/
 	err = netlink_get_setelem(ctx, &cmd->handle, &cmd->location,
-				  cmd->elem.set, new_set, init);
+				  cmd->elem.set, new_set, init, reset);
 	if (err >= 0)
 		__do_list_set(ctx, cmd, new_set);
 
@@ -2415,7 +2415,7 @@ static int do_command_get(struct netlink_ctx *ctx, struct cmd *cmd)
 {
 	switch (cmd->obj) {
 	case CMD_OBJ_ELEMENTS:
-		return do_get_setelems(ctx, cmd);
+		return do_get_setelems(ctx, cmd, false);
 	default:
 		BUG("invalid command object type %u\n", cmd->obj);
 	}
@@ -2452,6 +2452,15 @@ static int do_command_reset(struct netlink_ctx *ctx, struct cmd *cmd)
 		return do_command_list(ctx, cmd);
 	case CMD_OBJ_RULE:
 		return netlink_reset_rules(ctx, cmd, false);
+	case CMD_OBJ_ELEMENTS:
+		return do_get_setelems(ctx, cmd, true);
+	case CMD_OBJ_SET:
+	case CMD_OBJ_MAP:
+		ret = netlink_list_setelems(ctx, &cmd->handle, cmd->set, true);
+		if (ret < 0)
+			return ret;
+
+		return do_command_list(ctx, cmd);
 	default:
 		BUG("invalid command object type %u\n", cmd->obj);
 	}

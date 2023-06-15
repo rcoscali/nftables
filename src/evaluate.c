@@ -5470,6 +5470,11 @@ static int cmd_evaluate_reset(struct eval_ctx *ctx, struct cmd *cmd)
 			return table_not_found(ctx);
 
 		return 0;
+	case CMD_OBJ_ELEMENTS:
+		return setelem_evaluate(ctx, cmd);
+	case CMD_OBJ_SET:
+	case CMD_OBJ_MAP:
+		return cmd_evaluate_list(ctx, cmd);
 	default:
 		BUG("invalid command object type %u\n", cmd->obj);
 	}

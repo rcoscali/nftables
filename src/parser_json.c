@@ -3169,6 +3169,7 @@ static struct cmd *json_parse_cmd_add_set(struct json_ctx *ctx, json_t *root,
 	case CMD_DESTROY:
 	case CMD_LIST:
 	case CMD_FLUSH:
+	case CMD_RESET:
 		return cmd_alloc(op, obj, &h, int_loc, NULL);
 	default:
 		break;
@@ -3918,6 +3919,9 @@ static struct cmd *json_parse_cmd_reset(struct json_ctx *ctx,
 		{ "quotas", CMD_OBJ_QUOTAS, json_parse_cmd_list_multiple },
 		{ "rule", CMD_OBJ_RULE, json_parse_cmd_reset_rule },
 		{ "rules", CMD_OBJ_RULES, json_parse_cmd_reset_rule },
+		{ "element", CMD_OBJ_ELEMENTS, json_parse_cmd_add_element },
+		{ "set", CMD_OBJ_SET, json_parse_cmd_add_set },
+		{ "map", CMD_OBJ_MAP, json_parse_cmd_add_set },
 	};
 	unsigned int i;
 	json_t *tmp;

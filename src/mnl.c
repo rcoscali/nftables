@@ -1870,14 +1870,21 @@ int mnl_nft_setelem_del(struct netlink_ctx *ctx, struct cmd *cmd,
 }
 
 struct nftnl_set *mnl_nft_setelem_get_one(struct netlink_ctx *ctx,
-					  struct nftnl_set *nls_in)
+					  struct nftnl_set *nls_in,
+					  bool reset)
 {
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nftnl_set *nls_out;
 	struct nlmsghdr *nlh;
+	int msg_type;
 	int err;
 
-	nlh = nftnl_nlmsg_build_hdr(buf, NFT_MSG_GETSETELEM,
+	if (reset)
+		msg_type = NFT_MSG_GETSETELEM_RESET;
+	else
+		msg_type = NFT_MSG_GETSETELEM;
+
+	nlh = nftnl_nlmsg_build_hdr(buf, msg_type,
 				    nftnl_set_get_u32(nls_in, NFTNL_SET_FAMILY),
 				    NLM_F_ACK, ctx->seqnum);
 	nftnl_set_elems_nlmsg_build_payload(nlh, nls_in);
@@ -1900,12 +1907,19 @@ struct nftnl_set *mnl_nft_setelem_get_one(struct netlink_ctx *ctx,
 	return nls_out;
 }
 
-int mnl_nft_setelem_get(struct netlink_ctx *ctx, struct nftnl_set *nls)
+int mnl_nft_setelem_get(struct netlink_ctx *ctx, struct nftnl_set *nls,
+			bool reset)
 {
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlmsghdr *nlh;
+	int msg_type;
 
-	nlh = nftnl_nlmsg_build_hdr(buf, NFT_MSG_GETSETELEM,
+	if (reset)
+		msg_type = NFT_MSG_GETSETELEM_RESET;
+	else
+		msg_type = NFT_MSG_GETSETELEM;
+
+	nlh = nftnl_nlmsg_build_hdr(buf, msg_type,
 				    nftnl_set_get_u32(nls, NFTNL_SET_FAMILY),
 				    NLM_F_DUMP, ctx->seqnum);
 	nftnl_set_elems_nlmsg_build_payload(nlh, nls);

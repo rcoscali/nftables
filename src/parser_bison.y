@@ -1742,6 +1742,18 @@ reset_cmd		:	COUNTERS	ruleset_spec
 			{
 				$$ = cmd_alloc(CMD_RESET, CMD_OBJ_RULE, &$2, &@$, NULL);
 			}
+			|	ELEMENT		set_spec	set_block_expr
+			{
+				$$ = cmd_alloc(CMD_RESET, CMD_OBJ_ELEMENTS, &$2, &@$, $3);
+			}
+			|	SET		set_or_id_spec
+			{
+				$$ = cmd_alloc(CMD_RESET, CMD_OBJ_SET, &$2, &@$, NULL);
+			}
+			|	MAP		set_or_id_spec
+			{
+				$$ = cmd_alloc(CMD_RESET, CMD_OBJ_MAP, &$2, &@$, NULL);
+			}
 			;
 
 flush_cmd		:	TABLE		table_spec

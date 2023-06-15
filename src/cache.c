@@ -282,6 +282,11 @@ static unsigned int evaluate_cache_reset(struct cmd *cmd, unsigned int flags,
 		flags |= NFT_CACHE_SET | NFT_CACHE_FLOWTABLE |
 			 NFT_CACHE_OBJECT | NFT_CACHE_CHAIN;
 		break;
+	case CMD_OBJ_ELEMENTS:
+	case CMD_OBJ_SET:
+	case CMD_OBJ_MAP:
+		flags |= NFT_CACHE_SET;
+		break;
 	default:
 		flags |= NFT_CACHE_TABLE;
 		break;
@@ -1069,7 +1074,7 @@ static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags,
 					continue;
 
 				ret = netlink_list_setelems(ctx, &set->handle,
-							    set);
+							    set, false);
 				if (ret < 0)
 					goto cache_fails;
 			}
@@ -1082,7 +1087,7 @@ static int cache_init_objects(struct netlink_ctx *ctx, unsigned int flags,
 					continue;
 
 				ret = netlink_list_setelems(ctx, &set->handle,
-							    set);
+							    set, false);
 				if (ret < 0)
 					goto cache_fails;
 			}

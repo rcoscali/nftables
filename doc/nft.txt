@@ -570,7 +570,7 @@ section describes nft set syntax in more detail.
 
 [verse]
 *add set* ['family'] 'table' 'set' *{ type* 'type' | *typeof* 'expression' *;* [*flags* 'flags' *;*] [*timeout* 'timeout' *;*] [*gc-interval* 'gc-interval' *;*] [*elements = {* 'element'[*,* ...] *} ;*] [*size* 'size' *;*] [*comment* 'comment' *;*'] [*policy* 'policy' *;*] [*auto-merge ;*] *}*
-{*delete* | *destroy* | *list* | *flush*} *set* ['family'] 'table' 'set'
+{*delete* | *destroy* | *list* | *flush* | *reset* } *set* ['family'] 'table' 'set'
 *list sets* ['family']
 *delete set* ['family'] 'table' *handle* 'handle'
 {*add* | *delete* | *destroy* } *element* ['family'] 'table' 'set' *{* 'element'[*,* ...] *}*
@@ -585,6 +585,7 @@ be tuned with the flags that can be specified at set creation time.
 *destroy*:: Delete the specified set, it does not fail if it does not exist.
 *list*:: Display the elements in the specified set.
 *flush*:: Remove all elements from the specified set.
+*reset*:: Reset timeout and other state in all contained elements.
 
 .Set specifications
 [options="header"]
@@ -623,7 +624,7 @@ MAPS
 -----
 [verse]
 *add map* ['family'] 'table' 'map' *{ type* 'type' | *typeof* 'expression' [*flags* 'flags' *;*] [*elements = {* 'element'[*,* ...] *} ;*] [*size* 'size' *;*] [*comment* 'comment' *;*'] [*policy* 'policy' *;*] *}*
-{*delete* | *destroy* | *list* | *flush*} *map* ['family'] 'table' 'map'
+{*delete* | *destroy* | *list* | *flush* | *reset* } *map* ['family'] 'table' 'map'
 *list maps* ['family']
 
 Maps store data based on some specific key used as input. They are uniquely identified by a user-defined name and attached to tables.
@@ -634,8 +635,7 @@ Maps store data based on some specific key used as input. They are uniquely iden
 *destroy*:: Delete the specified map, it does not fail if it does not exist.
 *list*:: Display the elements in the specified map.
 *flush*:: Remove all elements from the specified map.
-*add element*:: Comma-separated list of elements to add into the specified map.
-*delete element*:: Comma-separated list of element keys to delete from the specified map.
+*reset*:: Reset timeout and other state in all contained elements.
 
 .Map specifications
 [options="header"]
@@ -682,7 +682,7 @@ ELEMENTS
 --------
 [verse]
 ____
-{*add* | *create* | *delete* | *destroy* | *get* } *element* ['family'] 'table' 'set' *{* 'ELEMENT'[*,* ...] *}*
+{*add* | *create* | *delete* | *destroy* | *get* | *reset* } *element* ['family'] 'table' 'set' *{* 'ELEMENT'[*,* ...] *}*
 
 'ELEMENT' := 'key_expression' 'OPTIONS' [*:* 'value_expression']
 'OPTIONS' := [*timeout* 'TIMESPEC'] [*expires* 'TIMESPEC'] [*comment* 'string']
@@ -701,6 +701,9 @@ listed elements may already exist.
 *get* command is useful to check if an element is contained in a set which may
 be non-trivial in very large and/or interval sets. In the latter case, the
 containing interval is returned instead of just the element itself.
+
+*reset* command resets timeout or other state attached to the given
+element(s).
 
 .Element options
 [options="header"]
