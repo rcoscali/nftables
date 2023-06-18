@@ -1574,11 +1574,6 @@ static int do_list_table(struct netlink_ctx *ctx, struct table *table)
 
 static int do_list_sets(struct netlink_ctx *ctx, struct cmd *cmd)
 {
-	struct print_fmt_options opts = {
-		.tab		= "\t",
-		.nl		= "\n",
-		.stmt_separator	= "\n",
-	};
 	struct table *table;
 	struct set *set;
 
@@ -1601,8 +1596,7 @@ static int do_list_sets(struct netlink_ctx *ctx, struct cmd *cmd)
 			if (cmd->obj == CMD_OBJ_MAPS &&
 			    !map_is_literal(set->flags))
 				continue;
-			set_print_declaration(set, &opts, &ctx->nft->output);
-			nft_print(&ctx->nft->output, "%s}%s", opts.tab, opts.nl);
+			set_print(set, &ctx->nft->output);
 		}
 
 		nft_print(&ctx->nft->output, "}\n");

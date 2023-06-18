@@ -235,6 +235,8 @@ static unsigned int evaluate_cache_list(struct nft_ctx *nft, struct cmd *cmd,
 	case CMD_OBJ_SETS:
 	case CMD_OBJ_MAPS:
 		flags |= NFT_CACHE_TABLE | NFT_CACHE_SET;
+		if (!nft_output_terse(&nft->output))
+			flags |= NFT_CACHE_SETELEM;
 		break;
 	case CMD_OBJ_FLOWTABLE:
 		if (filter &&
