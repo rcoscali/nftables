@@ -807,7 +807,7 @@ static struct expr *json_parse_sctp_chunk_expr(struct json_ctx *ctx,
 static struct expr *json_parse_dccp_option_expr(struct json_ctx *ctx,
 						const char *type, json_t *root)
 {
-	const int opt_type;
+	int opt_type;
 
 	if (json_unpack_err(ctx, root, "{s:i}", "type", &opt_type))
 		return NULL;
