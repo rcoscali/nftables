@@ -2236,17 +2236,21 @@ flowtable_list_expr	:	flowtable_expr_member
 
 flowtable_expr_member	:	QUOTED_STRING
 			{
-				$$ = constant_expr_alloc(&@$, &string_type,
-							 BYTEORDER_HOST_ENDIAN,
-							 strlen($1) * BITS_PER_BYTE, $1);
-				xfree($1);
+				struct expr *expr = ifname_expr_alloc(&@$, state->msgs, $1);
+
+				if (!expr)
+					YYERROR;
+
+				$$ = expr;
 			}
 			|	STRING
 			{
-				$$ = constant_expr_alloc(&@$, &string_type,
-							 BYTEORDER_HOST_ENDIAN,
-							 strlen($1) * BITS_PER_BYTE, $1);
-				xfree($1);
+				struct expr *expr = ifname_expr_alloc(&@$, state->msgs, $1);
+
+				if (!expr)
+					YYERROR;
+
+				$$ = expr;
 			}
 			|	variable_expr
 			{
