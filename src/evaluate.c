@@ -1869,12 +1869,21 @@ static void __mapping_expr_expand(struct expr *i)
 	}
 }
 
-static void mapping_expr_expand(struct expr *init)
+static int mapping_expr_expand(struct eval_ctx *ctx)
 {
 	struct expr *i;
 
-	list_for_each_entry(i, &init->expressions, list)
+	if (!set_is_anonymous(ctx->set->flags))
+		return 0;
+
+	list_for_each_entry(i, &ctx->set->init->expressions, list) {
+		if (i->etype != EXPR_MAPPING)
+			return expr_error(ctx->msgs, i,
+					  "expected mapping, not %s", expr_name(i));
 		__mapping_expr_expand(i);
+	}
+
+	return 0;
 }
 
 static int expr_evaluate_map(struct eval_ctx *ctx, struct expr **expr)
@@ -1955,8 +1964,8 @@ static int expr_evaluate_map(struct eval_ctx *ctx, struct expr **expr)
 		if (ctx->set->data->flags & EXPR_F_INTERVAL) {
 			ctx->set->data->len *= 2;
 
-			if (set_is_anonymous(ctx->set->flags))
-				mapping_expr_expand(ctx->set->init);
+			if (mapping_expr_expand(ctx))
+				return -1;
 		}
 
 		ctx->set->key->len = ctx->ectx.len;
