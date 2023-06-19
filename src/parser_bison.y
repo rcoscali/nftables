@@ -144,6 +144,33 @@ static bool already_set(const void *attr, const struct location *loc,
 	return true;
 }
 
+static struct expr *ifname_expr_alloc(const struct location *location,
+				      struct list_head *queue,
+				      const char *name)
+{
+	unsigned int length = strlen(name);
+	struct expr *expr;
+
+	if (length == 0) {
+		xfree(name);
+		erec_queue(error(location, "empty interface name"), queue);
+		return NULL;
+	}
+
+	if (length > 16) {
+		xfree(name);
+		erec_queue(error(location, "interface name too long"), queue);
+		return NULL;
+	}
+
+	expr = constant_expr_alloc(location, &ifname_type, BYTEORDER_HOST_ENDIAN,
+				   length * BITS_PER_BYTE, name);
+
+	xfree(name);
+
+	return expr;
+}
+
 #define YYLLOC_DEFAULT(Current, Rhs, N)	location_update(&Current, Rhs, N)
 
 #define symbol_value(loc, str) \
@@ -2520,12 +2547,11 @@ int_num			:	NUM			{ $$ = $1; }
 
 dev_spec		:	DEVICE	string
 			{
-				struct expr *expr;
+				struct expr *expr = ifname_expr_alloc(&@$, state->msgs, $2);
 
-				expr = constant_expr_alloc(&@$, &string_type,
-							   BYTEORDER_HOST_ENDIAN,
-							   strlen($2) * BITS_PER_BYTE, $2);
-				xfree($2);
+				if (!expr)
+					YYERROR;
+
 				$$ = compound_expr_alloc(&@$, EXPR_LIST);
 				compound_expr_add($$, expr);
 
