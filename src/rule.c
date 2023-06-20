@@ -76,7 +76,7 @@ static uint32_t udp_dflt_timeout[] = {
 	[NFTNL_CTTIMEOUT_UDP_REPLIED]		= 120,
 };
 
-struct timeout_protocol timeout_protocol[IPPROTO_MAX] = {
+struct timeout_protocol timeout_protocol[UINT8_MAX + 1] = {
 	[IPPROTO_TCP]	= {
 		.array_size	= NFTNL_CTTIMEOUT_TCP_MAX,
 		.state_to_name	= tcp_state_to_name,

@@ -289,7 +289,7 @@ struct stmt *exthdr_stmt_alloc(const struct location *loc,
 	return stmt;
 }
 
-static const struct exthdr_desc *exthdr_protocols[IPPROTO_MAX] = {
+static const struct exthdr_desc *exthdr_protocols[UINT8_MAX + 1] = {
 	[IPPROTO_HOPOPTS]	= &exthdr_hbh,
 	[IPPROTO_ROUTING]	= &exthdr_rt,
 	[IPPROTO_FRAGMENT]	= &exthdr_frag,
@@ -346,8 +346,7 @@ void exthdr_init_raw(struct expr *expr, uint8_t type,
 	expr->exthdr.offset = offset;
 	expr->exthdr.desc = NULL;
 
-	if (type < array_size(exthdr_protocols))
-		expr->exthdr.desc = exthdr_protocols[type];
+	expr->exthdr.desc = exthdr_protocols[type];
 
 	if (expr->exthdr.desc == NULL)
 		goto out;

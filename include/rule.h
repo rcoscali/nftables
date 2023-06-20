@@ -786,7 +786,7 @@ struct timeout_protocol {
 	uint32_t *dflt_timeout;
 };
 
-extern struct timeout_protocol timeout_protocol[IPPROTO_MAX];
+extern struct timeout_protocol timeout_protocol[UINT8_MAX + 1];
 extern int timeout_str2num(uint16_t l4proto, struct timeout_state *ts);
 
 #endif /* NFTABLES_RULE_H */
