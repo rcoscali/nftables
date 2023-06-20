@@ -541,6 +541,27 @@ static const struct proto_desc *proto_lookup_byname(const char *name)
 		&proto_dccp,
 		&proto_sctp,
 		&proto_th,
+		&proto_vxlan,
+		&proto_gre,
+		&proto_gretap,
+		&proto_geneve,
+	};
+	unsigned int i;
+
+	for (i = 0; i < array_size(proto_tbl); i++) {
+		if (!strcmp(proto_tbl[i]->name, name))
+			return proto_tbl[i];
+	}
+	return NULL;
+}
+
+static const struct proto_desc *inner_proto_lookup_byname(const char *name)
+{
+	const struct proto_desc *proto_tbl[] = {
+		&proto_geneve,
+		&proto_gre,
+		&proto_gretap,
+		&proto_vxlan,
 	};
 	unsigned int i;
 
@@ -554,7 +575,7 @@ static const struct proto_desc *proto_lookup_byname(const char *name)
 static struct expr *json_parse_payload_expr(struct json_ctx *ctx,
 					    const char *type, json_t *root)
 {
-	const char *protocol, *field, *base;
+	const char *tunnel, *protocol, *field, *base;
 	int offset, len, val;
 	struct expr *expr;
 
@@ -576,6 +597,33 @@ static struct expr *json_parse_payload_expr(struct json_ctx *ctx,
 		payload_init_raw(expr, val, offset, len);
 		expr->byteorder		= BYTEORDER_BIG_ENDIAN;
 		expr->payload.is_raw	= true;
+		return expr;
+	} else if (!json_unpack(root, "{s:s, s:s, s:s}",
+				"tunnel", &tunnel, "protocol", &protocol, "field", &field)) {
+		const struct proto_desc *proto = proto_lookup_byname(protocol);
+		const struct proto_desc *inner_proto = inner_proto_lookup_byname(tunnel);
+
+		if (!inner_proto) {
+			json_error(ctx, "Unknown payload tunnel protocol '%s'.",
+				   tunnel);
+			return NULL;
+		}
+		if (!proto) {
+			json_error(ctx, "Unknown payload protocol '%s'.",
+				   protocol);
+			return NULL;
+		}
+		if (json_parse_payload_field(proto, field, &val)) {
+			json_error(ctx, "Unknown %s field '%s'.",
+				   protocol, field);
+			return NULL;
+		}
+		expr = payload_expr_alloc(int_loc, proto, val);
+		expr->payload.inner_desc = inner_proto;
+
+		if (proto == &proto_th)
+			expr->payload.is_raw = true;
+
 		return expr;
 	} else if (!json_unpack(root, "{s:s, s:s}",
 				"protocol", &protocol, "field", &field)) {

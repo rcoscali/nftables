@@ -573,15 +573,23 @@ json_t *payload_expr_json(const struct expr *expr, struct output_ctx *octx)
 {
 	json_t *root;
 
-	if (payload_is_known(expr))
-		root = json_pack("{s:s, s:s}",
-				 "protocol", expr->payload.desc->name,
-				 "field", expr->payload.tmpl->token);
-	else
+	if (payload_is_known(expr)) {
+		if (expr->payload.inner_desc) {
+			root = json_pack("{s:s, s:s, s:s}",
+					 "tunnel", expr->payload.inner_desc->name,
+					 "protocol", expr->payload.desc->name,
+					 "field", expr->payload.tmpl->token);
+		} else {
+			root = json_pack("{s:s, s:s}",
+					 "protocol", expr->payload.desc->name,
+					 "field", expr->payload.tmpl->token);
+		}
+	} else {
 		root = json_pack("{s:s, s:i, s:i}",
 				 "base", proto_base_tokens[expr->payload.base],
 				 "offset", expr->payload.offset,
 				 "len", expr->len);
+	}
 
 	return json_pack("{s:o}", "payload", root);
 }
