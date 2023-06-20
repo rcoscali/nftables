@@ -1731,6 +1731,27 @@ static struct stmt *json_parse_counter_stmt(struct json_ctx *ctx,
 	return stmt;
 }
 
+static struct stmt *json_parse_last_stmt(struct json_ctx *ctx,
+					 const char *key, json_t *value)
+{
+	struct stmt *stmt;
+	int64_t used;
+
+	if (json_is_null(value))
+		return last_stmt_alloc(int_loc);
+
+	if (!json_unpack(value, "{s:I}", "used", &used)) {
+		stmt = last_stmt_alloc(int_loc);
+		if (used != -1) {
+			stmt->last.used = used;
+			stmt->last.set = 1;
+		}
+		return stmt;
+	}
+
+	return NULL;
+}
+
 static struct stmt *json_parse_verdict_stmt(struct json_ctx *ctx,
 					    const char *key, json_t *value)
 {
@@ -2747,6 +2768,7 @@ static struct stmt *json_parse_stmt(struct json_ctx *ctx, json_t *root)
 		{ "counter", json_parse_counter_stmt },
 		{ "mangle", json_parse_mangle_stmt },
 		{ "quota", json_parse_quota_stmt },
+		{ "last", json_parse_last_stmt },
 		{ "limit", json_parse_limit_stmt },
 		{ "flow", json_parse_flow_offload_stmt },
 		{ "fwd", json_parse_fwd_stmt },

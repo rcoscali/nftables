@@ -1482,6 +1482,14 @@ json_t *counter_stmt_json(const struct stmt *stmt, struct output_ctx *octx)
 			 "bytes", stmt->counter.bytes);
 }
 
+json_t *last_stmt_json(const struct stmt *stmt, struct output_ctx *octx)
+{
+	if (nft_output_stateless(octx) || stmt->last.set == 0)
+		return json_pack("{s:n}", "last");
+
+	return json_pack("{s:{s:I}}", "last", "used", stmt->last.used);
+}
+
 json_t *set_stmt_json(const struct stmt *stmt, struct output_ctx *octx)
 {
 	json_t *root;
