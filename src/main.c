@@ -361,9 +361,9 @@ int main(int argc, char * const *argv)
 	const struct option *options = get_options();
 	bool interactive = false, define = false;
 	const char *optstring = get_optstring();
-	char *buf = NULL, *filename = NULL;
 	unsigned int output_flags = 0;
 	unsigned int debug_mask;
+	char *filename = NULL;
 	unsigned int len;
 	int i, val, rc;
 
@@ -514,6 +514,8 @@ int main(int argc, char * const *argv)
 	nft_ctx_output_set_flags(nft, output_flags);
 
 	if (optind != argc) {
+		char *buf;
+
 		for (len = 0, i = optind; i < argc; i++)
 			len += strlen(argv[i]) + strlen(" ");
 
@@ -529,6 +531,7 @@ int main(int argc, char * const *argv)
 				strcat(buf, " ");
 		}
 		rc = !!nft_run_cmd_from_buffer(nft, buf);
+		free(buf);
 	} else if (filename != NULL) {
 		rc = !!nft_run_cmd_from_filename(nft, filename);
 	} else if (interactive) {
@@ -543,7 +546,6 @@ int main(int argc, char * const *argv)
 		exit(EXIT_FAILURE);
 	}
 
-	free(buf);
 	nft_ctx_free(nft);
 
 	return rc;
