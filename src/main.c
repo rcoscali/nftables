@@ -362,10 +362,10 @@ int main(int argc, char * const *argv)
 	bool interactive = false, define = false;
 	const char *optstring = get_optstring();
 	unsigned int output_flags = 0;
+	int i, val, rc = EXIT_SUCCESS;
 	unsigned int debug_mask;
 	char *filename = NULL;
 	unsigned int len;
-	int i, val, rc;
 
 	/* nftables cannot be used with setuid in a safe way. */
 	if (getuid() != geteuid())
@@ -384,20 +384,20 @@ int main(int argc, char * const *argv)
 		switch (val) {
 		case OPT_HELP:
 			show_help(argv[0]);
-			exit(EXIT_SUCCESS);
+			goto out;
 		case OPT_VERSION:
 			printf("%s v%s (%s)\n",
 			       PACKAGE_NAME, PACKAGE_VERSION, RELEASE_NAME);
-			exit(EXIT_SUCCESS);
+			goto out;
 		case OPT_VERSION_LONG:
 			show_version();
-			exit(EXIT_SUCCESS);
+			goto out;
 		case OPT_DEFINE:
 			if (nft_ctx_add_var(nft, optarg)) {
 				fprintf(stderr,
 					"Failed to define variable '%s'\n",
 					optarg);
-				exit(EXIT_FAILURE);
+				goto out_fail;
 			}
 			define = true;
 			break;
@@ -408,7 +408,7 @@ int main(int argc, char * const *argv)
 			if (interactive) {
 				fprintf(stderr,
 					"Error: -i/--interactive and -f/--file options cannot be combined\n");
-				exit(EXIT_FAILURE);
+				goto out_fail;
 			}
 			filename = optarg;
 			break;
@@ -416,7 +416,7 @@ int main(int argc, char * const *argv)
 			if (filename) {
 				fprintf(stderr,
 					"Error: -i/--interactive and -f/--file options cannot be combined\n");
-				exit(EXIT_FAILURE);
+				goto out_fail;
 			}
 			interactive = true;
 			break;
@@ -425,7 +425,7 @@ int main(int argc, char * const *argv)
 				fprintf(stderr,
 					"Failed to add include path '%s'\n",
 					optarg);
-				exit(EXIT_FAILURE);
+				goto out_fail;
 			}
 			break;
 		case OPT_NUMERIC:
@@ -460,7 +460,7 @@ int main(int argc, char * const *argv)
 				if (i == array_size(debug_param)) {
 					fprintf(stderr, "invalid debug parameter `%s'\n",
 						optarg);
-					exit(EXIT_FAILURE);
+					goto out_fail;
 				}
 
 				if (end == NULL)
@@ -480,7 +480,7 @@ int main(int argc, char * const *argv)
 			output_flags |= NFT_CTX_OUTPUT_JSON;
 #else
 			fprintf(stderr, "JSON support not compiled-in\n");
-			exit(EXIT_FAILURE);
+			goto out_fail;
 #endif
 			break;
 		case OPT_GUID:
@@ -502,13 +502,13 @@ int main(int argc, char * const *argv)
 			nft_ctx_set_optimize(nft, 0x1);
 			break;
 		case OPT_INVALID:
-			exit(EXIT_FAILURE);
+			goto out_fail;
 		}
 	}
 
 	if (!filename && define) {
 		fprintf(stderr, "Error: -D/--define can only be used with -f/--filename\n");
-		exit(EXIT_FAILURE);
+		goto out_fail;
 	}
 
 	nft_ctx_output_set_flags(nft, output_flags);
@@ -523,7 +523,7 @@ int main(int argc, char * const *argv)
 		if (buf == NULL) {
 			fprintf(stderr, "%s:%u: Memory allocation failure\n",
 				__FILE__, __LINE__);
-			exit(EXIT_FAILURE);
+			goto out_fail;
 		}
 		for (i = optind; i < argc; i++) {
 			strcat(buf, argv[i]);
@@ -538,15 +538,17 @@ int main(int argc, char * const *argv)
 		if (cli_init(nft) < 0) {
 			fprintf(stderr, "%s: interactive CLI not supported in this build\n",
 				argv[0]);
-			exit(EXIT_FAILURE);
+			goto out_fail;
 		}
-		return EXIT_SUCCESS;
 	} else {
 		fprintf(stderr, "%s: no command specified\n", argv[0]);
-		exit(EXIT_FAILURE);
+		goto out_fail;
 	}
 
+out:
 	nft_ctx_free(nft);
-
 	return rc;
+out_fail:
+	nft_ctx_free(nft);
+	return EXIT_FAILURE;
 }
