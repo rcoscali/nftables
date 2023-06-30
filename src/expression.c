@@ -1342,14 +1342,19 @@ static void set_elem_expr_destroy(struct expr *expr)
 		stmt_free(stmt);
 }
 
-static void set_elem_expr_clone(struct expr *new, const struct expr *expr)
+static void __set_elem_expr_clone(struct expr *new, const struct expr *expr)
 {
-	new->key = expr_clone(expr->key);
 	new->expiration = expr->expiration;
 	new->timeout = expr->timeout;
 	if (expr->comment)
 		new->comment = xstrdup(expr->comment);
 	init_list_head(&new->stmt_list);
+}
+
+static void set_elem_expr_clone(struct expr *new, const struct expr *expr)
+{
+	new->key = expr_clone(expr->key);
+	__set_elem_expr_clone(new, expr);
 }
 
 static const struct expr_ops set_elem_expr_ops = {
@@ -1379,11 +1384,17 @@ static void set_elem_catchall_expr_print(const struct expr *expr,
 	nft_print(octx, "*");
 }
 
+static void set_elem_catchall_expr_clone(struct expr *new, const struct expr *expr)
+{
+	__set_elem_expr_clone(new, expr);
+}
+
 static const struct expr_ops set_elem_catchall_expr_ops = {
 	.type		= EXPR_SET_ELEM_CATCHALL,
 	.name		= "catch-all set element",
 	.print		= set_elem_catchall_expr_print,
 	.json		= set_elem_catchall_expr_json,
+	.clone		= set_elem_catchall_expr_clone,
 };
 
 struct expr *set_elem_catchall_expr_alloc(const struct location *loc)
