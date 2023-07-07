@@ -65,8 +65,8 @@ ip6 test-ip6 input
 ip6 test-ip6 input
   [ payload load 2b @ network header + 0 => reg 1 ]
   [ bitwise reg 1 = ( reg 1 & 0x0000c00f ) ^ 0x00000000 ]
-  [ bitwise reg 1 = ( reg 1 >> 0x00000006 ) ]
   [ byteorder reg 1 = ntoh(reg 1, 2, 2) ]
+  [ bitwise reg 1 = ( reg 1 >> 0x00000006 ) ]
   [ bitwise reg 1 = ( reg 1 << 0x00000002 ) ]
   [ bitwise reg 1 = ( reg 1 & 0xffffffef ) ^ 0x00000010 ]
   [ meta set mark with reg 1 ]
@@ -75,8 +75,8 @@ ip6 test-ip6 input
 ip6 test-ip6 input
   [ payload load 2b @ network header + 0 => reg 1 ]
   [ bitwise reg 1 = ( reg 1 & 0x0000c00f ) ^ 0x00000000 ]
-  [ bitwise reg 1 = ( reg 1 >> 0x00000006 ) ]
   [ byteorder reg 1 = ntoh(reg 1, 2, 2) ]
+  [ bitwise reg 1 = ( reg 1 >> 0x00000006 ) ]
   [ bitwise reg 1 = ( reg 1 << 0x0000001a ) ]
   [ bitwise reg 1 = ( reg 1 & 0xffffffef ) ^ 0x00000010 ]
   [ meta set mark with reg 1 ]

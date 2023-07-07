@@ -508,6 +508,7 @@ static void expr_evaluate_bits(struct eval_ctx *ctx, struct expr **exprp)
 {
 	struct expr *expr = *exprp, *and, *mask, *rshift, *off;
 	unsigned masklen, len = expr->len, extra_len = 0;
+	enum byteorder byteorder;
 	uint8_t shift;
 	mpz_t bitmask;
 
@@ -542,6 +543,15 @@ static void expr_evaluate_bits(struct eval_ctx *ctx, struct expr **exprp)
 	and->len	= masklen;
 
 	if (shift) {
+		if (ctx->stmt_len > 0 && div_round_up(masklen, BITS_PER_BYTE) > 1) {
+			int op = byteorder_conversion_op(expr, BYTEORDER_HOST_ENDIAN);
+			and = unary_expr_alloc(&expr->location, op, and);
+			and->len = masklen;
+			byteorder = BYTEORDER_HOST_ENDIAN;
+		} else {
+			byteorder = expr->byteorder;
+		}
+
 		off = constant_expr_alloc(&expr->location,
 					  expr_basetype(expr),
 					  BYTEORDER_HOST_ENDIAN,
@@ -549,7 +559,7 @@ static void expr_evaluate_bits(struct eval_ctx *ctx, struct expr **exprp)
 
 		rshift = binop_expr_alloc(&expr->location, OP_RSHIFT, and, off);
 		rshift->dtype		= expr->dtype;
-		rshift->byteorder	= expr->byteorder;
+		rshift->byteorder	= byteorder;
 		rshift->len		= masklen;
 
 		*exprp = rshift;
