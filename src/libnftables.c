@@ -17,8 +17,7 @@
 #include <string.h>
 
 static int nft_netlink(struct nft_ctx *nft,
-		       struct list_head *cmds, struct list_head *msgs,
-		       struct mnl_socket *nf_sock)
+		       struct list_head *cmds, struct list_head *msgs)
 {
 	uint32_t batch_seqnum, seqnum = 0, last_seqnum = UINT32_MAX, num_cmds = 0;
 	struct netlink_ctx ctx = {
@@ -595,7 +594,7 @@ int nft_run_cmd_from_buffer(struct nft_ctx *nft, const char *buf)
 		goto err;
 	}
 
-	if (nft_netlink(nft, &cmds, &msgs, nft->nf_sock) != 0)
+	if (nft_netlink(nft, &cmds, &msgs) != 0)
 		rc = -1;
 err:
 	erec_print_list(&nft->output, &msgs, nft->debug_mask);
@@ -691,7 +690,7 @@ static int __nft_run_cmd_from_filename(struct nft_ctx *nft, const char *filename
 		goto err;
 	}
 
-	if (nft_netlink(nft, &cmds, &msgs, nft->nf_sock) != 0)
+	if (nft_netlink(nft, &cmds, &msgs) != 0)
 		rc = -1;
 err:
 	erec_print_list(&nft->output, &msgs, nft->debug_mask);
