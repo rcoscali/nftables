@@ -337,8 +337,7 @@ const char *nft_ctx_get_error_buffer(struct nft_ctx *ctx)
 EXPORT_SYMBOL(nft_ctx_free);
 void nft_ctx_free(struct nft_ctx *ctx)
 {
-	if (ctx->nf_sock)
-		mnl_socket_close(ctx->nf_sock);
+	mnl_socket_close(ctx->nf_sock);
 
 	exit_cookie(&ctx->output.output_cookie);
 	exit_cookie(&ctx->output.error_cookie);
