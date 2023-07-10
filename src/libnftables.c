@@ -219,8 +219,7 @@ struct nft_ctx *nft_ctx_new(uint32_t flags)
 	ctx->output.error_fp = stderr;
 	init_list_head(&ctx->vars_ctx.indesc_list);
 
-	if (flags == NFT_CTX_DEFAULT)
-		nft_ctx_netlink_init(ctx);
+	nft_ctx_netlink_init(ctx);
 
 	return ctx;
 }
