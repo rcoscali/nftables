@@ -409,6 +409,7 @@ static int payload_add_dependency(struct eval_ctx *ctx,
 	const struct proto_hdr_template *tmpl;
 	struct expr *dep, *left, *right;
 	struct proto_ctx *pctx;
+	unsigned int stmt_len;
 	struct stmt *stmt;
 	int protocol;
 
@@ -429,11 +430,16 @@ static int payload_add_dependency(struct eval_ctx *ctx,
 				    constant_data_ptr(protocol, tmpl->len));
 
 	dep = relational_expr_alloc(&expr->location, OP_EQ, left, right);
+
+	stmt_len = ctx->stmt_len;
+	ctx->stmt_len = 0;
+
 	stmt = expr_stmt_alloc(&dep->location, dep);
 	if (stmt_evaluate(ctx, stmt) < 0) {
 		return expr_error(ctx->msgs, expr,
 					  "dependency statement is invalid");
 	}
+	ctx->stmt_len = stmt_len;
 
 	if (ctx->inner_desc) {
 		if (tmpl->meta_key)
@@ -543,6 +549,7 @@ int payload_gen_dependency(struct eval_ctx *ctx, const struct expr *expr,
 	const struct hook_proto_desc *h;
 	const struct proto_desc *desc;
 	struct proto_ctx *pctx;
+	unsigned int stmt_len;
 	struct stmt *stmt;
 	uint16_t type;
 
@@ -559,12 +566,18 @@ int payload_gen_dependency(struct eval_ctx *ctx, const struct expr *expr,
 					  "protocol specification is invalid "
 					  "for this family");
 
+		stmt_len = ctx->stmt_len;
+		ctx->stmt_len = 0;
+
 		stmt = meta_stmt_meta_iiftype(&expr->location, type);
 		if (stmt_evaluate(ctx, stmt) < 0) {
 			return expr_error(ctx->msgs, expr,
 					  "dependency statement is invalid");
 		}
 		*res = stmt;
+
+		ctx->stmt_len = stmt_len;
+
 		return 0;
 	}
 
