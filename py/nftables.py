@@ -154,7 +154,7 @@ class Nftables:
 
     def __get_output_flag(self, name):
         flag = self.output_flags[name]
-        return self.nft_ctx_output_get_flags(self.__ctx) & flag
+        return (self.nft_ctx_output_get_flags(self.__ctx) & flag) != 0
 
     def __set_output_flag(self, name, val):
         flag = self.output_flags[name]
@@ -164,7 +164,7 @@ class Nftables:
         else:
             new_flags = flags & ~flag
         self.nft_ctx_output_set_flags(self.__ctx, new_flags)
-        return flags & flag
+        return (flags & flag) != 0
 
     def get_reversedns_output(self):
         """Get the current state of reverse DNS output.
