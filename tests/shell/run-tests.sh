@@ -74,6 +74,11 @@ if [ "$1" == "-V" ] ; then
 	shift
 fi
 
+if [ "$1" == "-K" ]; then
+	KMEMLEAK=y
+	shift
+fi
+
 for arg in "$@"; do
 	SINGLE+=" $arg"
 	VERBOSE=y
@@ -163,7 +168,46 @@ check_taint()
 	read taint_now < /proc/sys/kernel/tainted
 	if [ $taint -ne $taint_now ] ; then
 		msg_warn "[FAILED]	kernel is tainted: $taint  -> $taint_now"
-		((failed++))
+	fi
+}
+
+kmem_runs=0
+kmemleak_found=0
+
+check_kmemleak_force()
+{
+	test -f /sys/kernel/debug/kmemleak || return 0
+
+	echo scan > /sys/kernel/debug/kmemleak
+
+	lines=$(grep "unreferenced object" /sys/kernel/debug/kmemleak | wc -l)
+	if [ $lines -ne $kmemleak_found ];then
+		msg_warn "[FAILED]	kmemleak detected $lines memory leaks"
+		kmemleak_found=$lines
+	fi
+
+	if [ $lines -ne 0 ];then
+		return 1
+	fi
+
+	return 0
+}
+
+check_kmemleak()
+{
+	test -f /sys/kernel/debug/kmemleak || return
+
+	if [ "$KMEMLEAK" == "y" ] ; then
+		check_kmemleak_force
+		return
+	fi
+
+	kmem_runs=$((kmem_runs + 1))
+	if [ $((kmem_runs % 30)) -eq 0 ]; then
+		# scan slows tests down quite a bit, hence
+		# do this only for every 30th test file by
+		# default.
+		check_kmemleak_force
 	fi
 }
 
@@ -218,9 +262,19 @@ do
 	fi
 
 	check_taint
+	check_kmemleak
 done
 
 echo ""
+
+# kmemleak may report suspected leaks
+# that get free'd after all, so always do
+# a check after all test cases
+# have completed and reset the counter
+# so another warning gets emitted.
+kmemleak_found=0
+check_kmemleak_force
+
 msg_info "results: [OK] $ok [FAILED] $failed [TOTAL] $((ok+failed))"
 
 kernel_cleanup
