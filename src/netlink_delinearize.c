@@ -1734,6 +1734,8 @@ static void netlink_parse_dynset(struct netlink_parse_ctx *ctx,
 		expr = netlink_parse_concat_key(ctx, loc, sreg, set->key);
 		if (expr == NULL)
 			return;
+	} else if (expr->dtype == &invalid_type) {
+		expr_set_type(expr, datatype_get(set->key->dtype), set->key->byteorder);
 	}
 
 	expr = set_elem_expr_alloc(&expr->location, expr);
