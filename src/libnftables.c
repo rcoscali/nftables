@@ -607,8 +607,10 @@ err:
 	    nft_output_json(&nft->output) &&
 	    nft_output_echo(&nft->output))
 		json_print_echo(nft);
-	if (rc)
+
+	if (rc || nft->check)
 		nft_cache_release(&nft->cache);
+
 	return rc;
 }
 
@@ -713,7 +715,8 @@ err:
 	    nft_output_json(&nft->output) &&
 	    nft_output_echo(&nft->output))
 		json_print_echo(nft);
-	if (rc)
+
+	if (rc || nft->check)
 		nft_cache_release(&nft->cache);
 
 	scope_release(nft->state->scopes[0]);
