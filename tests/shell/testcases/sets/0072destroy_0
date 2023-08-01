@@ -1,8 +1,10 @@
-#!/bin/bash
-
-set -e
+#!/bin/sh -e
 
 $NFT add table x
-$NFT add set x s {type ipv4_addr\; size 2\;}
 
+# pass for non-existent set
+$NFT destroy set x s
+
+# successfully delete existing set
+$NFT add set x s '{type ipv4_addr; size 2;}'
 $NFT destroy set x s
