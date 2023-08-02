@@ -1684,11 +1684,14 @@ static void print_proto_timeout_policy(uint8_t l4, const uint32_t *timeout,
 	nft_print(octx, "%s%spolicy = { ", opts->tab, opts->tab);
 	for (i = 0; i < timeout_protocol[l4].array_size; i++) {
 		if (timeout[i] != timeout_protocol[l4].dflt_timeout[i]) {
+			uint64_t timeout_ms;
+
 			if (comma)
 				nft_print(octx, ", ");
-			nft_print(octx, "%s : %u",
-				  timeout_protocol[l4].state_to_name[i],
-				  timeout[i]);
+			timeout_ms = timeout[i] * 1000u;
+			nft_print(octx, "%s : ",
+				  timeout_protocol[l4].state_to_name[i]);
+			time_print(timeout_ms, octx);
 			comma = true;
 		}
 	}
