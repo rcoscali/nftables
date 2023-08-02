@@ -434,6 +434,11 @@ further quirks worth noticing:
   *prerouting*, *input*, *forward*, *output*, *postrouting* and this *ingress*
   hook.
 
+The *device* parameter accepts a network interface name as a string, and is
+required when adding a base chain that filters traffic on the ingress or
+egress hooks. Any ingress or egress chains will only filter traffic from the
+interface specified in the *device* parameter.
+
 The *priority* parameter accepts a signed integer value or a standard priority
 name which specifies the order in which chains with the same *hook* value are
 traversed. The ordering is ascending, i.e. lower priority values have precedence
