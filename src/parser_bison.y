@@ -727,7 +727,7 @@ int nft_lex(void *, void *, void *);
 
 %type <set>			map_block_alloc map_block
 %destructor { set_free($$); }	map_block_alloc
-%type <val>			map_block_obj_type
+%type <val>			map_block_obj_type map_block_data_interval
 
 %type <flowtable>		flowtable_block_alloc flowtable_block
 %destructor { flowtable_free($$); }	flowtable_block_alloc
@@ -2225,6 +2225,10 @@ map_block_obj_type	:	COUNTER	close_scope_counter { $$ = NFT_OBJECT_COUNTER; }
 			|	SYNPROXY close_scope_synproxy { $$ = NFT_OBJECT_SYNPROXY; }
 			;
 
+map_block_data_interval :	INTERVAL { $$ = EXPR_F_INTERVAL; }
+			|	{ $$ = 0; }
+			;
+
 map_block		:	/* empty */	{ $$ = $<set>-1; }
 			|	map_block	common_block
 			|	map_block	stmt_separator
@@ -2234,22 +2238,12 @@ map_block		:	/* empty */	{ $$ = $<set>-1; }
 				$$ = $1;
 			}
 			|	map_block	TYPE
-						data_type_expr	COLON	data_type_expr
-						stmt_separator	close_scope_type
-			{
-				$1->key = $3;
-				$1->data = $5;
-
-				$1->flags |= NFT_SET_MAP;
-				$$ = $1;
-			}
-			|	map_block	TYPE
-						data_type_expr	COLON	INTERVAL	data_type_expr
+						data_type_expr	COLON	map_block_data_interval data_type_expr
 						stmt_separator	close_scope_type
 			{
 				$1->key = $3;
 				$1->data = $6;
-				$1->data->flags |= EXPR_F_INTERVAL;
+				$1->data->flags |= $5;
 
 				$1->flags |= NFT_SET_MAP;
 				$$ = $1;
