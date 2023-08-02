@@ -660,7 +660,7 @@ int nft_lex(void *, void *, void *);
 %type <string>			identifier type_identifier string comment_spec
 %destructor { xfree($$); }	identifier type_identifier string comment_spec
 
-%type <val>			time_spec quota_used
+%type <val>			time_spec time_spec_or_num_s quota_used
 
 %type <expr>			data_type_expr data_type_atom_expr
 %destructor { expr_free($$); }  data_type_expr data_type_atom_expr
@@ -2631,6 +2631,11 @@ time_spec		:	STRING
 				}
 				$$ = res;
 			}
+			;
+
+/* compatibility kludge to allow either 60, 60s, 1m, ... */
+time_spec_or_num_s	:	NUM
+			|	time_spec { $$ = $1 / 1000u; }
 			;
 
 family_spec		:	/* empty */		{ $$ = NFPROTO_IPV4; }
@@ -4628,8 +4633,7 @@ timeout_states		:	timeout_state
 			}
 			;
 
-timeout_state		:	STRING	COLON	NUM
-
+timeout_state		:	STRING	COLON	time_spec_or_num_s
 			{
 				struct timeout_state *ts;
 
