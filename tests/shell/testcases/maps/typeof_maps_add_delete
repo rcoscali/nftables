@@ -1,0 +1,35 @@
+#!/bin/bash
+
+EXPECTED='table ip dynset {
+	map dynmark {
+		typeof ip daddr : meta mark
+		counter
+		size 64
+		timeout 5m
+	}
+
+	chain test_ping {
+		ip saddr @dynmark counter comment "should not increment"
+		ip saddr != @dynmark add @dynmark { ip saddr : 0x1 } counter
+		ip saddr @dynmark counter comment "should increment"
+		ip saddr @dynmark delete @dynmark { ip saddr : 0x1 }
+		ip saddr @dynmark counter comment "delete should be instant but might fail under memory pressure"
+	}
+
+	chain input {
+		type filter hook input priority 0; policy accept;
+
+		add @dynmark { 10.2.3.4 timeout 1s : 0x2 } comment "also check timeout-gc"
+		meta l4proto icmp ip daddr 127.0.0.42 jump test_ping
+	}
+}'
+
+set -e
+$NFT -f - <<< $EXPECTED
+$NFT list ruleset
+
+ip link set lo up
+ping -c 1 127.0.0.42
+
+# wait so that 10.2.3.4 times out.
+sleep 2
