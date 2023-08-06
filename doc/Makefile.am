@@ -26,5 +26,5 @@ nft.8: ${ASCIIDOCS}
 .adoc.5:
 	${AM_V_GEN}${A2X} ${A2X_OPTS_MANPAGE} $<
 
-CLEANFILES += ${dist_man_MANS}
+MAINTAINERCLEANFILES = ${dist_man_MANS}
 endif
