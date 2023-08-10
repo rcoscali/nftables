@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -e
+
+dumpfile=$(dirname $0)/dumps/$(basename $0).nft
+$NFT -f $dumpfile
+
+port=23
+for i in $(seq 1 400) ; do
+	timeout=$((RANDOM%3))
+	timeout=$((timeout+1))
+	j=1
+
+	batched="{ $port timeout 3s : jump other_input "
+	batched_addr="{ 10.0.$((i%256)).$j . $port timeout 3s : jump other_input "
+	port=$((port + 1))
+	for j in $(seq 2 100); do
+		batched="$batched, $port timeout ${timeout}s : jump other_input "
+		batched_addr="$batched_addr, 10.0.$((i%256)).$j . $port timeout ${timeout}s : jump other_input "
+		port=$((port + 1))
+	done
+
+	batched="$batched }"
+	batched_addr="$batched_addr }"
+	$NFT add element inet filter portmap "$batched"
+	$NFT add element inet filter portaddrmap "$batched_addr"
+done
+
+$NFT add element inet filter portaddrmap { "* timeout 2s : drop" }
+$NFT add element inet filter portmap { "* timeout 3s : drop" }
+
+# wait for elements to time out
+sleep 4
