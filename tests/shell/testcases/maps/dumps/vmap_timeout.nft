@@ -14,7 +14,12 @@ table inet filter {
 	chain ssh_input {
 	}
 
+	chain log_and_drop {
+		drop
+	}
+
 	chain other_input {
+		goto log_and_drop
 	}
 
 	chain wan_input {
