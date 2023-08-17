@@ -4,6 +4,14 @@
 # nft must return an error.  Also catch nfnetlink retry loops that
 # cause nft or kernel to spin.
 timeout 3 $NFT -f - <<EOF
+table ip t0 {
+	chain c { }
+	chain input {
+		type filter hook input priority 0;
+		jump c
+	}
+}
+
 table ip t1 {
 	chain a {
 		masquerade
@@ -17,6 +25,7 @@ EOF
 
 rc=$?
 if [ $rc -eq 0 ]; then
+	echo "Ruleset should have failed" 1>&2
 	exit 111
 fi
 
