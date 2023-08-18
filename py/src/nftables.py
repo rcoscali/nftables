@@ -156,6 +156,35 @@ class Nftables:
             self.nft_ctx_free(self.__ctx)
             self.__ctx = None
 
+    def _flags_from_numeric(self, flags_dict, val):
+        names = []
+        for n, v in flags_dict.items():
+            if val & v:
+                names.append(n)
+                val &= ~v
+        if val:
+            names.append(val)
+        return names
+
+    def _flags_to_numeric(self, flags_dict, values):
+        if isinstance(values, (str, int)):
+            values = (values,)
+
+        val = 0
+        for v in values:
+            if isinstance(v, str):
+                v = flags_dict.get(v)
+                if v is None:
+                    raise ValueError("Invalid argument")
+            elif isinstance(v, int):
+                if v < 0 or v > 0xFFFFFFFF:
+                    raise ValueError("Invalid argument")
+            else:
+                raise TypeError("Not a valid flag")
+            val |= v
+
+        return val
+
     def __get_output_flag(self, name):
         flag = self.output_flags[name]
         return (self.nft_ctx_output_get_flags(self.__ctx) & flag) != 0
@@ -375,16 +404,7 @@ class Nftables:
         Returns a set of flag names. See set_debug() for details.
         """
         val = self.nft_ctx_output_get_debug(self.__ctx)
-
-        names = []
-        for n,v in self.debug_flags.items():
-            if val & v:
-                names.append(n)
-                val &= ~v
-        if val:
-            names.append(val)
-
-        return names
+        return self._flags_from_numeric(self.debug_flags, val)
 
     def set_debug(self, values):
         """Set debug output flags.
@@ -406,19 +426,9 @@ class Nftables:
         Returns a set of previously active debug flags, as returned by
         get_debug() method.
         """
+        val = self._flags_to_numeric(self.debug_flags, values)
         old = self.get_debug()
-
-        if type(values) in [str, int]:
-            values = [values]
-
-        val = 0
-        for v in values:
-            if type(v) is str:
-                v = self.debug_flags[v]
-            val |= v
-
         self.nft_ctx_output_set_debug(self.__ctx, val)
-
         return old
 
     def cmd(self, cmdline):
