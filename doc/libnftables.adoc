@@ -87,12 +87,18 @@ The flags setting controls the input format.
 ----
 enum {
         NFT_CTX_INPUT_NO_DNS = (1 << 0),
+        NFT_CTX_INPUT_JSON   = (1 << 1),
 };
 ----
 
 NFT_CTX_INPUT_NO_DNS::
 	Avoid resolving IP addresses with blocking getaddrinfo(). In that case,
 	only plain IP addresses are accepted.
+
+NFT_CTX_INPUT_JSON:
+	When parsing the input, first try to interpret the input as JSON before
+	falling back to the nftables format. This behavior is implied when setting
+	the NFT_CTX_OUTPUT_JSON flag.
 
 The *nft_ctx_input_get_flags*() function returns the input flags setting's value in 'ctx'.
 
@@ -139,7 +145,8 @@ NFT_CTX_OUTPUT_HANDLE::
 NFT_CTX_OUTPUT_JSON::
 	If enabled at compile-time, libnftables accepts input in JSON format and is able to print output in JSON format as well.
 	See *libnftables-json*(5) for a description of the supported schema.
-	This flag controls JSON output format, input is auto-detected.
+	This flag enables JSON output format. If the flag is set, the input will first be tried as JSON format,
+	before falling back to nftables format. This flag implies NFT_CTX_INPUT_JSON.
 NFT_CTX_OUTPUT_ECHO::
 	The echo setting makes libnftables print the changes once they are committed to the kernel, just like a running instance of *nft monitor* would.
 	Amongst other things, this allows one to retrieve an added rule's handle atomically.
