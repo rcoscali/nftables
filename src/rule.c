@@ -27,6 +27,7 @@
 #include <cache.h>
 #include <owner.h>
 #include <intervals.h>
+#include "nftutils.h"
 
 #include <libnftnl/common.h>
 #include <libnftnl/ruleset.h>
@@ -1666,10 +1667,10 @@ struct obj *obj_lookup_fuzzy(const char *obj_name,
 
 static void print_proto_name_proto(uint8_t l4, struct output_ctx *octx)
 {
-	const struct protoent *p = getprotobynumber(l4);
+	char name[NFT_PROTONAME_MAXSIZE];
 
-	if (p)
-		nft_print(octx, "%s", p->p_name);
+	if (nft_getprotobynumber(l4, name, sizeof(name)))
+		nft_print(octx, "%s", name);
 	else
 		nft_print(octx, "%d", l4);
 }

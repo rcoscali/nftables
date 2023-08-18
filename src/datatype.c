@@ -29,6 +29,7 @@
 #include <netlink.h>
 #include <json.h>
 #include <misspell.h>
+#include "nftutils.h"
 
 #include <netinet/ip_icmp.h>
 
@@ -697,12 +698,11 @@ const struct datatype ip6addr_type = {
 static void inet_protocol_type_print(const struct expr *expr,
 				      struct output_ctx *octx)
 {
-	struct protoent *p;
-
 	if (!nft_output_numeric_proto(octx)) {
-		p = getprotobynumber(mpz_get_uint8(expr->value));
-		if (p != NULL) {
-			nft_print(octx, "%s", p->p_name);
+		char name[NFT_PROTONAME_MAXSIZE];
+
+		if (nft_getprotobynumber(mpz_get_uint8(expr->value), name, sizeof(name))) {
+			nft_print(octx, "%s", name);
 			return;
 		}
 	}
@@ -711,15 +711,15 @@ static void inet_protocol_type_print(const struct expr *expr,
 
 static void inet_protocol_type_describe(struct output_ctx *octx)
 {
-	struct protoent *p;
 	uint8_t protonum;
 
 	for (protonum = 0; protonum < UINT8_MAX; protonum++) {
-		p = getprotobynumber(protonum);
-		if (!p)
+		char name[NFT_PROTONAME_MAXSIZE];
+
+		if (!nft_getprotobynumber(protonum, name, sizeof(name)))
 			continue;
 
-		nft_print(octx, "\t%-30s\t%u\n", p->p_name, protonum);
+		nft_print(octx, "\t%-30s\t%u\n", name, protonum);
 	}
 }
 
@@ -727,7 +727,6 @@ static struct error_record *inet_protocol_type_parse(struct parse_ctx *ctx,
 						     const struct expr *sym,
 						     struct expr **res)
 {
-	struct protoent *p;
 	uint8_t proto;
 	uintmax_t i;
 	char *end;
@@ -740,11 +739,13 @@ static struct error_record *inet_protocol_type_parse(struct parse_ctx *ctx,
 
 		proto = i;
 	} else {
-		p = getprotobyname(sym->identifier);
-		if (p == NULL)
+		int r;
+
+		r = nft_getprotobyname(sym->identifier);
+		if (r < 0)
 			return error(&sym->location, "Could not resolve protocol name");
 
-		proto = p->p_proto;
+		proto = r;
 	}
 
 	*res = constant_expr_alloc(&sym->location, &inet_protocol_type,
@@ -768,12 +769,12 @@ const struct datatype inet_protocol_type = {
 static void inet_service_print(const struct expr *expr, struct output_ctx *octx)
 {
 	uint16_t port = mpz_get_be16(expr->value);
-	const struct servent *s = getservbyport(port, NULL);
+	char name[NFT_SERVNAME_MAXSIZE];
 
-	if (s == NULL)
+	if (!nft_getservbyport(port, NULL, name, sizeof(name)))
 		nft_print(octx, "%hu", ntohs(port));
 	else
-		nft_print(octx, "\"%s\"", s->s_name);
+		nft_print(octx, "\"%s\"", name);
 }
 
 void inet_service_type_print(const struct expr *expr, struct output_ctx *octx)

@@ -64,6 +64,8 @@ libnftables_la_SOURCES =			\
 		segtree.c			\
 		gmputil.c			\
 		utils.c				\
+		nftutils.c			\
+		nftutils.h			\
 		erec.c				\
 		mnl.c				\
 		iface.c				\
