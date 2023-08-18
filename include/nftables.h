@@ -27,6 +27,11 @@ struct input_ctx {
 	unsigned int flags;
 };
 
+static inline bool nft_input_no_dns(const struct input_ctx *ictx)
+{
+	return ictx->flags & NFT_CTX_INPUT_NO_DNS;
+}
+
 struct output_ctx {
 	unsigned int flags;
 	union {

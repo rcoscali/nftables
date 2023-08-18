@@ -84,7 +84,15 @@ The *nft_ctx_set_dry_run*() function sets the dry-run setting in 'ctx' to the va
 === nft_ctx_input_get_flags() and nft_ctx_input_set_flags()
 The flags setting controls the input format.
 
-Currently no flags are implemented.
+----
+enum {
+        NFT_CTX_INPUT_NO_DNS = (1 << 0),
+};
+----
+
+NFT_CTX_INPUT_NO_DNS::
+	Avoid resolving IP addresses with blocking getaddrinfo(). In that case,
+	only plain IP addresses are accepted.
 
 The *nft_ctx_input_get_flags*() function returns the input flags setting's value in 'ctx'.
 
