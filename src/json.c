@@ -69,8 +69,9 @@ static json_t *set_dtype_json(const struct expr *key)
 {
 	char *namedup = xstrdup(key->dtype->name), *tok;
 	json_t *root = NULL;
+	char *tok_safe;
 
-	tok = strtok(namedup, " .");
+	tok = strtok_r(namedup, " .", &tok_safe);
 	while (tok) {
 		json_t *jtok = json_string(tok);
 		if (!root)
@@ -79,7 +80,7 @@ static json_t *set_dtype_json(const struct expr *key)
 			root = json_pack("[o, o]", root, jtok);
 		else
 			json_array_append_new(root, jtok);
-		tok = strtok(NULL, " .");
+		tok = strtok_r(NULL, " .", &tok_safe);
 	}
 	xfree(namedup);
 	return root;
