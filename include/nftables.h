@@ -23,6 +23,10 @@ struct symbol_tables {
 	const struct symbol_table	*realm;
 };
 
+struct input_ctx {
+	unsigned int flags;
+};
+
 struct output_ctx {
 	unsigned int flags;
 	union {
@@ -119,6 +123,7 @@ struct nft_ctx {
 	unsigned int		num_vars;
 	unsigned int		parser_max_errors;
 	unsigned int		debug_mask;
+	struct input_ctx	input;
 	struct output_ctx	output;
 	bool			check;
 	struct nft_cache	cache;

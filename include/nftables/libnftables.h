@@ -48,6 +48,9 @@ enum nft_optimize_flags {
 uint32_t nft_ctx_get_optimize(struct nft_ctx *ctx);
 void nft_ctx_set_optimize(struct nft_ctx *ctx, uint32_t flags);
 
+unsigned int nft_ctx_input_get_flags(struct nft_ctx *ctx);
+unsigned int nft_ctx_input_set_flags(struct nft_ctx *ctx, unsigned int flags);
+
 enum {
 	NFT_CTX_OUTPUT_REVERSEDNS	= (1 << 0),
 	NFT_CTX_OUTPUT_SERVICE		= (1 << 1),
