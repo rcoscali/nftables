@@ -37,6 +37,11 @@ class SchemaValidator:
 class Nftables:
     """A class representing libnftables interface"""
 
+    input_flags = {
+        "no-dns": 0x1,
+        "json": 0x2,
+    }
+
     debug_flags = {
         "scanner":   0x1,
         "parser":    0x2,
@@ -83,6 +88,14 @@ class Nftables:
         self.nft_ctx_new = lib.nft_ctx_new
         self.nft_ctx_new.restype = c_void_p
         self.nft_ctx_new.argtypes = [c_int]
+
+        self.nft_ctx_input_get_flags = lib.nft_ctx_input_get_flags
+        self.nft_ctx_input_get_flags.restype = c_uint
+        self.nft_ctx_input_get_flags.argtypes = [c_void_p]
+
+        self.nft_ctx_input_set_flags = lib.nft_ctx_input_set_flags
+        self.nft_ctx_input_set_flags.restype = c_uint
+        self.nft_ctx_input_set_flags.argtypes = [c_void_p, c_uint]
 
         self.nft_ctx_output_get_flags = lib.nft_ctx_output_get_flags
         self.nft_ctx_output_get_flags.restype = c_uint
@@ -184,6 +197,36 @@ class Nftables:
             val |= v
 
         return val
+
+    def get_input_flags(self):
+        """Get currently active input flags.
+
+        Returns a set of flag names. See set_input_flags() for details.
+        """
+        val = self.nft_ctx_input_get_flags(self.__ctx)
+        return self._flags_from_numeric(self.input_flags, val)
+
+    def set_input_flags(self, values):
+        """Set input flags.
+
+        Resets all input flags to values. Accepts either a single flag or a list
+        of flags. Each flag might be given either as string or integer value as
+        shown in the following table:
+
+        Name      | Value (hex)
+        -----------------------
+        "no-dns"  | 0x1
+        "json"    | 0x2
+
+        "no-dns" disables blocking address lookup.
+        "json" enables JSON mode for input.
+
+        Returns a set of previously active input flags, as returned by
+        get_input_flags() method.
+        """
+        val = self._flags_to_numeric(self.input_flags, values)
+        old = self.nft_ctx_input_set_flags(self.__ctx, val)
+        return self._flags_from_numeric(self.input_flags, old)
 
     def __get_output_flag(self, name):
         flag = self.output_flags[name]
