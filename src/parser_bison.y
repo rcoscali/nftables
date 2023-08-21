@@ -2237,6 +2237,11 @@ map_block		:	/* empty */	{ $$ = $<set>-1; }
 				$1->timeout = $3;
 				$$ = $1;
 			}
+			|	map_block	GC_INTERVAL	time_spec	stmt_separator
+			{
+				$1->gc_int = $3;
+				$$ = $1;
+			}
 			|	map_block	TYPE
 						data_type_expr	COLON	map_block_data_interval data_type_expr
 						stmt_separator	close_scope_type
