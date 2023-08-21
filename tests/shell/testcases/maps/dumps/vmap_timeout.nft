@@ -2,12 +2,14 @@ table inet filter {
 	map portmap {
 		type inet_service : verdict
 		flags timeout
+		gc-interval 10s
 		elements = { 22 : jump ssh_input }
 	}
 
 	map portaddrmap {
 		typeof ip daddr . th dport : verdict
 		flags timeout
+		gc-interval 10s
 		elements = { 1.2.3.4 . 22 : jump ssh_input }
 	}
 
