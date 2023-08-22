@@ -385,20 +385,23 @@ const struct datatype ifname_type = {
 
 static void date_type_print(const struct expr *expr, struct output_ctx *octx)
 {
-	uint64_t tstamp = mpz_get_uint64(expr->value);
+	uint64_t tstamp64 = mpz_get_uint64(expr->value);
 	struct tm *tm, *cur_tm;
 	char timestr[21];
+	time_t tstamp;
 
 	/* Convert from nanoseconds to seconds */
-	tstamp /= 1000000000L;
+	tstamp64 /= 1000000000L;
 
 	/* Obtain current tm, to add tm_gmtoff to the timestamp */
-	cur_tm = localtime((time_t *) &tstamp);
+	tstamp = tstamp64;
+	cur_tm = localtime(&tstamp);
 
 	if (cur_tm)
-		tstamp += cur_tm->tm_gmtoff;
+		tstamp64 += cur_tm->tm_gmtoff;
 
-	if ((tm = gmtime((time_t *) &tstamp)) != NULL &&
+	tstamp = tstamp64;
+	if ((tm = gmtime(&tstamp)) != NULL &&
 	     strftime(timestr, sizeof(timestr) - 1, "%Y-%m-%d %T", tm))
 		nft_print(octx, "\"%s\"", timestr);
 	else
