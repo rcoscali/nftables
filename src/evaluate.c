@@ -3037,6 +3037,24 @@ static int stmt_evaluate_payload(struct eval_ctx *ctx, struct stmt *stmt)
 static int stmt_evaluate_meter(struct eval_ctx *ctx, struct stmt *stmt)
 {
 	struct expr *key, *set, *setref;
+	struct set *existing_set;
+	struct table *table;
+
+	table = table_cache_find(&ctx->nft->cache.table_cache,
+				 ctx->cmd->handle.table.name,
+				 ctx->cmd->handle.family);
+	if (table == NULL)
+		return table_not_found(ctx);
+
+	existing_set = set_cache_find(table, stmt->meter.name);
+	if (existing_set)
+		return cmd_error(ctx, &stmt->location,
+				 "%s; meter ‘%s’ overlaps an existing %s ‘%s’ in family %s",
+				 strerror(EEXIST),
+				 stmt->meter.name,
+				 set_is_map(existing_set->flags) ? "map" : "set",
+				 existing_set->handle.set.name,
+				 family2str(existing_set->handle.family));
 
 	expr_set_context(&ctx->ectx, NULL, 0);
 	if (expr_evaluate(ctx, &stmt->meter.key) < 0)
