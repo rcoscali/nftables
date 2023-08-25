@@ -23,6 +23,9 @@ AM_CONDITIONAL([BUILD_MAN], [test "x$enable_man_doc" = "xyes" ])
 
 # Checks for programs.
 AC_PROG_CC
+
+AC_USE_SYSTEM_EXTENSIONS
+
 AC_PROG_MKDIR_P
 AC_PROG_INSTALL
 AC_PROG_SED
