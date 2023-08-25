@@ -47,7 +47,6 @@ fi
 
 AM_PROG_AR
 LT_INIT([disable-static])
-AM_PROG_CC_C_O
 AC_EXEEXT
 CHECK_GCC_FVISIBILITY
 
