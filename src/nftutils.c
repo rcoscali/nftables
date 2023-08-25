@@ -6,7 +6,6 @@
 
 #include <netdb.h>
 #include <string.h>
-#include <stdint.h>
 
 /* Buffer size used for getprotobynumber_r() and similar. The manual comments
  * that a buffer of 1024 should be sufficient "for most applications"(??), so

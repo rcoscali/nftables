@@ -13,7 +13,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
 #include <arpa/inet.h>
 #include <linux/netfilter.h>

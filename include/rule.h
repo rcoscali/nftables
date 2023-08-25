@@ -1,7 +1,6 @@
 #ifndef NFTABLES_RULE_H
 #define NFTABLES_RULE_H
 
-#include <stdint.h>
 #include <nftables.h>
 #include <list.h>
 #include <netinet/in.h>

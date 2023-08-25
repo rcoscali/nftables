@@ -1,7 +1,6 @@
 #ifndef NFTABLES_DATATYPE_H
 #define NFTABLES_DATATYPE_H
 
-#include <stdbool.h>
 #include <json.h>
 
 /**

@@ -1,7 +1,6 @@
 #ifndef NFTABLES_EXPRESSION_H
 #define NFTABLES_EXPRESSION_H
 
-#include <stdbool.h>
 #include <gmputil.h>
 #include <linux/netfilter/nf_tables.h>
 

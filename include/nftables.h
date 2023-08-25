@@ -1,7 +1,6 @@
 #ifndef NFTABLES_NFTABLES_H
 #define NFTABLES_NFTABLES_H
 
-#include <stdbool.h>
 #include <stdarg.h>
 #include <limits.h>
 #include <utils.h>

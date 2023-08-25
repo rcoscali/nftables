@@ -9,7 +9,6 @@
 #include <nft.h>
 
 #include <errno.h>
-#include <stdint.h> /* needed by gmputil.h */
 #include <string.h>
 #include <syslog.h>
 

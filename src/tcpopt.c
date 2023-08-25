@@ -3,7 +3,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
 #include <netinet/in.h>
 #include <netinet/ip6.h>

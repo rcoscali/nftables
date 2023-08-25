@@ -15,7 +15,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
 #include <net/if_arp.h>
 #include <arpa/inet.h>

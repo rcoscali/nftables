@@ -8,7 +8,6 @@
 
 #include <nft.h>
 
-#include <stdint.h>
 #include <expression.h>
 #include <gmputil.h>
 #include <list.h>

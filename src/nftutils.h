@@ -2,7 +2,6 @@
 #ifndef NFTUTILS_H
 #define NFTUTILS_H
 
-#include <stdbool.h>
 #include <stddef.h>
 
 /* The maximum buffer size for (struct protoent).p_name. It is excessively large,

@@ -4,4 +4,7 @@
 
 #include <config.h>
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #endif /* NFTABLES_NFT_H */

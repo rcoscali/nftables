@@ -2,8 +2,6 @@
 #define NFTABLES_UTILS_H
 
 #include <asm/byteorder.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
