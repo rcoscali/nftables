@@ -8,8 +8,8 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
-#define _GNU_SOURCE
-#include <config.h>
+#include <nft.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>

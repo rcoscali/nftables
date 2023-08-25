@@ -1,3 +1,5 @@
+#include <nft.h>
+
 #include <stdint.h>
 
 #include <netinet/in.h>

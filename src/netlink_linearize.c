@@ -9,6 +9,8 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <nft.h>
+
 #include <linux/netfilter/nf_tables.h>
 #include <linux/netfilter/nf_log.h>
 

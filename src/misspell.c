@@ -6,6 +6,8 @@
  * later) as published by the Free Software Foundation.
  */
 
+#include <nft.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>

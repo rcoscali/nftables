@@ -11,7 +11,8 @@
  * programme.
  */
 
-#define _GNU_SOURCE
+#include <nft.h>
+
 #include <string.h>
 #include <errno.h>
 #include <inttypes.h>

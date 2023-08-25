@@ -10,6 +10,8 @@
 
 %{
 
+#include <nft.h>
+
 #include <limits.h>
 #include <glob.h>
 #include <netinet/in.h>

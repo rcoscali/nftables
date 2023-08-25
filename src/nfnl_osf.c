@@ -19,6 +19,8 @@
  * Based on iptables/utils/nfnl_osf.c.
  */
 
+#include <nft.h>
+
 #include <sys/time.h>
 
 #include <ctype.h>

@@ -8,6 +8,8 @@
  * published by the Free Software Foundation.
  */
 
+#include <nft.h>
+
 #include <errno.h>
 #include <stddef.h>
 #include <stdlib.h>

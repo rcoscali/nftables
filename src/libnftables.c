@@ -5,6 +5,9 @@
  * it under the terms of the GNU General Public License version 2 (or any
  * later) as published by the Free Software Foundation.
  */
+
+#include <nft.h>
+
 #include <nftables/libnftables.h>
 #include <erec.h>
 #include <mnl.h>

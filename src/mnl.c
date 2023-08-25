@@ -8,6 +8,8 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <nft.h>
+
 #include <libmnl/libmnl.h>
 #include <libnftnl/common.h>
 #include <libnftnl/ruleset.h>

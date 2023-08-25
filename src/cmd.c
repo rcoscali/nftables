@@ -6,6 +6,8 @@
  * later) as published by the Free Software Foundation.
  */
 
+#include <nft.h>
+
 #include <erec.h>
 #include <mnl.h>
 #include <cmd.h>

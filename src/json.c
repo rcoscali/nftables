@@ -6,7 +6,8 @@
  * later) as published by the Free Software Foundation.
  */
 
-#define _GNU_SOURCE
+#include <nft.h>
+
 #include <stdio.h>
 #include <string.h>
 

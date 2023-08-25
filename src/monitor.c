@@ -6,6 +6,8 @@
  * later) as published by the Free Software Foundation.
  */
 
+#include <nft.h>
+
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>

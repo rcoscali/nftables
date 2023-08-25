@@ -6,6 +6,8 @@
  * later) as published by the Free Software Foundation.
  */
 
+#include <nft.h>
+
 #include <exthdr.h>
 #include <sctp_chunk.h>
 
