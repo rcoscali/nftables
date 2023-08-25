@@ -2062,17 +2062,14 @@ static int expr_evaluate_mapping(struct eval_ctx *ctx, struct expr **expr)
 				  "Key must be a constant");
 	mapping->flags |= mapping->left->flags & EXPR_F_SINGLETON;
 
-	if (set->data) {
-		if (!set_is_anonymous(set->flags) &&
-		    set->data->flags & EXPR_F_INTERVAL)
-			datalen = set->data->len / 2;
-		else
-			datalen = set->data->len;
-
-		__expr_set_context(&ctx->ectx, set->data->dtype, set->data->byteorder, datalen, 0);
-	} else {
-		assert((set->flags & NFT_SET_MAP) == 0);
-	}
+	assert(set->data != NULL);
+	if (!set_is_anonymous(set->flags) &&
+	    set->data->flags & EXPR_F_INTERVAL)
+		datalen = set->data->len / 2;
+	else
+		datalen = set->data->len;
+	__expr_set_context(&ctx->ectx, set->data->dtype,
+			   set->data->byteorder, datalen, 0);
 
 	if (expr_evaluate(ctx, &mapping->right) < 0)
 		return -1;
