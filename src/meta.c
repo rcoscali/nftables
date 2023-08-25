@@ -10,6 +10,8 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#define _GNU_SOURCE
+
 #include <errno.h>
 #include <limits.h>
 #include <stddef.h>
@@ -25,6 +27,7 @@
 #include <linux/netfilter.h>
 #include <linux/pkt_sched.h>
 #include <linux/if_packet.h>
+#include <time.h>
 
 #include <nftables.h>
 #include <expression.h>
@@ -36,10 +39,6 @@
 #include <erec.h>
 #include <iface.h>
 #include <json.h>
-
-#define _XOPEN_SOURCE
-#define __USE_XOPEN
-#include <time.h>
 
 static void tchandle_type_print(const struct expr *expr,
 				struct output_ctx *octx)
