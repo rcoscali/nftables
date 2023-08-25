@@ -9,7 +9,6 @@
 #ifndef LIB_NFTABLES_H
 #define LIB_NFTABLES_H
 
-#define _GNU_SOURCE
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
