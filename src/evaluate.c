@@ -1817,7 +1817,12 @@ static int expr_evaluate_set(struct eval_ctx *ctx, struct expr **expr)
 			set->set_flags |= NFT_SET_CONCAT;
 	} else if (set->size == 1) {
 		i = list_first_entry(&set->expressions, struct expr, list);
-		if (i->etype == EXPR_SET_ELEM && list_empty(&i->stmt_list)) {
+		if (i->etype == EXPR_SET_ELEM &&
+		    (!i->dtype->basetype ||
+		     i->dtype->basetype->type != TYPE_BITMASK ||
+		     i->dtype->type == TYPE_CT_STATE) &&
+		    list_empty(&i->stmt_list)) {
+
 			switch (i->key->etype) {
 			case EXPR_PREFIX:
 			case EXPR_RANGE:
