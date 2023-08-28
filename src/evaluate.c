@@ -2832,6 +2832,10 @@ static int __stmt_evaluate_arg(struct eval_ctx *ctx, struct stmt *stmt,
 		return byteorder_conversion(ctx, expr, byteorder);
 	case EXPR_PREFIX:
 		return stmt_prefix_conversion(ctx, expr, byteorder);
+	case EXPR_NUMGEN:
+		if (dtype->type == TYPE_IPADDR)
+			return byteorder_conversion(ctx, expr, byteorder);
+		break;
 	default:
 		break;
 	}
