@@ -3931,7 +3931,7 @@ static int stmt_evaluate_log_prefix(struct eval_ctx *ctx, struct stmt *stmt)
 		SNPRINTF_BUFFER_SIZE(ret, size, len, offset);
 	}
 
-	if (len == NF_LOG_PREFIXLEN)
+	if (len == 0)
 		return stmt_error(ctx, stmt, "log prefix is too long");
 
 	expr = constant_expr_alloc(&stmt->log.prefix->location, &string_type,
