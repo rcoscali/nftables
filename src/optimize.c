@@ -397,6 +397,7 @@ static int rule_collect_stmts(struct optimize_ctx *ctx, struct rule *rule)
 				clone->ops = &unsupported_stmt_ops;
 				break;
 			}
+			/* fall-through */
 		case STMT_VERDICT:
 			clone->expr = expr_get(stmt->expr);
 			break;
