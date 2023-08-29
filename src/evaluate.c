@@ -4126,14 +4126,16 @@ static int stmt_evaluate_queue(struct eval_ctx *ctx, struct stmt *stmt)
 static int stmt_evaluate_log_prefix(struct eval_ctx *ctx, struct stmt *stmt)
 {
 	char prefix[NF_LOG_PREFIXLEN] = {}, tmp[NF_LOG_PREFIXLEN] = {};
-	int len = sizeof(prefix), offset = 0, ret;
+	size_t len = sizeof(prefix);
+	size_t offset = 0;
 	struct expr *expr;
-	size_t size = 0;
 
 	if (stmt->log.prefix->etype != EXPR_LIST)
 		return 0;
 
 	list_for_each_entry(expr, &stmt->log.prefix->expressions, list) {
+		int ret;
+
 		switch (expr->etype) {
 		case EXPR_VALUE:
 			expr_to_string(expr, tmp);
@@ -4147,7 +4149,7 @@ static int stmt_evaluate_log_prefix(struct eval_ctx *ctx, struct stmt *stmt)
 			BUG("unknown expression type %s\n", expr_name(expr));
 			break;
 		}
-		SNPRINTF_BUFFER_SIZE(ret, size, len, offset);
+		SNPRINTF_BUFFER_SIZE(ret, &len, &offset);
 	}
 
 	if (len == 0)

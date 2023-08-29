@@ -999,11 +999,11 @@ struct error_record *meta_key_parse(const struct location *loc,
                                     const char *str,
                                     unsigned int *value)
 {
-	int ret, len, offset = 0;
 	const char *sep = "";
+	size_t offset = 0;
 	unsigned int i;
 	char buf[1024];
-	size_t size;
+	size_t len;
 
 	for (i = 0; i < array_size(meta_templates); i++) {
 		if (!meta_templates[i].token || strcmp(meta_templates[i].token, str))
@@ -1026,9 +1026,10 @@ struct error_record *meta_key_parse(const struct location *loc,
 	}
 
 	len = (int)sizeof(buf);
-	size = sizeof(buf);
 
 	for (i = 0; i < array_size(meta_templates); i++) {
+		int ret;
+
 		if (!meta_templates[i].token)
 			continue;
 
@@ -1036,8 +1037,8 @@ struct error_record *meta_key_parse(const struct location *loc,
 			sep = ", ";
 
 		ret = snprintf(buf+offset, len, "%s%s", sep, meta_templates[i].token);
-		SNPRINTF_BUFFER_SIZE(ret, size, len, offset);
-		assert(offset < (int)sizeof(buf));
+		SNPRINTF_BUFFER_SIZE(ret, &len, &offset);
+		assert(len > 0);
 	}
 
 	return error(loc, "syntax error, unexpected %s, known keys are %s", str, buf);
