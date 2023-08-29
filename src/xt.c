@@ -350,7 +350,7 @@ err:
 }
 
 static struct option original_opts[] = {
-	{ NULL },
+	{ },
 };
 
 static struct xtables_globals xt_nft_globals = {
