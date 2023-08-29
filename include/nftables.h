@@ -236,8 +236,7 @@ void realm_table_rt_exit(struct nft_ctx *ctx);
 
 int nft_print(struct output_ctx *octx, const char *fmt, ...)
 	__attribute__((format(printf, 2, 3)));
-int nft_gmp_print(struct output_ctx *octx, const char *fmt, ...)
-	__attribute__((format(printf, 2, 0)));
+int nft_gmp_print(struct output_ctx *octx, const char *fmt, ...);
 
 int nft_optimize(struct nft_ctx *nft, struct list_head *cmds);
 
