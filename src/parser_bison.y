@@ -3660,8 +3660,8 @@ reject_opts		:       /* empty */
 nat_stmt		:	nat_stmt_alloc	nat_stmt_args
 			;
 
-nat_stmt_alloc		:	SNAT	{ $$ = nat_stmt_alloc(&@$, NFT_NAT_SNAT); }
-			|	DNAT	{ $$ = nat_stmt_alloc(&@$, NFT_NAT_DNAT); }
+nat_stmt_alloc		:	SNAT	{ $$ = nat_stmt_alloc(&@$, __NFT_NAT_SNAT); }
+			|	DNAT	{ $$ = nat_stmt_alloc(&@$, __NFT_NAT_DNAT); }
 			;
 
 tproxy_stmt		:	TPROXY TO stmt_expr
