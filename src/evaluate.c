@@ -4125,13 +4125,16 @@ static int stmt_evaluate_queue(struct eval_ctx *ctx, struct stmt *stmt)
 
 static int stmt_evaluate_log_prefix(struct eval_ctx *ctx, struct stmt *stmt)
 {
-	char prefix[NF_LOG_PREFIXLEN] = {}, tmp[NF_LOG_PREFIXLEN] = {};
+	char tmp[NF_LOG_PREFIXLEN] = {};
+	char prefix[NF_LOG_PREFIXLEN];
 	size_t len = sizeof(prefix);
 	size_t offset = 0;
 	struct expr *expr;
 
 	if (stmt->log.prefix->etype != EXPR_LIST)
 		return 0;
+
+	prefix[0] = '\0';
 
 	list_for_each_entry(expr, &stmt->log.prefix->expressions, list) {
 		int ret;
