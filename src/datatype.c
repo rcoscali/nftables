@@ -622,7 +622,8 @@ static struct error_record *ipaddr_type_parse(struct parse_ctx *ctx,
 			return error(&sym->location,
 				     "Hostname resolves to multiple addresses");
 		}
-		addr = ((struct sockaddr_in *)ai->ai_addr)->sin_addr;
+		assert(ai->ai_addr->sa_family == AF_INET);
+		addr = ((struct sockaddr_in *) (void *) ai->ai_addr)->sin_addr;
 		freeaddrinfo(ai);
 	}
 
@@ -687,7 +688,9 @@ static struct error_record *ip6addr_type_parse(struct parse_ctx *ctx,
 			return error(&sym->location,
 				     "Hostname resolves to multiple addresses");
 		}
-		addr = ((struct sockaddr_in6 *)ai->ai_addr)->sin6_addr;
+
+		assert(ai->ai_addr->sa_family == AF_INET6);
+		addr = ((struct sockaddr_in6 *)(void *)ai->ai_addr)->sin6_addr;
 		freeaddrinfo(ai);
 	}
 
@@ -823,7 +826,12 @@ static struct error_record *inet_service_type_parse(struct parse_ctx *ctx,
 			return error(&sym->location, "Could not resolve service: %s",
 				     gai_strerror(err));
 
-		port = ((struct sockaddr_in *)ai->ai_addr)->sin_port;
+		if (ai->ai_addr->sa_family == AF_INET) {
+			port = ((struct sockaddr_in *)(void *)ai->ai_addr)->sin_port;
+		} else {
+			assert(ai->ai_addr->sa_family == AF_INET6);
+			port = ((struct sockaddr_in6 *)(void *)ai->ai_addr)->sin6_port;
+		}
 		freeaddrinfo(ai);
 	}
 
