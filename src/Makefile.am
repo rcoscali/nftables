@@ -88,6 +88,7 @@ libparser_la_CFLAGS = ${AM_CFLAGS} \
 		      -Wno-missing-prototypes \
 		      -Wno-missing-declarations \
 		      -Wno-implicit-function-declaration \
+		      -Wno-unused-but-set-variable \
 		      -Wno-nested-externs \
 		      -Wno-undef \
 		      -Wno-redundant-decls
