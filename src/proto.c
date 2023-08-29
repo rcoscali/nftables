@@ -306,6 +306,8 @@ const struct proto_desc *proto_ctx_find_conflict(struct proto_ctx *ctx,
 
 #define HDR_FIELD(__name, __struct, __member)				\
 	HDR_TEMPLATE(__name, &integer_type, __struct, __member)
+#define HDR_HEX_FIELD(__name, __struct, __member)				\
+	HDR_TEMPLATE(__name, &xinteger_type, __struct, __member)
 #define HDR_BITFIELD(__name, __dtype,  __offset, __len)			\
 	PROTO_HDR_TEMPLATE(__name, __dtype, BYTEORDER_BIG_ENDIAN,	\
 			   __offset, __len)
@@ -846,7 +848,7 @@ const struct proto_desc proto_ip = {
 		[IPHDR_ECN]		= HDR_BITFIELD("ecn", &ecn_type, 14, 2),
 		[IPHDR_LENGTH]		= IPHDR_FIELD("length",		tot_len),
 		[IPHDR_ID]		= IPHDR_FIELD("id",		id),
-		[IPHDR_FRAG_OFF]	= IPHDR_FIELD("frag-off",	frag_off),
+		[IPHDR_FRAG_OFF]	= HDR_HEX_FIELD("frag-off", struct iphdr, frag_off),
 		[IPHDR_TTL]		= IPHDR_FIELD("ttl",		ttl),
 		[IPHDR_PROTOCOL]	= INET_PROTOCOL("protocol", struct iphdr, protocol),
 		[IPHDR_CHECKSUM]	= IPHDR_FIELD("checksum",	check),

@@ -384,7 +384,7 @@
     }
 ]
 
-# ip frag-off 222 accept
+# ip frag-off 0xde accept
 [
     {
         "match": {
@@ -403,7 +403,7 @@
     }
 ]
 
-# ip frag-off != 233
+# ip frag-off != 0xe9
 [
     {
         "match": {
@@ -419,7 +419,7 @@
     }
 ]
 
-# ip frag-off 33-45
+# ip frag-off 0x21-0x2d
 [
     {
         "match": {
@@ -437,7 +437,7 @@
     }
 ]
 
-# ip frag-off != 33-45
+# ip frag-off != 0x21-0x2d
 [
     {
         "match": {
@@ -455,7 +455,7 @@
     }
 ]
 
-# ip frag-off { 33, 55, 67, 88}
+# ip frag-off { 0x21, 0x37, 0x43, 0x58}
 [
     {
         "match": {
@@ -478,7 +478,7 @@
     }
 ]
 
-# ip frag-off != { 33, 55, 67, 88}
+# ip frag-off != { 0x21, 0x37, 0x43, 0x58}
 [
     {
         "match": {

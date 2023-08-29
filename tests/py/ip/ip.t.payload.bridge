@@ -162,7 +162,7 @@ bridge test-bridge input
   [ payload load 2b @ network header + 4 => reg 1 ]
   [ lookup reg 1 set __set%d 0x1 ]
 
-# ip frag-off 222 accept
+# ip frag-off 0xde accept
 bridge test-bridge input 
   [ meta load protocol => reg 1 ]
   [ cmp eq reg 1 0x00000008 ]
@@ -170,14 +170,14 @@ bridge test-bridge input
   [ cmp eq reg 1 0x0000de00 ]
   [ immediate reg 0 accept ]
 
-# ip frag-off != 233
+# ip frag-off != 0xe9
 bridge test-bridge input 
   [ meta load protocol => reg 1 ]
   [ cmp eq reg 1 0x00000008 ]
   [ payload load 2b @ network header + 6 => reg 1 ]
   [ cmp neq reg 1 0x0000e900 ]
 
-# ip frag-off 33-45
+# ip frag-off 0x21-0x2d
 bridge test-bridge input 
   [ meta load protocol => reg 1 ]
   [ cmp eq reg 1 0x00000008 ]
@@ -185,14 +185,14 @@ bridge test-bridge input
   [ cmp gte reg 1 0x00002100 ]
   [ cmp lte reg 1 0x00002d00 ]
 
-# ip frag-off != 33-45
+# ip frag-off != 0x21-0x2d
 bridge test-bridge input 
   [ meta load protocol => reg 1 ]
   [ cmp eq reg 1 0x00000008 ]
   [ payload load 2b @ network header + 6 => reg 1 ]
   [ range neq reg 1 0x00002100 0x00002d00 ]
 
-# ip frag-off { 33, 55, 67, 88}
+# ip frag-off { 0x21, 0x37, 0x43, 0x58}
 __set%d test-bridge 3 size 4
 __set%d test-bridge 0
 	element 00002100  : 0 [end]	element 00003700  : 0 [end]	element 00004300  : 0 [end]	element 00005800  : 0 [end]
@@ -202,7 +202,7 @@ bridge test-bridge input
   [ payload load 2b @ network header + 6 => reg 1 ]
   [ lookup reg 1 set __set%d ]
 
-# ip frag-off != { 33, 55, 67, 88}
+# ip frag-off != { 0x21, 0x37, 0x43, 0x58}
 __set%d test-bridge 3 size 4
 __set%d test-bridge 0
 	element 00002100  : 0 [end]	element 00003700  : 0 [end]	element 00004300  : 0 [end]	element 00005800  : 0 [end]
