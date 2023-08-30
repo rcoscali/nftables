@@ -83,8 +83,7 @@ static void netlink_set_register(struct netlink_parse_ctx *ctx,
 		return;
 	}
 
-	if (ctx->registers[reg] != NULL)
-		expr_free(ctx->registers[reg]);
+	expr_free(ctx->registers[reg]);
 
 	ctx->registers[reg] = expr;
 }
