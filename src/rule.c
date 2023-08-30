@@ -148,11 +148,12 @@ struct set *set_alloc(const struct location *loc)
 {
 	struct set *set;
 
+	assert(loc);
+
 	set = xzalloc(sizeof(*set));
 	set->refcnt = 1;
 	set->handle.set_id = ++set_id;
-	if (loc != NULL)
-		set->location = *loc;
+	set->location = *loc;
 
 	init_list_head(&set->stmt_list);
 
@@ -163,7 +164,7 @@ struct set *set_clone(const struct set *set)
 {
 	struct set *new_set;
 
-	new_set			= set_alloc(NULL);
+	new_set			= set_alloc(&internal_location);
 	handle_merge(&new_set->handle, &set->handle);
 	new_set->flags		= set->flags;
 	new_set->gc_int		= set->gc_int;
@@ -454,6 +455,8 @@ void set_print_plain(const struct set *s, struct output_ctx *octx)
 struct rule *rule_alloc(const struct location *loc, const struct handle *h)
 {
 	struct rule *rule;
+
+	assert(loc);
 
 	rule = xzalloc(sizeof(*rule));
 	rule->location = *loc;
@@ -1300,6 +1303,8 @@ struct cmd *cmd_alloc(enum cmd_ops op, enum cmd_obj obj,
 {
 	struct cmd *cmd;
 
+	assert(loc);
+
 	cmd = xzalloc(sizeof(*cmd));
 	init_list_head(&cmd->list);
 	cmd->op       = op;
@@ -1614,9 +1619,10 @@ struct obj *obj_alloc(const struct location *loc)
 {
 	struct obj *obj;
 
+	assert(loc);
+
 	obj = xzalloc(sizeof(*obj));
-	if (loc != NULL)
-		obj->location = *loc;
+	obj->location = *loc;
 
 	obj->refcnt = 1;
 	return obj;
@@ -2025,9 +2031,10 @@ struct flowtable *flowtable_alloc(const struct location *loc)
 {
 	struct flowtable *flowtable;
 
+	assert(loc);
+
 	flowtable = xzalloc(sizeof(*flowtable));
-	if (loc != NULL)
-		flowtable->location = *loc;
+	flowtable->location = *loc;
 
 	flowtable->refcnt = 1;
 	return flowtable;

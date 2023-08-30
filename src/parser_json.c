@@ -3175,7 +3175,7 @@ static struct cmd *json_parse_cmd_add_set(struct json_ctx *ctx, json_t *root,
 		break;
 	}
 
-	set = set_alloc(NULL);
+	set = set_alloc(&internal_location);
 
 	if (json_unpack(root, "{s:o}", "type", &tmp)) {
 		json_error(ctx, "Invalid set type.");

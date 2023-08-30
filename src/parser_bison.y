@@ -2134,7 +2134,7 @@ typeof_expr		:	primary_expr
 
 set_block_alloc		:	/* empty */
 			{
-				$$ = set_alloc(NULL);
+				$$ = set_alloc(&internal_location);
 			}
 			;
 
@@ -2214,7 +2214,7 @@ set_flag		:	CONSTANT	{ $$ = NFT_SET_CONSTANT; }
 
 map_block_alloc		:	/* empty */
 			{
-				$$ = set_alloc(NULL);
+				$$ = set_alloc(&internal_location);
 			}
 			;
 
@@ -2329,7 +2329,7 @@ set_policy_spec		:	PERFORMANCE	{ $$ = NFT_SET_POL_PERFORMANCE; }
 
 flowtable_block_alloc	:	/* empty */
 			{
-				$$ = flowtable_alloc(NULL);
+				$$ = flowtable_alloc(&internal_location);
 			}
 			;
 
@@ -2448,7 +2448,7 @@ data_type_expr		:	data_type_atom_expr
 
 obj_block_alloc		:       /* empty */
 			{
-				$$ = obj_alloc(NULL);
+				$$ = obj_alloc(&internal_location);
 			}
 			;
 
