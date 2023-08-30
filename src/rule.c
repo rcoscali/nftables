@@ -700,7 +700,7 @@ const char *chain_hookname_lookup(const char *name)
 /* internal ID to uniquely identify a set in the batch */
 static uint32_t chain_id;
 
-struct chain *chain_alloc(const char *name)
+struct chain *chain_alloc(void)
 {
 	struct chain *chain;
 
@@ -709,8 +709,6 @@ struct chain *chain_alloc(const char *name)
 	chain->handle.chain_id = ++chain_id;
 	init_list_head(&chain->rules);
 	init_list_head(&chain->scope.symbols);
-	if (name != NULL)
-		chain->handle.chain.name = xstrdup(name);
 
 	chain->policy = NULL;
 	return chain;

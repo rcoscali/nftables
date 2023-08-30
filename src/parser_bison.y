@@ -2029,7 +2029,7 @@ table_block		:	/* empty */	{ $$ = $<table>-1; }
 
 chain_block_alloc	:	/* empty */
 			{
-				$$ = chain_alloc(NULL);
+				$$ = chain_alloc();
 				if (open_scope(state, &$$->scope) < 0) {
 					erec_queue(error(&@$, "too many levels of nesting"),
 						   state->msgs);

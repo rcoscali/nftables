@@ -2965,7 +2965,7 @@ static struct cmd *json_parse_cmd_add_chain(struct json_ctx *ctx, json_t *root,
 		h.chain.name = xstrdup(h.chain.name);
 
 	if (comment) {
-		chain = chain_alloc(NULL);
+		chain = chain_alloc();
 		handle_merge(&chain->handle, &h);
 		chain->comment = xstrdup(comment);
 	}
@@ -2978,7 +2978,7 @@ static struct cmd *json_parse_cmd_add_chain(struct json_ctx *ctx, json_t *root,
 		return cmd_alloc(op, obj, &h, int_loc, chain);
 
 	if (!chain)
-		chain = chain_alloc(NULL);
+		chain = chain_alloc();
 
 	chain->flags |= CHAIN_F_BASECHAIN;
 	chain->type.str = xstrdup(type);

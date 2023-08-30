@@ -626,11 +626,13 @@ struct chain *netlink_delinearize_chain(struct netlink_ctx *ctx,
 	const char *udata;
 	uint32_t ulen;
 
-	chain = chain_alloc(nftnl_chain_get_str(nlc, NFTNL_CHAIN_NAME));
+	chain = chain_alloc();
 	chain->handle.family =
 		nftnl_chain_get_u32(nlc, NFTNL_CHAIN_FAMILY);
 	chain->handle.table.name  =
 		xstrdup(nftnl_chain_get_str(nlc, NFTNL_CHAIN_TABLE));
+	chain->handle.chain.name =
+		xstrdup(nftnl_chain_get_str(nlc, NFTNL_CHAIN_NAME));
 	chain->handle.handle.id =
 		nftnl_chain_get_u64(nlc, NFTNL_CHAIN_HANDLE);
 	if (nftnl_chain_is_set(nlc, NFTNL_CHAIN_FLAGS))

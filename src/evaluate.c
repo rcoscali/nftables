@@ -5005,7 +5005,7 @@ static int chain_evaluate(struct eval_ctx *ctx, struct chain *chain)
 
 	if (chain == NULL) {
 		if (!chain_cache_find(table, ctx->cmd->handle.chain.name)) {
-			chain = chain_alloc(NULL);
+			chain = chain_alloc();
 			handle_merge(&chain->handle, &ctx->cmd->handle);
 			chain_cache_add(chain, table);
 		}
