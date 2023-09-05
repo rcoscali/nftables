@@ -14,12 +14,7 @@
 # - delete them
 # - make sure they can't be deleted again
 
-if [ "$(ps -o comm= $PPID)" = "run-tests.sh" ]; then
-	# Skip some permutations on a full test suite run to keep it quick
-	TYPES="ipv4_addr ipv6_addr ether_addr inet_service"
-else
-	TYPES="ipv4_addr ipv6_addr ether_addr inet_proto inet_service mark"
-fi
+TYPES="ipv4_addr ipv6_addr ether_addr inet_proto inet_service mark"
 
 RULESPEC_ipv4_addr="ip saddr"
 ELEMS_ipv4_addr="192.0.2.1 198.51.100.0/25 203.0.113.0-203.0.113.129"
