@@ -4500,11 +4500,14 @@ static int setelem_evaluate(struct eval_ctx *ctx, struct cmd *cmd)
 		return -1;
 
 	cmd->elem.set = set_get(set);
+	if (set_is_interval(ctx->set->flags)) {
+		if (!(set->flags & NFT_SET_CONCAT) &&
+		    interval_set_eval(ctx, ctx->set, cmd->expr) < 0)
+			return -1;
 
-	if (set_is_interval(ctx->set->flags) &&
-	    !(set->flags & NFT_SET_CONCAT) &&
-	    interval_set_eval(ctx, ctx->set, cmd->expr) < 0)
-		return -1;
+		assert(cmd->expr->etype == EXPR_SET);
+		cmd->expr->set_flags |= NFT_SET_INTERVAL;
+	}
 
 	ctx->set = NULL;
 
