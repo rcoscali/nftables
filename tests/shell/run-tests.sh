@@ -34,6 +34,8 @@ usage() {
 	echo " -g              : Sets DUMPGEN=y."
 	echo " -V              : Sets VALGRIND=y."
 	echo " -K              : Sets KMEMLEAK=y."
+	echo " -R|--without-realroot : Sets NFT_TEST_HAS_REALROOT=n."
+	echo " -U|--no-unshare : Sets NFT_TEST_UNSHARE_CMD=\"\"."
 	echo " --              : Separate options from tests."
 	echo " [TESTS...]      : Other options are treated as test names,"
 	echo "                   that is, executables that are run by the runner."
@@ -47,6 +49,25 @@ usage() {
 	echo " DUMPGEN=*|y   : Regenerate dump files."
 	echo " VALGRIND=*|y  : Run \$NFT in valgrind."
 	echo " KMEMLEAK=*|y  : Check for kernel memleaks."
+	echo " NFT_TEST_HAS_REALROOT=*|y : To indicate whether the test has real root permissions."
+	echo "                 Usually, you don't need this and it gets autodetected."
+	echo "                 You might want to set it, if you know better than the"
+	echo "                 \`id -u\` check, whether the user is root in the main namespace."
+	echo "                 Note that without real root, certain tests may not work,"
+	echo "                 e.g. due to limited /proc/sys/net/core/{wmem_max,rmem_max}."
+	echo "                 Checks that cannot pass in such environment should check for"
+	echo "                 [ \"\$NFT_TEST_HAS_REALROOT\" != y ] and skip gracefully."
+	echo " NFT_TEST_UNSHARE_CMD=cmd : when set, this is the command line for an unshare"
+	echo "                 command, which is used to sandbox each test invocation. By"
+	echo "                 setting it to empty, no unsharing is done."
+	echo "                 By default it is unset, in which case it's autodetected as"
+	echo "                 \`unshare -f -p\` (for root) or as \`unshare -f -p --mount-proc -U --map-root-user -n\`"
+	echo "                 for non-root."
+	echo "                 When setting this, you may also want to set NFT_TEST_HAS_UNSHARED="
+	echo "                 and NFT_TEST_HAS_REALROOT= accordingly."
+	echo " NFT_TEST_HAS_UNSHARED=*|y : To indicate to the test whether the test run will be unshared."
+	echo "                 Test may consider this."
+	echo "                 This is only honored when \$NFT_TEST_UNSHARE_CMD= is set. Otherwise it's detected."
 	echo " TMPDIR=<PATH> : select a different base directory for the result data."
 }
 
@@ -55,23 +76,11 @@ NFT_TEST_BASEDIR="$(dirname "$0")"
 # Export the base directory. It may be used by tests.
 export NFT_TEST_BASEDIR
 
-if [ "$(id -u)" != "0" ] ; then
-	msg_error "this requires root!"
-fi
-
-if [ "${1}" != "run" ]; then
-	if unshare -f -n true; then
-		unshare -n "${0}" run $@
-		exit $?
-	fi
-	msg_warn "cannot run in own namespace, connectivity might break"
-fi
-shift
-
 VERBOSE="$(bool_y "$VERBOSE")"
 DUMPGEN="$(bool_y "$DUMPGEN")"
 VALGRIND="$(bool_y "$VALGRIND")"
 KMEMLEAK="$(bool_y "$KMEMLEAK")"
+NFT_TEST_HAS_REALROOT="$NFT_TEST_HAS_REALROOT"
 DO_LIST_TESTS=
 
 TESTS=()
@@ -98,6 +107,12 @@ while [ $# -gt 0 ] ; do
 			;;
 		-L|--list-tests)
 			DO_LIST_TESTS=y
+			;;
+		-R|--without-realroot)
+			NFT_TEST_HAS_REALROOT=n
+			;;
+		-U|--no-unshare)
+			NFT_TEST_UNSHARE_CMD=
 			;;
 		--)
 			TESTS+=( "$@" )
@@ -140,6 +155,62 @@ fi
 
 _TMPDIR="${TMPDIR:-/tmp}"
 
+if [ "$NFT_TEST_HAS_REALROOT" = "" ] ; then
+	# The caller didn't set NFT_TEST_HAS_REALROOT and didn't specify
+	# -R/--without-root option. Autodetect it based on `id -u`.
+	export NFT_TEST_HAS_REALROOT="$(test "$(id -u)" = "0" && echo y || echo n)"
+else
+	NFT_TEST_HAS_REALROOT="$(bool_y "$NFT_TEST_HAS_REALROOT")"
+fi
+export NFT_TEST_HAS_REALROOT
+
+detect_unshare() {
+	if ! $1 true &>/dev/null ; then
+		return 1
+	fi
+	NFT_TEST_UNSHARE_CMD="$1"
+	return 0
+}
+
+if [ -n "${NFT_TEST_UNSHARE_CMD+x}" ] ; then
+	# User overrides the unshare command.
+	if ! detect_unshare "$NFT_TEST_UNSHARE_CMD" ; then
+		msg_error "Cannot unshare via NFT_TEST_UNSHARE_CMD=$(printf '%q' "$NFT_TEST_UNSHARE_CMD")"
+	fi
+	if [ -z "${NFT_TEST_HAS_UNSHARED+x}" ] ; then
+		# Autodetect NFT_TEST_HAS_UNSHARED based one whether
+		# $NFT_TEST_UNSHARE_CMD is set.
+		if [ -n "$NFT_TEST_UNSHARE_CMD" ] ; then
+			NFT_TEST_HAS_UNSHARED="y"
+		else
+			NFT_TEST_HAS_UNSHARED="n"
+		fi
+	else
+		NFT_TEST_HAS_UNSHARED="$(bool_y "$NFT_TEST_HAS_UNSHARED")"
+	fi
+else
+	if [ "$NFT_TEST_HAS_REALROOT" = y ] ; then
+		# We appear to have real root. So try to unshare
+		# without a separate USERNS. CLONE_NEWUSER will break
+		# tests that are limited by
+		# /proc/sys/net/core/{wmem_max,rmem_max}. With real
+		# root, we want to test that.
+		detect_unshare "unshare -f -n -m" ||
+			detect_unshare "unshare -f -n" ||
+			detect_unshare "unshare -f -p -m --mount-proc -U --map-root-user -n" ||
+			detect_unshare "unshare -f -U --map-root-user -n"
+	else
+		detect_unshare "unshare -f -p -m --mount-proc -U --map-root-user -n" ||
+			detect_unshare "unshare -f -U --map-root-user -n"
+	fi
+	if [ -z "$NFT_TEST_UNSHARE_CMD" ] ; then
+		msg_error "Unshare does not work. Run as root with -U/--no-unshare or set NFT_TEST_UNSHARE_CMD"
+	fi
+	NFT_TEST_HAS_UNSHARED=y
+fi
+# If tests wish, they can know whether they are unshared via this variable.
+export NFT_TEST_HAS_UNSHARED
+
 [ -z "$NFT" ] && NFT="$NFT_TEST_BASEDIR/../../src/nft"
 ${NFT} > /dev/null 2>&1
 ret=$?
@@ -171,6 +242,9 @@ msg_info "conf: VERBOSE=$(printf '%q' "$VERBOSE")"
 msg_info "conf: DUMPGEN=$(printf '%q' "$DUMPGEN")"
 msg_info "conf: VALGRIND=$(printf '%q' "$VALGRIND")"
 msg_info "conf: KMEMLEAK=$(printf '%q' "$KMEMLEAK")"
+msg_info "conf: NFT_TEST_HAS_REALROOT=$(printf '%q' "$NFT_TEST_HAS_REALROOT")"
+msg_info "conf: NFT_TEST_UNSHARE_CMD=$(printf '%q' "$NFT_TEST_UNSHARE_CMD")"
+msg_info "conf: NFT_TEST_HAS_UNSHARED=$(printf '%q' "$NFT_TEST_HAS_UNSHARED")"
 msg_info "conf: TMPDIR=$(printf '%q' "$_TMPDIR")"
 
 NFT_TEST_LATEST="$_TMPDIR/nft-test.latest.$USER"
@@ -181,9 +255,14 @@ ln -snf "$NFT_TEST_TMPDIR" "$NFT_TEST_LATEST"
 # distinct files! It will be deleted on EXIT.
 export NFT_TEST_TMPDIR
 
+echo
+msg_info "info: NFT_TEST_BASEDIR=$(printf '%q' "$NFT_TEST_BASEDIR")"
+msg_info "info: NFT_TEST_TMPDIR=$(printf '%q' "$NFT_TEST_TMPDIR")"
 
 kernel_cleanup() {
-	$NFT flush ruleset
+	if [ "$NFT_TEST_HAS_UNSHARED" != y ] ; then
+		$NFT flush ruleset
+	fi
 	$MODPROBE -raq \
 	nft_reject_ipv4 nft_reject_bridge nft_reject_ipv6 nft_reject \
 	nft_redir_ipv4 nft_redir_ipv6 nft_redir \
@@ -297,22 +376,32 @@ check_kmemleak()
 
 check_taint
 
+TESTIDX=0
 for testfile in "${TESTS[@]}" ; do
 	read taint < /proc/sys/kernel/tainted
 	kernel_cleanup
 
+	((TESTIDX++))
+
+	# We also create and export a test-specific temporary directory.
+	NFT_TEST_TESTTMPDIR="$NFT_TEST_TMPDIR/test-${testfile//\//-}.$TESTIDX"
+	mkdir "$NFT_TEST_TESTTMPDIR"
+	chmod 755 "$NFT_TEST_TESTTMPDIR"
+	export NFT_TEST_TESTTMPDIR
+
 	msg_info "[EXECUTING]	$testfile"
-	test_output=$(NFT="$NFT" DIFF=$DIFF ${testfile} 2>&1)
+	test_output="$(NFT="$NFT" DIFF=$DIFF $NFT_TEST_UNSHARE_CMD "$NFT_TEST_BASEDIR/helpers/test-wrapper.sh" "$testfile" 2>&1)"
 	rc_got=$?
 	echo -en "\033[1A\033[K" # clean the [EXECUTING] foobar line
 
 	if [ "$rc_got" -eq 0 ] ; then
+		# FIXME: this should move inside test-wrapper.sh.
 		# check nft dump only for positive tests
 		dumppath="$(dirname ${testfile})/dumps"
 		dumpfile="${dumppath}/$(basename ${testfile}).nft"
 		rc_spec=0
 		if [ "$rc_got" -eq 0 ] && [ -f ${dumpfile} ]; then
-			test_output=$(${DIFF} -u ${dumpfile} <($NFT list ruleset) 2>&1)
+			test_output=$(${DIFF} -u ${dumpfile} <(cat "$NFT_TEST_TESTTMPDIR/ruleset-after") 2>&1)
 			rc_spec=$?
 		fi
 
@@ -323,7 +412,7 @@ for testfile in "${TESTS[@]}" ; do
 
 			if [ "$DUMPGEN" == "y" ] && [ "$rc_got" == 0 ] && [ ! -f "${dumpfile}" ]; then
 				mkdir -p "${dumppath}"
-				$NFT list ruleset > "${dumpfile}"
+				cat "$NFT_TEST_TESTTMPDIR/ruleset-after" > "${dumpfile}"
 			fi
 		else
 			((failed++))
@@ -361,4 +450,5 @@ check_kmemleak_force
 msg_info "results: [OK] $ok [FAILED] $failed [TOTAL] $((ok+failed))"
 
 kernel_cleanup
+
 [ "$failed" -eq 0 ]
