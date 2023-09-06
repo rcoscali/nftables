@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# Configuration
-TESTDIR="./$(dirname $0)/testcases"
-SRC_NFT="$(dirname $0)/../../src/nft"
-DIFF=$(which diff)
-
 msg_error() {
 	echo "E: $1 ..." >&2
 	exit 1
@@ -18,6 +13,32 @@ msg_info() {
 	echo "I: $1"
 }
 
+usage() {
+	echo " $0 [OPTIONS]"
+	echo
+	echo "OPTIONS:"
+	echo " -h|--help : Print usage."
+	echo " -v        : Sets VERBOSE=y."
+	echo " -g        : Sets DUMPGEN=y."
+	echo " -V        : Sets VALGRIND=y."
+	echo " -K        : Sets KMEMLEAK=y."
+	echo
+	echo "ENVIRONMENT VARIABLES:"
+	echo " NFT=<CMD>    : Path to nft executable. Will be called as \`\$NFT [...]\` so"
+	echo "                it can be a command with parameters. Note that in this mode quoting"
+	echo "                does not work, so the usage is limited and the command cannot contain"
+	echo "                spaces."
+	echo " VERBOSE=*|y  : Enable verbose output."
+	echo " DUMPGEN=*|y  : Regenerate dump files."
+	echo " VALGRIND=*|y : Run \$NFT in valgrind."
+	echo " KMEMLEAK=*|y : Check for kernel memleaks."
+}
+
+# Configuration
+TESTDIR="./$(dirname $0)/testcases"
+SRC_NFT="$(dirname $0)/../../src/nft"
+DIFF=$(which diff)
+
 if [ "$(id -u)" != "0" ] ; then
 	msg_error "this requires root!"
 fi
@@ -30,6 +51,48 @@ if [ "${1}" != "run" ]; then
 	msg_warn "cannot run in own namespace, connectivity might break"
 fi
 shift
+
+VERBOSE="$VERBOSE"
+DUMPGEN="$DUMPGEN"
+VALGRIND="$VALGRIND"
+KMEMLEAK="$KMEMLEAK"
+
+TESTS=()
+
+while [ $# -gt 0 ] ; do
+	A="$1"
+	shift
+	case "$A" in
+		-v)
+			VERBOSE=y
+			;;
+		-g)
+			DUMPGEN=y
+			;;
+		-V)
+			VALGRIND=y
+			;;
+		-K)
+			KMEMLEAK=y
+			;;
+		-h|--help)
+			usage
+			exit 0
+			;;
+		--)
+			TESTS+=( "$@" )
+			shift $#
+			;;
+		*)
+			# Any unrecognized option is treated as a test name, and also
+			# enable verbose tests.
+			TESTS+=( "$A" )
+			VERBOSE=y
+			;;
+	esac
+done
+
+SINGLE="${TESTS[*]}"
 
 [ -z "$NFT" ] && NFT=$SRC_NFT
 ${NFT} > /dev/null 2>&1
@@ -58,31 +121,6 @@ DIFF="$(which diff)"
 if [ ! -x "$DIFF" ] ; then
 	DIFF=true
 fi
-
-if [ "$1" == "-v" ] ; then
-	VERBOSE=y
-	shift
-fi
-
-if [ "$1" == "-g" ] ; then
-	DUMPGEN=y
-	shift
-fi
-
-if [ "$1" == "-V" ] ; then
-	VALGRIND=y
-	shift
-fi
-
-if [ "$1" == "-K" ]; then
-	KMEMLEAK=y
-	shift
-fi
-
-for arg in "$@"; do
-	SINGLE+=" $arg"
-	VERBOSE=y
-done
 
 kernel_cleanup() {
 	$NFT flush ruleset
