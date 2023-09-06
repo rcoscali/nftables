@@ -109,6 +109,18 @@ if [ "${#TESTS[@]}" -eq 0 ] ; then
 	test "${#TESTS[@]}" -gt 0 || msg_error "Could not find tests"
 fi
 
+TESTSOLD=( "${TESTS[@]}" )
+TESTS=()
+for t in "${TESTSOLD[@]}" ; do
+	if [ -f "$t" -a -x "$t" ] ; then
+		TESTS+=( "$t" )
+	elif [ -d "$t" ] ; then
+		TESTS+=( $(find_tests "$t") )
+	else
+		msg_error "Unknown test \"$t\""
+	fi
+done
+
 if [ "$DO_LIST_TESTS" = y ] ; then
 	printf '%s\n' "${TESTS[@]}"
 	exit 0
