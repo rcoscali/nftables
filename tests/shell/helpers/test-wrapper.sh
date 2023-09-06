@@ -9,6 +9,8 @@ TEST="$1"
 TESTBASE="$(basename "$TEST")"
 TESTDIR="$(dirname "$TEST")"
 
+START_TIME="$(cut -d ' ' -f1 /proc/uptime)"
+
 CLEANUP_UMOUNT_RUN_NETNS=n
 
 cleanup() {
@@ -98,5 +100,9 @@ else
 		rc_exit=125
 	fi
 fi
+
+END_TIME="$(cut -d ' ' -f1 /proc/uptime)"
+WALL_TIME="$(awk -v start="$START_TIME" -v end="$END_TIME" "BEGIN { print(end - start) }")"
+printf "%s\n" "$WALL_TIME" "$START_TIME" "$END_TIME" > "$NFT_TEST_TESTTMPDIR/times"
 
 exit "$rc_exit"
