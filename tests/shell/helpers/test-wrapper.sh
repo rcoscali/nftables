@@ -12,7 +12,7 @@ TESTDIR="$(dirname "$TEST")"
 printf '%s\n' "$TEST" > "$NFT_TEST_TESTTMPDIR/name"
 
 rc_test=0
-"$TEST" |& tee "$NFT_TEST_TESTTMPDIR/testout.log" || rc_test=$?
+"$TEST" &> "$NFT_TEST_TESTTMPDIR/testout.log" || rc_test=$?
 
 $NFT list ruleset > "$NFT_TEST_TESTTMPDIR/ruleset-after"
 

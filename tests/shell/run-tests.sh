@@ -1,16 +1,31 @@
 #!/bin/bash
 
+_msg() {
+	local level="$1"
+	shift
+	local msg
+
+	msg="$level: $*"
+	if [ "$level" = E -o "$level" = W ] ; then
+		printf '%s\n' "$msg" >&2
+	else
+		printf '%s\n' "$msg"
+	fi
+	if [ "$level" = E ] ; then
+		exit 1
+	fi
+}
+
 msg_error() {
-	echo "E: $1 ..." >&2
-	exit 1
+	_msg E "$@"
 }
 
 msg_warn() {
-	echo "W: $1" >&2
+	_msg W "$@"
 }
 
 msg_info() {
-	echo "I: $1"
+	_msg I "$@"
 }
 
 bool_y() {
@@ -388,6 +403,64 @@ check_kmemleak()
 
 check_taint
 
+print_test_header() {
+	local msglevel="$1"
+	local testfile="$2"
+	local status="$3"
+	local suffix="$4"
+	local text
+
+	text="[$status]"
+	text="$(printf '%-12s' "$text")"
+	_msg "$msglevel" "$text $testfile${suffix:+: $suffix}"
+}
+
+print_test_result() {
+	local NFT_TEST_TESTTMPDIR="$1"
+	local testfile="$2"
+	local rc_got="$3"
+	shift 3
+
+	local result_msg_level="I"
+	local result_msg_status="OK"
+	local result_msg_suffix=""
+	local result_msg_files=( "$NFT_TEST_TESTTMPDIR/testout.log" "$NFT_TEST_TESTTMPDIR/ruleset-diff" )
+
+	if [ "$rc_got" -eq 0 ] ; then
+		((ok++))
+	elif [ "$rc_got" -eq 124 ] ; then
+		((failed++))
+		result_msg_level="W"
+		result_msg_status="DUMP FAIL"
+	elif [ "$rc_got" -eq 77 ] ; then
+		((skipped++))
+		result_msg_level="I"
+		result_msg_status="SKIPPED"
+	else
+		((failed++))
+		result_msg_level="W"
+		result_msg_status="FAILED"
+		result_msg_suffix="got $rc_got"
+		result_msg_files=( "$NFT_TEST_TESTTMPDIR/testout.log" )
+	fi
+
+	print_test_header "$result_msg_level" "$testfile" "$result_msg_status" "$result_msg_suffix"
+
+	if [ "$VERBOSE" = "y" ] ; then
+		local f
+
+		for f in "${result_msg_files[@]}"; do
+			if [ -s "$f" ] ; then
+				cat "$f"
+			fi
+		done
+
+		if [ "$rc_got" -ne 0 ] ; then
+			msg_info "check \"$NFT_TEST_TESTTMPDIR\""
+		fi
+	fi
+}
+
 TESTIDX=0
 for testfile in "${TESTS[@]}" ; do
 	read taint < /proc/sys/kernel/tainted
@@ -401,44 +474,12 @@ for testfile in "${TESTS[@]}" ; do
 	chmod 755 "$NFT_TEST_TESTTMPDIR"
 	export NFT_TEST_TESTTMPDIR
 
-	msg_info "[EXECUTING]	$testfile"
-	test_output="$(NFT="$NFT" DIFF=$DIFF DUMPGEN="$DUMPGEN" $NFT_TEST_UNSHARE_CMD "$NFT_TEST_BASEDIR/helpers/test-wrapper.sh" "$testfile" 2>&1)"
+	print_test_header I "$testfile" "EXECUTING" ""
+	NFT="$NFT" DIFF="$DIFF" DUMPGEN="$DUMPGEN" $NFT_TEST_UNSHARE_CMD "$NFT_TEST_BASEDIR/helpers/test-wrapper.sh" "$testfile"
 	rc_got=$?
 	echo -en "\033[1A\033[K" # clean the [EXECUTING] foobar line
 
-	if [ -s "$NFT_TEST_TESTTMPDIR/ruleset-diff" ] ; then
-		test_output="$test_output$(cat "$NFT_TEST_TESTTMPDIR/ruleset-diff")"
-	fi
-
-	if [ "$rc_got" -eq 0 ] ; then
-		((ok++))
-		msg_info "[OK]		$testfile"
-		[ "$VERBOSE" == "y" ] && [ ! -z "$test_output" ] && echo "$test_output"
-	elif [ "$rc_got" -eq 124 ] ; then
-		((failed++))
-		if [ "$VERBOSE" == "y" ] ; then
-			msg_warn "[DUMP FAIL]	$testfile: dump diff detected"
-			[ ! -z "$test_output" ] && echo "$test_output"
-		else
-			msg_warn "[DUMP FAIL]	$testfile"
-		fi
-	elif [ "$rc_got" -eq 77 ] ; then
-		((skipped++))
-		if [ "$VERBOSE" == "y" ] ; then
-			msg_warn "[SKIPPED]	$testfile"
-			[ ! -z "$test_output" ] && echo "$test_output"
-		else
-			msg_warn "[SKIPPED]	$testfile"
-		fi
-	else
-		((failed++))
-		if [ "$VERBOSE" == "y" ] ; then
-			msg_warn "[FAILED]	$testfile: got $rc_got"
-			[ ! -z "$test_output" ] && echo "$test_output"
-		else
-			msg_warn "[FAILED]	$testfile"
-		fi
-	fi
+	print_test_result "$NFT_TEST_TESTTMPDIR" "$testfile" "$rc_got"
 
 	check_taint
 	check_kmemleak
