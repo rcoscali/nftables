@@ -47,7 +47,9 @@ usage() {
 	echo "                 does not work, so the usage is limited and the command cannot contain"
 	echo "                 spaces."
 	echo " VERBOSE=*|y   : Enable verbose output."
-	echo " DUMPGEN=*|y   : Regenerate dump files."
+	echo " DUMPGEN=*|y   : Regenerate dump files. Dump files are only recreated if the"
+	echo "                 test completes successfully and the \"dumps\" directory for the"
+	echo "                 test exits."
 	echo " VALGRIND=*|y  : Run \$NFT in valgrind."
 	echo " KMEMLEAK=*|y  : Check for kernel memleaks."
 	echo " NFT_TEST_HAS_REALROOT=*|y : To indicate whether the test has real root permissions."
@@ -400,38 +402,25 @@ for testfile in "${TESTS[@]}" ; do
 	export NFT_TEST_TESTTMPDIR
 
 	msg_info "[EXECUTING]	$testfile"
-	test_output="$(NFT="$NFT" DIFF=$DIFF $NFT_TEST_UNSHARE_CMD "$NFT_TEST_BASEDIR/helpers/test-wrapper.sh" "$testfile" 2>&1)"
+	test_output="$(NFT="$NFT" DIFF=$DIFF DUMPGEN="$DUMPGEN" $NFT_TEST_UNSHARE_CMD "$NFT_TEST_BASEDIR/helpers/test-wrapper.sh" "$testfile" 2>&1)"
 	rc_got=$?
 	echo -en "\033[1A\033[K" # clean the [EXECUTING] foobar line
 
+	if [ -s "$NFT_TEST_TESTTMPDIR/ruleset-diff" ] ; then
+		test_output="$test_output$(cat "$NFT_TEST_TESTTMPDIR/ruleset-diff")"
+	fi
+
 	if [ "$rc_got" -eq 0 ] ; then
-		# FIXME: this should move inside test-wrapper.sh.
-		# check nft dump only for positive tests
-		dumppath="$(dirname ${testfile})/dumps"
-		dumpfile="${dumppath}/$(basename ${testfile}).nft"
-		rc_spec=0
-		if [ "$rc_got" -eq 0 ] && [ -f ${dumpfile} ]; then
-			test_output=$(${DIFF} -u ${dumpfile} <(cat "$NFT_TEST_TESTTMPDIR/ruleset-after") 2>&1)
-			rc_spec=$?
-		fi
-
-		if [ "$rc_spec" -eq 0 ]; then
-			msg_info "[OK]		$testfile"
-			[ "$VERBOSE" == "y" ] && [ ! -z "$test_output" ] && echo "$test_output"
-			((ok++))
-
-			if [ "$DUMPGEN" == "y" ] && [ "$rc_got" == 0 ] && [ ! -f "${dumpfile}" ]; then
-				mkdir -p "${dumppath}"
-				cat "$NFT_TEST_TESTTMPDIR/ruleset-after" > "${dumpfile}"
-			fi
+		((ok++))
+		msg_info "[OK]		$testfile"
+		[ "$VERBOSE" == "y" ] && [ ! -z "$test_output" ] && echo "$test_output"
+	elif [ "$rc_got" -eq 124 ] ; then
+		((failed++))
+		if [ "$VERBOSE" == "y" ] ; then
+			msg_warn "[DUMP FAIL]	$testfile: dump diff detected"
+			[ ! -z "$test_output" ] && echo "$test_output"
 		else
-			((failed++))
-			if [ "$VERBOSE" == "y" ] ; then
-				msg_warn "[DUMP FAIL]	$testfile: dump diff detected"
-				[ ! -z "$test_output" ] && echo "$test_output"
-			else
-				msg_warn "[DUMP FAIL]	$testfile"
-			fi
+			msg_warn "[DUMP FAIL]	$testfile"
 		fi
 	elif [ "$rc_got" -eq 77 ] ; then
 		((skipped++))
