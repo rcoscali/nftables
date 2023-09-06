@@ -28,20 +28,21 @@ usage() {
 	echo "                   that is, executables that are run by the runner."
 	echo
 	echo "ENVIRONMENT VARIABLES:"
-	echo " NFT=<CMD>    : Path to nft executable. Will be called as \`\$NFT [...]\` so"
-	echo "                it can be a command with parameters. Note that in this mode quoting"
-	echo "                does not work, so the usage is limited and the command cannot contain"
-	echo "                spaces."
-	echo " VERBOSE=*|y  : Enable verbose output."
-	echo " DUMPGEN=*|y  : Regenerate dump files."
-	echo " VALGRIND=*|y : Run \$NFT in valgrind."
-	echo " KMEMLEAK=*|y : Check for kernel memleaks."
+	echo " NFT=<CMD>     : Path to nft executable. Will be called as \`\$NFT [...]\` so"
+	echo "                 it can be a command with parameters. Note that in this mode quoting"
+	echo "                 does not work, so the usage is limited and the command cannot contain"
+	echo "                 spaces."
+	echo " VERBOSE=*|y   : Enable verbose output."
+	echo " DUMPGEN=*|y   : Regenerate dump files."
+	echo " VALGRIND=*|y  : Run \$NFT in valgrind."
+	echo " KMEMLEAK=*|y  : Check for kernel memleaks."
+	echo " TMPDIR=<PATH> : select a different base directory for the result data."
 }
 
-# Configuration
-BASEDIR="$(dirname "$0")"
-SRC_NFT="$BASEDIR/../../src/nft"
-DIFF=$(which diff)
+NFT_TEST_BASEDIR="$(dirname "$0")"
+
+# Export the base directory. It may be used by tests.
+export NFT_TEST_BASEDIR
 
 if [ "$(id -u)" != "0" ] ; then
 	msg_error "this requires root!"
@@ -105,7 +106,7 @@ find_tests() {
 }
 
 if [ "${#TESTS[@]}" -eq 0 ] ; then
-	TESTS=( $(find_tests "$BASEDIR/testcases/") )
+	TESTS=( $(find_tests "$NFT_TEST_BASEDIR/testcases/") )
 	test "${#TESTS[@]}" -gt 0 || msg_error "Could not find tests"
 fi
 
@@ -126,7 +127,7 @@ if [ "$DO_LIST_TESTS" = y ] ; then
 	exit 0
 fi
 
-[ -z "$NFT" ] && NFT=$SRC_NFT
+[ -z "$NFT" ] && NFT="$NFT_TEST_BASEDIR/../../src/nft"
 ${NFT} > /dev/null 2>&1
 ret=$?
 if [ ${ret} -eq 126 ] || [ ${ret} -eq 127 ]; then
@@ -144,6 +145,26 @@ DIFF="$(which diff)"
 if [ ! -x "$DIFF" ] ; then
 	DIFF=true
 fi
+
+cleanup_on_exit() {
+	test -z "$NFT_TEST_TMPDIR" || rm -rf "$NFT_TEST_TMPDIR"
+}
+trap cleanup_on_exit EXIT
+
+_TMPDIR="${TMPDIR:-/tmp}"
+
+NFT_TEST_TMPDIR="$(mktemp --tmpdir="$_TMPDIR" -d "nft-test.$(date '+%Y%m%d-%H%M%S.%3N').XXXXXX")" ||
+	msg_error "Failure to create temp directory in \"$_TMPDIR\""
+chmod 755 "$NFT_TEST_TMPDIR"
+
+NFT_TEST_LATEST="$_TMPDIR/nft-test.latest.$USER"
+
+ln -snf "$NFT_TEST_TMPDIR" "$NFT_TEST_LATEST"
+
+# export the tmp directory for tests. They may use it, but create
+# distinct files! It will be deleted on EXIT.
+export NFT_TEST_TMPDIR
+
 
 kernel_cleanup() {
 	$NFT flush ruleset
@@ -199,16 +220,10 @@ EOF
 }
 
 if [ "$VALGRIND" == "y" ]; then
-	tmpd=$(mktemp -d)
-	chmod 755 $tmpd
-
-	msg_info "writing valgrind logs to $tmpd"
-
-	printscript "$NFT" "$tmpd" >${tmpd}/nft
-	trap "rm ${tmpd}/nft" EXIT
-	chmod a+x ${tmpd}/nft
-
-	NFT="${tmpd}/nft"
+	msg_info "writing valgrind logs to $NFT_TEST_TMPDIR"
+	printscript "$NFT" "$NFT_TEST_TMPDIR" > "$NFT_TEST_TMPDIR/nft"
+	chmod a+x "$NFT_TEST_TMPDIR/nft"
+	NFT="$NFT_TEST_TMPDIR/nft"
 fi
 
 echo ""
