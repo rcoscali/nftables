@@ -14,14 +14,18 @@ msg_info() {
 }
 
 usage() {
-	echo " $0 [OPTIONS]"
+	echo " $0 [OPTIONS] [TESTS...]"
 	echo
 	echo "OPTIONS:"
-	echo " -h|--help : Print usage."
-	echo " -v        : Sets VERBOSE=y."
-	echo " -g        : Sets DUMPGEN=y."
-	echo " -V        : Sets VALGRIND=y."
-	echo " -K        : Sets KMEMLEAK=y."
+	echo " -h|--help       : Print usage."
+	echo " -L|--list-tests : List test names and quit."
+	echo " -v              : Sets VERBOSE=y. Specifying tests without \"--\" enables verbose mode."
+	echo " -g              : Sets DUMPGEN=y."
+	echo " -V              : Sets VALGRIND=y."
+	echo " -K              : Sets KMEMLEAK=y."
+	echo " --              : Separate options from tests."
+	echo " [TESTS...]      : Other options are treated as test names,"
+	echo "                   that is, executables that are run by the runner."
 	echo
 	echo "ENVIRONMENT VARIABLES:"
 	echo " NFT=<CMD>    : Path to nft executable. Will be called as \`\$NFT [...]\` so"
@@ -35,8 +39,8 @@ usage() {
 }
 
 # Configuration
-TESTDIR="./$(dirname $0)/testcases"
-SRC_NFT="$(dirname $0)/../../src/nft"
+BASEDIR="$(dirname "$0")"
+SRC_NFT="$BASEDIR/../../src/nft"
 DIFF=$(which diff)
 
 if [ "$(id -u)" != "0" ] ; then
@@ -56,6 +60,7 @@ VERBOSE="$VERBOSE"
 DUMPGEN="$DUMPGEN"
 VALGRIND="$VALGRIND"
 KMEMLEAK="$KMEMLEAK"
+DO_LIST_TESTS=
 
 TESTS=()
 
@@ -79,6 +84,9 @@ while [ $# -gt 0 ] ; do
 			usage
 			exit 0
 			;;
+		-L|--list-tests)
+			DO_LIST_TESTS=y
+			;;
 		--)
 			TESTS+=( "$@" )
 			shift $#
@@ -92,7 +100,19 @@ while [ $# -gt 0 ] ; do
 	esac
 done
 
-SINGLE="${TESTS[*]}"
+find_tests() {
+	find "$1" -type f -executable | sort
+}
+
+if [ "${#TESTS[@]}" -eq 0 ] ; then
+	TESTS=( $(find_tests "$BASEDIR/testcases/") )
+	test "${#TESTS[@]}" -gt 0 || msg_error "Could not find tests"
+fi
+
+if [ "$DO_LIST_TESTS" = y ] ; then
+	printf '%s\n' "${TESTS[@]}"
+	exit 0
+fi
 
 [ -z "$NFT" ] && NFT=$SRC_NFT
 ${NFT} > /dev/null 2>&1
@@ -101,15 +121,6 @@ if [ ${ret} -eq 126 ] || [ ${ret} -eq 127 ]; then
 	msg_error "cannot execute nft command: ${NFT}"
 else
 	msg_info "using nft command: ${NFT}"
-fi
-
-if [ ! -d "$TESTDIR" ] ; then
-	msg_error "missing testdir $TESTDIR"
-fi
-
-FIND="$(which find)"
-if [ ! -x "$FIND" ] ; then
-	msg_error "no find binary found"
 fi
 
 MODPROBE="$(which modprobe)"
@@ -144,14 +155,6 @@ kernel_cleanup() {
 	nf_flow_table nf_flow_table_ipv4 nf_flow_tables_ipv6 \
 	nf_flow_table_inet nft_flow_offload \
 	nft_xfrm
-}
-
-find_tests() {
-	if [ ! -z "$SINGLE" ] ; then
-		echo $SINGLE
-		return
-	fi
-	${FIND} ${TESTDIR} -type f -executable | sort
 }
 
 printscript() { # (cmd, tmpd)
@@ -251,8 +254,7 @@ check_kmemleak()
 
 check_taint
 
-for testfile in $(find_tests)
-do
+for testfile in "${TESTS[@]}" ; do
 	read taint < /proc/sys/kernel/tainted
 	kernel_cleanup
 
