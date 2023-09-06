@@ -13,6 +13,17 @@ msg_info() {
 	echo "I: $1"
 }
 
+bool_y() {
+	case "$1" in
+		y|Y|yes|Yes|YES|1|true|True|TRUE)
+			printf y
+			;;
+		*)
+			printf n
+			;;
+	esac
+}
+
 usage() {
 	echo " $0 [OPTIONS] [TESTS...]"
 	echo
@@ -57,10 +68,10 @@ if [ "${1}" != "run" ]; then
 fi
 shift
 
-VERBOSE="$VERBOSE"
-DUMPGEN="$DUMPGEN"
-VALGRIND="$VALGRIND"
-KMEMLEAK="$KMEMLEAK"
+VERBOSE="$(bool_y "$VERBOSE")"
+DUMPGEN="$(bool_y "$DUMPGEN")"
+VALGRIND="$(bool_y "$VALGRIND")"
+KMEMLEAK="$(bool_y "$KMEMLEAK")"
 DO_LIST_TESTS=
 
 TESTS=()
