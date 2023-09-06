@@ -138,13 +138,13 @@ if [ "$DO_LIST_TESTS" = y ] ; then
 	exit 0
 fi
 
+_TMPDIR="${TMPDIR:-/tmp}"
+
 [ -z "$NFT" ] && NFT="$NFT_TEST_BASEDIR/../../src/nft"
 ${NFT} > /dev/null 2>&1
 ret=$?
 if [ ${ret} -eq 126 ] || [ ${ret} -eq 127 ]; then
-	msg_error "cannot execute nft command: ${NFT}"
-else
-	msg_info "using nft command: ${NFT}"
+	msg_error "cannot execute nft command: $NFT"
 fi
 
 MODPROBE="$(which modprobe)"
@@ -162,11 +162,16 @@ cleanup_on_exit() {
 }
 trap cleanup_on_exit EXIT
 
-_TMPDIR="${TMPDIR:-/tmp}"
-
 NFT_TEST_TMPDIR="$(mktemp --tmpdir="$_TMPDIR" -d "nft-test.$(date '+%Y%m%d-%H%M%S.%3N').XXXXXX")" ||
 	msg_error "Failure to create temp directory in \"$_TMPDIR\""
 chmod 755 "$NFT_TEST_TMPDIR"
+
+msg_info "conf: NFT=$(printf '%q' "$NFT")"
+msg_info "conf: VERBOSE=$(printf '%q' "$VERBOSE")"
+msg_info "conf: DUMPGEN=$(printf '%q' "$DUMPGEN")"
+msg_info "conf: VALGRIND=$(printf '%q' "$VALGRIND")"
+msg_info "conf: KMEMLEAK=$(printf '%q' "$KMEMLEAK")"
+msg_info "conf: TMPDIR=$(printf '%q' "$_TMPDIR")"
 
 NFT_TEST_LATEST="$_TMPDIR/nft-test.latest.$USER"
 
