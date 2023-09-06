@@ -14,6 +14,8 @@ rc_test=0
 
 if [ "$rc_test" -eq 0 ] ; then
 	echo "$rc_test" > "$NFT_TEST_TESTTMPDIR/rc_test-ok"
+elif [ "$rc_test" -eq 77 ] ; then
+	echo "$rc_test" > "$NFT_TEST_TESTTMPDIR/rc_test-skipped"
 else
 	echo "$rc_test" > "$NFT_TEST_TESTTMPDIR/rc_test-failed"
 fi

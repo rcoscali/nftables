@@ -323,6 +323,7 @@ fi
 
 echo ""
 ok=0
+skipped=0
 failed=0
 taint=0
 
@@ -423,6 +424,14 @@ for testfile in "${TESTS[@]}" ; do
 				msg_warn "[DUMP FAIL]	$testfile"
 			fi
 		fi
+	elif [ "$rc_got" -eq 77 ] ; then
+		((skipped++))
+		if [ "$VERBOSE" == "y" ] ; then
+			msg_warn "[SKIPPED]	$testfile"
+			[ ! -z "$test_output" ] && echo "$test_output"
+		else
+			msg_warn "[SKIPPED]	$testfile"
+		fi
 	else
 		((failed++))
 		if [ "$VERBOSE" == "y" ] ; then
@@ -447,7 +456,7 @@ echo ""
 kmemleak_found=0
 check_kmemleak_force
 
-msg_info "results: [OK] $ok [FAILED] $failed [TOTAL] $((ok+failed))"
+msg_info "results: [OK] $ok [SKIPPED] $skipped [FAILED] $failed [TOTAL] $((ok+skipped+failed))"
 
 kernel_cleanup
 
