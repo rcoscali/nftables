@@ -61,6 +61,8 @@ usage() {
 	echo "                 it can be a command with parameters. Note that in this mode quoting"
 	echo "                 does not work, so the usage is limited and the command cannot contain"
 	echo "                 spaces."
+	echo " NFT_REAL=<CMD> : Real nft comand. Usually this is just the same as \$NFT,"
+	echo "                 however, you may set NFT='valgrind nft' and NFT_REAL to the real command."
 	echo " VERBOSE=*|y   : Enable verbose output."
 	echo " DUMPGEN=*|y   : Regenerate dump files. Dump files are only recreated if the"
 	echo "                 test completes successfully and the \"dumps\" directory for the"
@@ -262,7 +264,10 @@ NFT_TEST_TMPDIR="$(mktemp --tmpdir="$_TMPDIR" -d "nft-test.$(date '+%Y%m%d-%H%M%
 	msg_error "Failure to create temp directory in \"$_TMPDIR\""
 chmod 755 "$NFT_TEST_TMPDIR"
 
+NFT_REAL="${NFT_REAL-$NFT}"
+
 msg_info "conf: NFT=$(printf '%q' "$NFT")"
+msg_info "conf: NFT_REAL=$(printf '%q' "$NFT_REAL")"
 msg_info "conf: VERBOSE=$(printf '%q' "$VERBOSE")"
 msg_info "conf: DUMPGEN=$(printf '%q' "$DUMPGEN")"
 msg_info "conf: VALGRIND=$(printf '%q' "$VALGRIND")"
@@ -311,40 +316,8 @@ kernel_cleanup() {
 	nft_xfrm
 }
 
-printscript() { # (cmd, tmpd)
-	cat <<EOF
-#!/bin/bash
-
-CMD="$1"
-
-# note: valgrind man page warns about --log-file with --trace-children, the
-# last child executed overwrites previous reports unless %p or %q is used.
-# Since libtool wrapper calls exec but none of the iptables tools do, this is
-# perfect for us as it effectively hides bash-related errors
-
-valgrind --log-file=$2/valgrind.log --trace-children=yes \
-	 --leak-check=full --show-leak-kinds=all \$CMD "\$@"
-RC=\$?
-
-# don't keep uninteresting logs
-if grep -q 'no leaks are possible' $2/valgrind.log; then
-	rm $2/valgrind.log
-else
-	mv $2/valgrind.log $2/valgrind_\$\$.log
-fi
-
-# drop logs for failing commands for now
-[ \$RC -eq 0 ] || rm $2/valgrind_\$\$.log
-
-exit \$RC
-EOF
-}
-
 if [ "$VALGRIND" == "y" ]; then
-	msg_info "writing valgrind logs to $NFT_TEST_TMPDIR"
-	printscript "$NFT" "$NFT_TEST_TMPDIR" > "$NFT_TEST_TMPDIR/nft"
-	chmod a+x "$NFT_TEST_TMPDIR/nft"
-	NFT="$NFT_TEST_TMPDIR/nft"
+	NFT="$NFT_TEST_BASEDIR/helpers/nft-valgrind-wrapper.sh"
 fi
 
 echo ""
@@ -468,7 +441,7 @@ for testfile in "${TESTS[@]}" ; do
 	export NFT_TEST_TESTTMPDIR
 
 	print_test_header I "$testfile" "EXECUTING" ""
-	NFT="$NFT" DIFF="$DIFF" DUMPGEN="$DUMPGEN" $NFT_TEST_UNSHARE_CMD "$NFT_TEST_BASEDIR/helpers/test-wrapper.sh" "$testfile"
+	NFT="$NFT" NFT_REAL="$NFT_REAL" DIFF="$DIFF" DUMPGEN="$DUMPGEN" $NFT_TEST_UNSHARE_CMD "$NFT_TEST_BASEDIR/helpers/test-wrapper.sh" "$testfile"
 	rc_got=$?
 	echo -en "\033[1A\033[K" # clean the [EXECUTING] foobar line
 
