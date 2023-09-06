@@ -11,6 +11,8 @@ TESTDIR="$(dirname "$TEST")"
 
 START_TIME="$(cut -d ' ' -f1 /proc/uptime)"
 
+export TMPDIR="$NFT_TEST_TESTTMPDIR"
+
 CLEANUP_UMOUNT_RUN_NETNS=n
 
 cleanup() {
