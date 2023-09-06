@@ -16,6 +16,15 @@ if [ x = x"$NFT" ] ; then
 	NFT=nft
 fi
 
+if [ "$NFT_TEST_HAS_SOCKET_LIMITS" = y ] ; then
+	# The socket limit /proc/sys/net/core/wmem_max may be unsuitable for
+	# the test.
+	#
+	# Skip it. You may ensure that the limits are suitable and rerun
+	# with NFT_TEST_HAS_SOCKET_LIMITS=n.
+	exit 77
+fi
+
 testns=testns-$(mktemp -u "XXXXXXXX")
 tmp=""
 

@@ -28,6 +28,17 @@ msg_info() {
 	_msg I "$@"
 }
 
+bool_n() {
+	case "$1" in
+		n|N|no|No|NO|0|false|False|FALSE)
+			printf n
+			;;
+		*)
+			printf y
+			;;
+	esac
+}
+
 bool_y() {
 	case "$1" in
 		y|Y|yes|Yes|YES|1|true|True|TRUE)
@@ -78,6 +89,12 @@ usage() {
 	echo "                 e.g. due to limited /proc/sys/net/core/{wmem_max,rmem_max}."
 	echo "                 Checks that cannot pass in such environment should check for"
 	echo "                 [ \"\$NFT_TEST_HAS_REALROOT\" != y ] and skip gracefully."
+	echo " NFT_TEST_HAS_SOCKET_LIMITS=*|n : some tests will fail if /proc/sys/net/core/{wmem_max,rmem_max} is"
+	echo "                 too small. When running as real root, then test can override those limits. However,"
+	echo "                 with rootless the test would fail. Tests will check for [ "\$NFT_TEST_HAS_SOCKET_LIMITS" = y ]"
+	echo "                 and skip. You may set NFT_TEST_HAS_SOCKET_LIMITS=n if you ensure those limits are"
+	echo "                 suitable to run the test rootless. Otherwise will be autodetected."
+	echo "                 Set /proc/sys/net/core/{wmem_max,rmem_max} to at least 2MB to get them to pass automatically."
 	echo " NFT_TEST_UNSHARE_CMD=cmd : when set, this is the command line for an unshare"
 	echo "                 command, which is used to sandbox each test invocation. By"
 	echo "                 setting it to empty, no unsharing is done."
@@ -202,6 +219,20 @@ else
 fi
 export NFT_TEST_HAS_REALROOT
 
+if [ "$NFT_TEST_HAS_SOCKET_LIMITS" = "" ] ; then
+	if [ "$NFT_TEST_HAS_REALROOT" = y ] ; then
+		NFT_TEST_HAS_SOCKET_LIMITS=n
+	elif [ "$(cat /proc/sys/net/core/wmem_max 2>/dev/null)" -ge $((2000*1024)) ] 2>/dev/null && \
+	     [ "$(cat /proc/sys/net/core/rmem_max 2>/dev/null)" -ge $((2000*1024)) ] 2>/dev/null ; then
+		NFT_TEST_HAS_SOCKET_LIMITS=n
+	else
+		NFT_TEST_HAS_SOCKET_LIMITS=y
+	fi
+else
+	NFT_TEST_HAS_SOCKET_LIMITS="$(bool_n "$NFT_TEST_HAS_SOCKET_LIMITS")"
+fi
+export NFT_TEST_HAS_SOCKET_LIMITS
+
 detect_unshare() {
 	if ! $1 true &>/dev/null ; then
 		return 1
@@ -316,6 +347,7 @@ msg_info "conf: DUMPGEN=$(printf '%q' "$DUMPGEN")"
 msg_info "conf: VALGRIND=$(printf '%q' "$VALGRIND")"
 msg_info "conf: KMEMLEAK=$(printf '%q' "$KMEMLEAK")"
 msg_info "conf: NFT_TEST_HAS_REALROOT=$(printf '%q' "$NFT_TEST_HAS_REALROOT")"
+msg_info "conf: NFT_TEST_HAS_SOCKET_LIMITS=$(printf '%q' "$NFT_TEST_HAS_SOCKET_LIMITS")"
 msg_info "conf: NFT_TEST_UNSHARE_CMD=$(printf '%q' "$NFT_TEST_UNSHARE_CMD")"
 msg_info "conf: NFT_TEST_HAS_UNSHARED=$(printf '%q' "$NFT_TEST_HAS_UNSHARED")"
 msg_info "conf: NFT_TEST_HAS_UNSHARED_MOUNT=$(printf '%q' "$NFT_TEST_HAS_UNSHARED_MOUNT")"
