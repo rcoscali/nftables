@@ -52,6 +52,7 @@ usage() {
 	echo " -R|--without-realroot : Sets NFT_TEST_HAS_REALROOT=n."
 	echo " -U|--no-unshare : Sets NFT_TEST_UNSHARE_CMD=\"\"."
 	echo " -k|--keep-logs  : Sets NFT_TEST_KEEP_LOGS=y."
+	echo " -s|--sequential : Sets NFT_TEST_JOBS=0, which also enables global cleanups."
 	echo " --              : Separate options from tests."
 	echo " [TESTS...]      : Other options are treated as test names,"
 	echo "                   that is, executables that are run by the runner."
@@ -89,6 +90,11 @@ usage() {
 	echo "                 Test may consider this."
 	echo "                 This is only honored when \$NFT_TEST_UNSHARE_CMD= is set. Otherwise it's detected."
 	echo " NFT_TEST_KEEP_LOGS=*|y: Keep the temp directory. On success, it will be deleted by default."
+	echo " NFT_TEST_JOBS=<NUM}>: number of jobs for parallel execution. Defaults to \"12\" for parallel run."
+	echo "                 Setting this to \"0\" or \"1\", means to run jobs sequentially."
+	echo "                 Setting this to \"0\" means also to perform global cleanups between tests (remove"
+	echo "                 kernel modules)."
+	echo "                 Parallel jobs requires unshare and are disabled with NFT_TEST_UNSHARE_CMD=\"\"."
 	echo " TMPDIR=<PATH> : select a different base directory for the result data."
 }
 
@@ -103,6 +109,7 @@ VALGRIND="$(bool_y "$VALGRIND")"
 KMEMLEAK="$(bool_y "$KMEMLEAK")"
 NFT_TEST_KEEP_LOGS="$(bool_y "$NFT_TEST_KEEP_LOGS")"
 NFT_TEST_HAS_REALROOT="$NFT_TEST_HAS_REALROOT"
+NFT_TEST_JOBS="${NFT_TEST_JOBS:-12}"
 DO_LIST_TESTS=
 
 TESTS=()
@@ -138,6 +145,9 @@ while [ $# -gt 0 ] ; do
 			;;
 		-U|--no-unshare)
 			NFT_TEST_UNSHARE_CMD=
+			;;
+		-s|--sequential)
+			NFT_TEST_JOBS=0
 			;;
 		--)
 			TESTS+=( "$@" )
@@ -236,6 +246,14 @@ fi
 # If tests wish, they can know whether they are unshared via this variable.
 export NFT_TEST_HAS_UNSHARED
 
+# normalize the jobs number to be an integer.
+case "$NFT_TEST_JOBS" in
+	''|*[!0-9]*) NFT_TEST_JOBS=12 ;;
+esac
+if [ -z "$NFT_TEST_UNSHARE_CMD" -a "$NFT_TEST_JOBS" -gt 1 ] ; then
+	NFT_TEST_JOBS=1
+fi
+
 [ -z "$NFT" ] && NFT="$NFT_TEST_BASEDIR/../../src/nft"
 ${NFT} > /dev/null 2>&1
 ret=$?
@@ -243,9 +261,11 @@ if [ ${ret} -eq 126 ] || [ ${ret} -eq 127 ]; then
 	msg_error "cannot execute nft command: $NFT"
 fi
 
-MODPROBE="$(which modprobe)"
-if [ ! -x "$MODPROBE" ] ; then
-	msg_error "no modprobe binary found"
+if [ "$NFT_TEST_JOBS" -eq 0 ] ; then
+	MODPROBE="$(which modprobe)"
+	if [ ! -x "$MODPROBE" ] ; then
+		msg_error "no modprobe binary found"
+	fi
 fi
 
 DIFF="$(which diff)"
@@ -276,6 +296,7 @@ msg_info "conf: NFT_TEST_HAS_REALROOT=$(printf '%q' "$NFT_TEST_HAS_REALROOT")"
 msg_info "conf: NFT_TEST_UNSHARE_CMD=$(printf '%q' "$NFT_TEST_UNSHARE_CMD")"
 msg_info "conf: NFT_TEST_HAS_UNSHARED=$(printf '%q' "$NFT_TEST_HAS_UNSHARED")"
 msg_info "conf: NFT_TEST_KEEP_LOGS=$(printf '%q' "$NFT_TEST_KEEP_LOGS")"
+msg_info "conf: NFT_TEST_JOBS=$NFT_TEST_JOBS"
 msg_info "conf: TMPDIR=$(printf '%q' "$_TMPDIR")"
 
 NFT_TEST_LATEST="$_TMPDIR/nft-test.latest.$USER"
@@ -291,6 +312,11 @@ msg_info "info: NFT_TEST_BASEDIR=$(printf '%q' "$NFT_TEST_BASEDIR")"
 msg_info "info: NFT_TEST_TMPDIR=$(printf '%q' "$NFT_TEST_TMPDIR")"
 
 kernel_cleanup() {
+	if [ "$NFT_TEST_JOBS" -ne 0 ] ; then
+		# When we run jobs in parallel (even with only one "parallel"
+		# job via `NFT_TEST_JOBS=1`), we skip such global cleanups.
+		return
+	fi
 	if [ "$NFT_TEST_HAS_UNSHARED" != y ] ; then
 		$NFT flush ruleset
 	fi
@@ -428,27 +454,61 @@ print_test_result() {
 	fi
 }
 
+declare -A JOBS_TEMPDIR
+declare -A JOBS_PIDLIST
+
+job_start() {
+	local testfile="$1"
+
+	if [ "$NFT_TEST_JOBS" -le 1 ] ; then
+		print_test_header I "$testfile" "EXECUTING" ""
+	fi
+
+	NFT_TEST_TESTTMPDIR="${JOBS_TEMPDIR["$testfile"]}" \
+	NFT="$NFT" NFT_REAL="$NFT_REAL" DIFF="$DIFF" DUMPGEN="$DUMPGEN" $NFT_TEST_UNSHARE_CMD "$NFT_TEST_BASEDIR/helpers/test-wrapper.sh" "$testfile"
+	local rc_got=$?
+
+	if [ "$NFT_TEST_JOBS" -le 1 ] ; then
+		echo -en "\033[1A\033[K" # clean the [EXECUTING] foobar line
+	fi
+
+	return "$rc_got"
+}
+
+job_wait()
+{
+	local num_jobs="$1"
+
+	while [ "$JOBS_N_RUNNING" -gt 0 -a "$JOBS_N_RUNNING" -ge "$num_jobs" ] ; do
+		wait -n -p JOBCOMPLETED
+		local rc_got="$?"
+		testfile2="${JOBS_PIDLIST[$JOBCOMPLETED]}"
+		print_test_result "${JOBS_TEMPDIR["$testfile2"]}" "$testfile2" "$rc_got"
+		((JOBS_N_RUNNING--))
+		check_kmemleak
+	done
+}
+
 TESTIDX=0
+JOBS_N_RUNNING=0
 for testfile in "${TESTS[@]}" ; do
+	job_wait "$NFT_TEST_JOBS"
+
 	kernel_cleanup
 
 	((TESTIDX++))
 
-	# We also create and export a test-specific temporary directory.
 	NFT_TEST_TESTTMPDIR="$NFT_TEST_TMPDIR/test-${testfile//\//-}.$TESTIDX"
 	mkdir "$NFT_TEST_TESTTMPDIR"
 	chmod 755 "$NFT_TEST_TESTTMPDIR"
-	export NFT_TEST_TESTTMPDIR
+	JOBS_TEMPDIR["$testfile"]="$NFT_TEST_TESTTMPDIR"
 
-	print_test_header I "$testfile" "EXECUTING" ""
-	NFT="$NFT" NFT_REAL="$NFT_REAL" DIFF="$DIFF" DUMPGEN="$DUMPGEN" $NFT_TEST_UNSHARE_CMD "$NFT_TEST_BASEDIR/helpers/test-wrapper.sh" "$testfile"
-	rc_got=$?
-	echo -en "\033[1A\033[K" # clean the [EXECUTING] foobar line
-
-	print_test_result "$NFT_TEST_TESTTMPDIR" "$testfile" "$rc_got"
-
-	check_kmemleak
+	job_start "$testfile" &
+	JOBS_PIDLIST[$!]="$testfile"
+	((JOBS_N_RUNNING++))
 done
+
+job_wait 0
 
 echo ""
 
