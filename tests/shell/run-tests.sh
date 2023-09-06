@@ -36,6 +36,7 @@ usage() {
 	echo " -K              : Sets KMEMLEAK=y."
 	echo " -R|--without-realroot : Sets NFT_TEST_HAS_REALROOT=n."
 	echo " -U|--no-unshare : Sets NFT_TEST_UNSHARE_CMD=\"\"."
+	echo " -k|--keep-logs  : Sets NFT_TEST_KEEP_LOGS=y."
 	echo " --              : Separate options from tests."
 	echo " [TESTS...]      : Other options are treated as test names,"
 	echo "                   that is, executables that are run by the runner."
@@ -68,6 +69,7 @@ usage() {
 	echo " NFT_TEST_HAS_UNSHARED=*|y : To indicate to the test whether the test run will be unshared."
 	echo "                 Test may consider this."
 	echo "                 This is only honored when \$NFT_TEST_UNSHARE_CMD= is set. Otherwise it's detected."
+	echo " NFT_TEST_KEEP_LOGS=*|y: Keep the temp directory. On success, it will be deleted by default."
 	echo " TMPDIR=<PATH> : select a different base directory for the result data."
 }
 
@@ -80,6 +82,7 @@ VERBOSE="$(bool_y "$VERBOSE")"
 DUMPGEN="$(bool_y "$DUMPGEN")"
 VALGRIND="$(bool_y "$VALGRIND")"
 KMEMLEAK="$(bool_y "$KMEMLEAK")"
+NFT_TEST_KEEP_LOGS="$(bool_y "$NFT_TEST_KEEP_LOGS")"
 NFT_TEST_HAS_REALROOT="$NFT_TEST_HAS_REALROOT"
 DO_LIST_TESTS=
 
@@ -104,6 +107,9 @@ while [ $# -gt 0 ] ; do
 		-h|--help)
 			usage
 			exit 0
+			;;
+		-k|--keep-logs)
+			NFT_TEST_KEEP_LOGS=y
 			;;
 		-L|--list-tests)
 			DO_LIST_TESTS=y
@@ -229,7 +235,9 @@ if [ ! -x "$DIFF" ] ; then
 fi
 
 cleanup_on_exit() {
-	test -z "$NFT_TEST_TMPDIR" || rm -rf "$NFT_TEST_TMPDIR"
+	if [ "$NFT_TEST_KEEP_LOGS" != y -a -n "$NFT_TEST_TMPDIR" ] ; then
+		rm -rf "$NFT_TEST_TMPDIR"
+	fi
 }
 trap cleanup_on_exit EXIT
 
@@ -245,14 +253,15 @@ msg_info "conf: KMEMLEAK=$(printf '%q' "$KMEMLEAK")"
 msg_info "conf: NFT_TEST_HAS_REALROOT=$(printf '%q' "$NFT_TEST_HAS_REALROOT")"
 msg_info "conf: NFT_TEST_UNSHARE_CMD=$(printf '%q' "$NFT_TEST_UNSHARE_CMD")"
 msg_info "conf: NFT_TEST_HAS_UNSHARED=$(printf '%q' "$NFT_TEST_HAS_UNSHARED")"
+msg_info "conf: NFT_TEST_KEEP_LOGS=$(printf '%q' "$NFT_TEST_KEEP_LOGS")"
 msg_info "conf: TMPDIR=$(printf '%q' "$_TMPDIR")"
 
 NFT_TEST_LATEST="$_TMPDIR/nft-test.latest.$USER"
 
 ln -snf "$NFT_TEST_TMPDIR" "$NFT_TEST_LATEST"
 
-# export the tmp directory for tests. They may use it, but create
-# distinct files! It will be deleted on EXIT.
+# export the tmp directory for tests. They may use it, but create distinct
+# files! On success, it will be deleted on EXIT. See also "--keep-logs"
 export NFT_TEST_TMPDIR
 
 echo
@@ -459,5 +468,12 @@ check_kmemleak_force
 msg_info "results: [OK] $ok [SKIPPED] $skipped [FAILED] $failed [TOTAL] $((ok+skipped+failed))"
 
 kernel_cleanup
+
+if [ "$failed" -gt 0 -o "$NFT_TEST_KEEP_LOGS" = y ] ; then
+	msg_info "check the temp directory \"$NFT_TEST_TMPDIR\" (\"$NFT_TEST_LATEST\")"
+	msg_info "   ls -lad \"$NFT_TEST_LATEST\"/*/*"
+	msg_info "   grep -R ^ \"$NFT_TEST_LATEST\"/"
+	NFT_TEST_TMPDIR=
+fi
 
 [ "$failed" -eq 0 ]
