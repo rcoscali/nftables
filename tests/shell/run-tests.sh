@@ -351,15 +351,6 @@ echo ""
 ok=0
 skipped=0
 failed=0
-taint=0
-
-check_taint()
-{
-	read taint_now < /proc/sys/kernel/tainted
-	if [ $taint -ne $taint_now ] ; then
-		msg_warn "[FAILED]	kernel is tainted: $taint  -> $taint_now"
-	fi
-}
 
 kmem_runs=0
 kmemleak_found=0
@@ -401,7 +392,10 @@ check_kmemleak()
 	fi
 }
 
-check_taint
+read kernel_tainted < /proc/sys/kernel/tainted
+if [ "$kernel_tainted" -ne 0 ] ; then
+	msg_warn "[FAILED]	kernel is tainted"
+fi
 
 print_test_header() {
 	local msglevel="$1"
@@ -463,7 +457,6 @@ print_test_result() {
 
 TESTIDX=0
 for testfile in "${TESTS[@]}" ; do
-	read taint < /proc/sys/kernel/tainted
 	kernel_cleanup
 
 	((TESTIDX++))
@@ -481,7 +474,6 @@ for testfile in "${TESTS[@]}" ; do
 
 	print_test_result "$NFT_TEST_TESTTMPDIR" "$testfile" "$rc_got"
 
-	check_taint
 	check_kmemleak
 done
 
