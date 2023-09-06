@@ -84,10 +84,13 @@ usage() {
 	echo "                 By default it is unset, in which case it's autodetected as"
 	echo "                 \`unshare -f -p\` (for root) or as \`unshare -f -p --mount-proc -U --map-root-user -n\`"
 	echo "                 for non-root."
-	echo "                 When setting this, you may also want to set NFT_TEST_HAS_UNSHARED="
-	echo "                 and NFT_TEST_HAS_REALROOT= accordingly."
+	echo "                 When setting this, you may also want to set NFT_TEST_HAS_UNSHARED=,"
+	echo "                 NFT_TEST_HAS_REALROOT= and NFT_TEST_HAS_UNSHARED_MOUNT= accordingly."
 	echo " NFT_TEST_HAS_UNSHARED=*|y : To indicate to the test whether the test run will be unshared."
 	echo "                 Test may consider this."
+	echo "                 This is only honored when \$NFT_TEST_UNSHARE_CMD= is set. Otherwise it's detected."
+	echo " NFT_TEST_HAS_UNSHARED_MOUNT=*|y : To indicate to the test whether the test run will have a private"
+	echo "                 mount namespace."
 	echo "                 This is only honored when \$NFT_TEST_UNSHARE_CMD= is set. Otherwise it's detected."
 	echo " NFT_TEST_KEEP_LOGS=*|y: Keep the temp directory. On success, it will be deleted by default."
 	echo " NFT_TEST_JOBS=<NUM}>: number of jobs for parallel execution. Defaults to \"12\" for parallel run."
@@ -223,20 +226,39 @@ if [ -n "${NFT_TEST_UNSHARE_CMD+x}" ] ; then
 	else
 		NFT_TEST_HAS_UNSHARED="$(bool_y "$NFT_TEST_HAS_UNSHARED")"
 	fi
+	if [ -z "${NFT_TEST_HAS_UNSHARED_MOUNT+x}" ] ; then
+		NFT_TEST_HAS_UNSHARED_MOUNT=n
+		if [ "$NFT_TEST_HAS_UNSHARED" == y ] ; then
+			case "$NFT_TEST_UNSHARE_CMD" in
+				unshare*-m*|unshare*--mount-proc*)
+					NFT_TEST_HAS_UNSHARED_MOUNT=y
+					;;
+			esac
+		fi
+	else
+		NFT_TEST_HAS_UNSHARED_MOUNT="$(bool_y "$NFT_TEST_HAS_UNSHARED_MOUNT")"
+	fi
 else
+	NFT_TEST_HAS_UNSHARED_MOUNT=n
 	if [ "$NFT_TEST_HAS_REALROOT" = y ] ; then
 		# We appear to have real root. So try to unshare
 		# without a separate USERNS. CLONE_NEWUSER will break
 		# tests that are limited by
 		# /proc/sys/net/core/{wmem_max,rmem_max}. With real
 		# root, we want to test that.
-		detect_unshare "unshare -f -n -m" ||
+		if detect_unshare "unshare -f -n -m" ; then
+			NFT_TEST_HAS_UNSHARED_MOUNT=y
+		else
 			detect_unshare "unshare -f -n" ||
 			detect_unshare "unshare -f -p -m --mount-proc -U --map-root-user -n" ||
 			detect_unshare "unshare -f -U --map-root-user -n"
+		fi
 	else
-		detect_unshare "unshare -f -p -m --mount-proc -U --map-root-user -n" ||
+		if detect_unshare "unshare -f -p -m --mount-proc -U --map-root-user -n" ; then
+			NFT_TEST_HAS_UNSHARED_MOUNT=y
+		else
 			detect_unshare "unshare -f -U --map-root-user -n"
+		fi
 	fi
 	if [ -z "$NFT_TEST_UNSHARE_CMD" ] ; then
 		msg_error "Unshare does not work. Run as root with -U/--no-unshare or set NFT_TEST_UNSHARE_CMD"
@@ -245,6 +267,7 @@ else
 fi
 # If tests wish, they can know whether they are unshared via this variable.
 export NFT_TEST_HAS_UNSHARED
+export NFT_TEST_HAS_UNSHARED_MOUNT
 
 # normalize the jobs number to be an integer.
 case "$NFT_TEST_JOBS" in
@@ -295,6 +318,7 @@ msg_info "conf: KMEMLEAK=$(printf '%q' "$KMEMLEAK")"
 msg_info "conf: NFT_TEST_HAS_REALROOT=$(printf '%q' "$NFT_TEST_HAS_REALROOT")"
 msg_info "conf: NFT_TEST_UNSHARE_CMD=$(printf '%q' "$NFT_TEST_UNSHARE_CMD")"
 msg_info "conf: NFT_TEST_HAS_UNSHARED=$(printf '%q' "$NFT_TEST_HAS_UNSHARED")"
+msg_info "conf: NFT_TEST_HAS_UNSHARED_MOUNT=$(printf '%q' "$NFT_TEST_HAS_UNSHARED_MOUNT")"
 msg_info "conf: NFT_TEST_KEEP_LOGS=$(printf '%q' "$NFT_TEST_KEEP_LOGS")"
 msg_info "conf: NFT_TEST_JOBS=$NFT_TEST_JOBS"
 msg_info "conf: TMPDIR=$(printf '%q' "$_TMPDIR")"

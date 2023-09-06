@@ -9,9 +9,32 @@ TEST="$1"
 TESTBASE="$(basename "$TEST")"
 TESTDIR="$(dirname "$TEST")"
 
+CLEANUP_UMOUNT_RUN_NETNS=n
+
+cleanup() {
+	if [ "$CLEANUP_UMOUNT_RUN_NETNS" = y ] ; then
+		umount "/var/run/netns" || :
+	fi
+}
+
+trap cleanup EXIT
+
 printf '%s\n' "$TEST" > "$NFT_TEST_TESTTMPDIR/name"
 
 read tainted_before < /proc/sys/kernel/tainted
+
+if [ "$NFT_TEST_HAS_UNSHARED_MOUNT" = y ] ; then
+	# We have a private mount namespace. We will mount /run/netns as a tmpfs,
+	# this is useful because `ip netns add` wants to add files there.
+	#
+	# When running as rootless, this is necessary to get such tests to
+	# pass.  When running rootful, it's still useful to not touch the
+	# "real" /var/run/netns of the system.
+	mkdir -p /var/run/netns
+	if mount -t tmpfs --make-private "/var/run/netns" ; then
+		CLEANUP_UMOUNT_RUN_NETNS=y
+	fi
+fi
 
 rc_test=0
 "$TEST" &> "$NFT_TEST_TESTTMPDIR/testout.log" || rc_test=$?
