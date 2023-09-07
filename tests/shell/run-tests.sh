@@ -382,6 +382,8 @@ NFT_TEST_TMPDIR="$(mktemp --tmpdir="$_TMPDIR" -d "nft-test.$(date '+%Y%m%d-%H%M%
 	msg_error "Failure to create temp directory in \"$_TMPDIR\""
 chmod 755 "$NFT_TEST_TMPDIR"
 
+exec &> >(tee "$NFT_TEST_TMPDIR/test.log")
+
 NFT_REAL="${NFT_REAL-$NFT}"
 
 msg_info "conf: NFT=$(printf '%q' "$NFT")"
