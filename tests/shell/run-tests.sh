@@ -154,7 +154,7 @@ usage() {
 	echo "                 mount namespace."
 	echo "                 This is only honored when \$NFT_TEST_UNSHARE_CMD= is set. Otherwise it's detected."
 	echo " NFT_TEST_KEEP_LOGS=*|y: Keep the temp directory. On success, it will be deleted by default."
-	echo " NFT_TEST_JOBS=<NUM}>: number of jobs for parallel execution. Defaults to \"12\" for parallel run."
+	echo " NFT_TEST_JOBS=<NUM}>: number of jobs for parallel execution. Defaults to \"\$(nproc)*1.5\" for parallel run."
 	echo "                 Setting this to \"0\" or \"1\", means to run jobs sequentially."
 	echo "                 Setting this to \"0\" means also to perform global cleanups between tests (remove"
 	echo "                 kernel modules)."
@@ -167,13 +167,17 @@ NFT_TEST_BASEDIR="$(dirname "$0")"
 # Export the base directory. It may be used by tests.
 export NFT_TEST_BASEDIR
 
+_NFT_TEST_JOBS_DEFAULT="$(nproc)"
+[ "$_NFT_TEST_JOBS_DEFAULT" -gt 0 ] 2>/dev/null || _NFT_TEST_JOBS_DEFAULT=1
+_NFT_TEST_JOBS_DEFAULT="$(( _NFT_TEST_JOBS_DEFAULT + (_NFT_TEST_JOBS_DEFAULT + 1) / 2 ))"
+
 VERBOSE="$(bool_y "$VERBOSE")"
 DUMPGEN="$(bool_y "$DUMPGEN")"
 VALGRIND="$(bool_y "$VALGRIND")"
 KMEMLEAK="$(bool_y "$KMEMLEAK")"
 NFT_TEST_KEEP_LOGS="$(bool_y "$NFT_TEST_KEEP_LOGS")"
 NFT_TEST_HAS_REALROOT="$NFT_TEST_HAS_REALROOT"
-NFT_TEST_JOBS="${NFT_TEST_JOBS:-12}"
+NFT_TEST_JOBS="${NFT_TEST_JOBS:-$_NFT_TEST_JOBS_DEFAULT}"
 DO_LIST_TESTS=
 
 TESTS=()
@@ -345,7 +349,7 @@ export NFT_TEST_HAS_UNSHARED_MOUNT
 
 # normalize the jobs number to be an integer.
 case "$NFT_TEST_JOBS" in
-	''|*[!0-9]*) NFT_TEST_JOBS=12 ;;
+	''|*[!0-9]*) NFT_TEST_JOBS=_NFT_TEST_JOBS_DEFAULT ;;
 esac
 if [ -z "$NFT_TEST_UNSHARE_CMD" -a "$NFT_TEST_JOBS" -gt 1 ] ; then
 	NFT_TEST_JOBS=1
