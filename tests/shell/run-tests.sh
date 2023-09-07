@@ -1,15 +1,26 @@
 #!/bin/bash
 
+GREEN=""
+YELLOW=""
+RED=""
+RESET=""
+if [[ -t 1 && -z "$NO_COLOR" ]] ; then
+	GREEN=$'\e[32m'
+	YELLOW=$'\e[33m'
+	RED=$'\e[31m'
+	RESET=$'\e[0m'
+fi
+
 _msg() {
 	local level="$1"
 	shift
-	local msg
 
-	msg="$level: $*"
-	if [ "$level" = E -o "$level" = W ] ; then
-		printf '%s\n' "$msg" >&2
+	if [ "$level" = E ] ; then
+		printf '%s\n' "$RED$level$RESET: $*" >&2
+	elif [ "$level" = W ] ; then
+		printf '%s\n' "$YELLOW$level$RESET: $*" >&2
 	else
-		printf '%s\n' "$msg"
+		printf '%s\n' "$level: $*"
 	fi
 	if [ "$level" = E ] ; then
 		exit 1
@@ -26,6 +37,39 @@ msg_warn() {
 
 msg_info() {
 	_msg I "$@"
+}
+
+align_text() {
+	local _OUT_VARNAME="$1"
+	local _LEFT_OR_RIGHT="$2"
+	local _INDENT="$3"
+	shift 3
+	local _text="$*"
+	local _text_plain
+	local _text_align
+	local _text_result
+	local _i
+
+	# This function is needed, because "$text" might contain color escape
+	# sequences. A plain `printf '%12s' "$text"` will not align properly.
+
+	# strip escape sequences
+	_text_plain="${_text//$'\e['[0-9]m/}"
+	_text_plain="${_text_plain//$'\e['[0-9][0-9]m/}"
+
+	_text_align=""
+	for (( _i = "${#_text_plain}" ; "$_i" < "$_INDENT" ; _i++ )) ; do
+		_text_align="$_text_align "
+	done
+
+	if [ "$_LEFT_OR_RIGHT" = left ] ; then
+		_text_result="$(printf "%s$_text_align-" "$_text")"
+	else
+		_text_result="$(printf "$_text_align%s-" "$_text")"
+	fi
+	_text_result="${_text_result%-}"
+
+	eval "$_OUT_VARNAME=\"\$_text_result\""
 }
 
 bool_n() {
@@ -459,8 +503,7 @@ print_test_header() {
 	local suffix="$4"
 	local text
 
-	text="[$status]"
-	text="$(printf '%-12s' "$text")"
+	align_text text left 12 "[$status]"
 	_msg "$msglevel" "$text $testfile${suffix:+: $suffix}"
 }
 
@@ -477,10 +520,10 @@ print_test_result() {
 
 	if [ "$rc_got" -eq 0 ] ; then
 		((ok++))
-		result_msg_status="OK"
+		result_msg_status="${GREEN}OK$RESET"
 	elif [ "$rc_got" -eq 77 ] ; then
 		((skipped++))
-		result_msg_status="SKIPPED"
+		result_msg_status="${YELLOW}SKIPPED$RESET"
 	else
 		((failed++))
 		result_msg_level="W"
@@ -492,6 +535,7 @@ print_test_result() {
 			result_msg_status="FAILED"
 			result_msg_suffix="got $rc_got"
 		fi
+		result_msg_status="$RED$result_msg_status$RESET"
 		result_msg_files=( "$NFT_TEST_TESTTMPDIR/testout.log" )
 	fi
 
@@ -578,7 +622,14 @@ echo ""
 kmemleak_found=0
 check_kmemleak_force
 
-msg_info "results: [OK] $ok [SKIPPED] $skipped [FAILED] $failed [TOTAL] $((ok+skipped+failed))"
+if [ "$failed" -gt 0 ] ; then
+	RR="$RED"
+elif [ "$skipped" -gt 0 ] ; then
+	RR="$YELLOW"
+else
+	RR="$GREEN"
+fi
+msg_info "${RR}results$RESET: [OK] $GREEN$ok$RESET [SKIPPED] $YELLOW$skipped$RESET [FAILED] $RED$failed$RESET [TOTAL] $((ok+skipped+failed))"
 
 kernel_cleanup
 
