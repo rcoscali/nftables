@@ -471,25 +471,27 @@ print_test_result() {
 	shift 3
 
 	local result_msg_level="I"
-	local result_msg_status="OK"
 	local result_msg_suffix=""
 	local result_msg_files=( "$NFT_TEST_TESTTMPDIR/testout.log" "$NFT_TEST_TESTTMPDIR/ruleset-diff" )
+	local result_msg_status
 
 	if [ "$rc_got" -eq 0 ] ; then
 		((ok++))
-	elif [ "$rc_got" -eq 124 ] ; then
-		((failed++))
-		result_msg_level="W"
-		result_msg_status="DUMP FAIL"
+		result_msg_status="OK"
 	elif [ "$rc_got" -eq 77 ] ; then
 		((skipped++))
-		result_msg_level="I"
 		result_msg_status="SKIPPED"
 	else
 		((failed++))
 		result_msg_level="W"
-		result_msg_status="FAILED"
-		result_msg_suffix="got $rc_got"
+		if [ "$rc_got" -eq 123 ] ; then
+			result_msg_status="TAINTED"
+		elif [ "$rc_got" -eq 124 ] ; then
+			result_msg_status="DUMP FAIL"
+		else
+			result_msg_status="FAILED"
+			result_msg_suffix="got $rc_got"
+		fi
 		result_msg_files=( "$NFT_TEST_TESTTMPDIR/testout.log" )
 	fi
 
