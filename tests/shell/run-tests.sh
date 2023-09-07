@@ -100,7 +100,7 @@ usage() {
 	echo "OPTIONS:"
 	echo " -h|--help       : Print usage."
 	echo " -L|--list-tests : List test names and quit."
-	echo " -v              : Sets VERBOSE=y. Specifying tests without \"--\" enables verbose mode."
+	echo " -v              : Sets VERBOSE=y."
 	echo " -g              : Sets DUMPGEN=y."
 	echo " -V              : Sets VALGRIND=y."
 	echo " -K              : Sets KMEMLEAK=y."
@@ -218,10 +218,7 @@ while [ $# -gt 0 ] ; do
 			shift $#
 			;;
 		*)
-			# Any unrecognized option is treated as a test name, and also
-			# enable verbose tests.
 			TESTS+=( "$A" )
-			VERBOSE=y
 			;;
 	esac
 done
