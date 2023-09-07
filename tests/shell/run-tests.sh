@@ -16,9 +16,9 @@ _msg() {
 	shift
 
 	if [ "$level" = E ] ; then
-		printf '%s\n' "$RED$level$RESET: $*" >&2
+		printf '%s\n' "$RED$level$RESET: $*"
 	elif [ "$level" = W ] ; then
-		printf '%s\n' "$YELLOW$level$RESET: $*" >&2
+		printf '%s\n' "$YELLOW$level$RESET: $*"
 	else
 		printf '%s\n' "$level: $*"
 	fi
