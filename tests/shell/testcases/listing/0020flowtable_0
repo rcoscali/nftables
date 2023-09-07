@@ -43,7 +43,7 @@ EXPECTED3="table ip filter {
 
 ip link add d0 type dummy || {
 	echo "Skipping, no dummy interface available"
-	exit 0
+	exit 77
 }
 trap "ip link del d0" EXIT
 
