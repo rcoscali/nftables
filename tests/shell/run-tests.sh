@@ -249,6 +249,8 @@ if [ "$DO_LIST_TESTS" = y ] ; then
 	exit 0
 fi
 
+START_TIME="$(cut -d ' ' -f1 /proc/uptime)"
+
 _TMPDIR="${TMPDIR:-/tmp}"
 
 if [ "$NFT_TEST_HAS_REALROOT" = "" ] ; then
@@ -635,6 +637,20 @@ fi
 msg_info "${RR}results$RESET: [OK] $GREEN$ok$RESET [SKIPPED] $YELLOW$skipped$RESET [FAILED] $RED$failed$RESET [TOTAL] $((ok+skipped+failed))"
 
 kernel_cleanup
+
+#    ( \
+#        for d in /tmp/nft-test.latest.*/test-*/ ; do \
+#               printf '%10.2f  %s\n' \
+#                      "$(sed '1!d' "$d/times")" \
+#                      "$(cat "$d/name")" ; \
+#        done \
+#        | sort -n \
+#        | awk '{print $0; s+=$1} END{printf("%10.2f\n", s)}' ; \
+#        printf '%10.2f wall time\n' "$(sed '1!d' /tmp/nft-test.latest.*/times)" \
+#    )
+END_TIME="$(cut -d ' ' -f1 /proc/uptime)"
+WALL_TIME="$(awk -v start="$START_TIME" -v end="$END_TIME" "BEGIN { print(end - start) }")"
+printf "%s\n" "$WALL_TIME" "$START_TIME" "$END_TIME" > "$NFT_TEST_TMPDIR/times"
 
 if [ "$failed" -gt 0 -o "$NFT_TEST_KEEP_LOGS" = y ] ; then
 	msg_info "check the temp directory \"$NFT_TEST_TMPDIR\" (\"$NFT_TEST_LATEST\")"
