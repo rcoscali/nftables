@@ -78,13 +78,18 @@ if [ "$rc_dump" -ne 0 ] ; then
 	echo "$DUMPFILE" > "$NFT_TEST_TESTTMPDIR/rc-failed-dump"
 fi
 
+rc_valgrind=0
+[ -f "$NFT_TEST_TESTTMPDIR/rc-failed-valgrind" ] && rc_valgrind=122
+
 rc_tainted=0
 if [ "$tainted_before" != "$tainted_after" ] ; then
 	echo "$tainted_after" > "$NFT_TEST_TESTTMPDIR/rc-failed-tainted"
 	rc_tainted=123
 fi
 
-if [ "$rc_tainted" -ne 0 ] ; then
+if [ "$rc_valgrind" -ne 0 ] ; then
+	rc_exit="$rc_valgrind"
+elif [ "$rc_tainted" -ne 0 ] ; then
 	rc_exit="$rc_tainted"
 elif [ "$rc_test" -ge 118 -a "$rc_test" -le 124 ] ; then
 	# Special exit codes are reserved. Coerce them.
@@ -101,9 +106,9 @@ fi
 # We always write the real exit code of the test ($rc_test) to one of the files
 # rc-{ok,skipped,failed}, depending on which it is.
 #
-# Note that there might be other rc-failed-{dump,tainted} files with additional
-# errors. Note that if such files exist, the overall state will always be
-# failed too (and an "rc-failed" file exists).
+# Note that there might be other rc-failed-{dump,tainted,valgrind} files with
+# additional errors. Note that if such files exist, the overall state will
+# always be failed too (and an "rc-failed" file exists).
 #
 # On failure, we also write the combined "$rc_exit" code from "test-wrapper.sh"
 # to "rc-failed-exit" file.

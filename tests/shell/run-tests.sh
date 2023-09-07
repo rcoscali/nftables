@@ -527,7 +527,9 @@ print_test_result() {
 	else
 		((failed++))
 		result_msg_level="W"
-		if [ "$rc_got" -eq 123 ] ; then
+		if [ "$rc_got" -eq 122 ] ; then
+			result_msg_status="VALGRIND"
+		elif [ "$rc_got" -eq 123 ] ; then
 			result_msg_status="TAINTED"
 		elif [ "$rc_got" -eq 124 ] ; then
 			result_msg_status="DUMP FAIL"
