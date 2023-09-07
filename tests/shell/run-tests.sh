@@ -411,6 +411,11 @@ echo
 msg_info "info: NFT_TEST_BASEDIR=$(printf '%q' "$NFT_TEST_BASEDIR")"
 msg_info "info: NFT_TEST_TMPDIR=$(printf '%q' "$NFT_TEST_TMPDIR")"
 
+if [ "$VALGRIND" == "y" ]; then
+	NFT="$NFT_TEST_BASEDIR/helpers/nft-valgrind-wrapper.sh"
+	msg_info "info: NFT=$(printf '%q' "$NFT")"
+fi
+
 kernel_cleanup() {
 	if [ "$NFT_TEST_JOBS" -ne 0 ] ; then
 		# When we run jobs in parallel (even with only one "parallel"
@@ -441,10 +446,6 @@ kernel_cleanup() {
 	nf_flow_table_inet nft_flow_offload \
 	nft_xfrm
 }
-
-if [ "$VALGRIND" == "y" ]; then
-	NFT="$NFT_TEST_BASEDIR/helpers/nft-valgrind-wrapper.sh"
-fi
 
 echo ""
 ok=0
