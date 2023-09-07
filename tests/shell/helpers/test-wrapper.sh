@@ -51,7 +51,6 @@ DUMPPATH="$TESTDIR/dumps"
 DUMPFILE="$DUMPPATH/$TESTBASE.nft"
 
 dump_written=
-rc_dump=
 
 # The caller can request a re-geneating of the dumps, by setting
 # DUMPGEN=y.
@@ -66,42 +65,60 @@ if [ "$rc_test" -eq 0 -a "$DUMPGEN" = y -a -d "$DUMPPATH" ] ; then
 	cat "$NFT_TEST_TESTTMPDIR/ruleset-after" > "$DUMPFILE"
 fi
 
+rc_dump=0
 if [ "$rc_test" -ne 77 -a -f "$DUMPFILE" ] ; then
-	rc_dump=0
 	if [ "$dump_written" != y ] ; then
-		$DIFF -u "$DUMPFILE" "$NFT_TEST_TESTTMPDIR/ruleset-after" &> "$NFT_TEST_TESTTMPDIR/ruleset-diff" || rc_dump=$?
-		if [ "$rc_dump" -eq 0 ] ; then
+		if ! $DIFF -u "$DUMPFILE" "$NFT_TEST_TESTTMPDIR/ruleset-after" &> "$NFT_TEST_TESTTMPDIR/ruleset-diff" ; then
+			rc_dump=124
 			rm -f "$NFT_TEST_TESTTMPDIR/ruleset-diff"
 		fi
 	fi
 fi
+if [ "$rc_dump" -ne 0 ] ; then
+	echo "$DUMPFILE" > "$NFT_TEST_TESTTMPDIR/rc-failed-dump"
+fi
 
+rc_tainted=0
 if [ "$tainted_before" != "$tainted_after" ] ; then
 	echo "$tainted_after" > "$NFT_TEST_TESTTMPDIR/rc-failed-tainted"
+	rc_tainted=123
 fi
 
-rc_exit="$rc_test"
-if [ -n "$rc_dump" ] && [ "$rc_dump" -ne 0 ] ; then
-	echo "$DUMPFILE" > "$NFT_TEST_TESTTMPDIR/rc-failed-dump"
-	echo "$rc_test" > "$NFT_TEST_TESTTMPDIR/rc-failed"
-	if [ "$rc_exit" -eq 0 ] ; then
-		# Special exit code to indicate dump diff.
-		rc_exit=124
-	fi
-elif [ "$rc_test" -eq 77 ] ; then
-	echo "$rc_test" > "$NFT_TEST_TESTTMPDIR/rc-skipped"
-elif [ "$rc_test" -eq 0 -a "$tainted_before" = "$tainted_after" ] ; then
-	echo "$rc_test" > "$NFT_TEST_TESTTMPDIR/rc-ok"
+if [ "$rc_tainted" -ne 0 ] ; then
+	rc_exit="$rc_tainted"
+elif [ "$rc_test" -ge 118 -a "$rc_test" -le 124 ] ; then
+	# Special exit codes are reserved. Coerce them.
+	rc_exit="125"
+elif [ "$rc_test" -ne 0 ] ; then
+	rc_exit="$rc_test"
+elif [ "$rc_dump" -ne 0 ] ; then
+	rc_exit="$rc_dump"
 else
-	echo "$rc_test" > "$NFT_TEST_TESTTMPDIR/rc-failed"
-	if [ "$rc_test" -eq 0 -a "$tainted_before" != "$tainted_after" ] ; then
-		# Special exit code to indicate tainted.
-		rc_exit=123
-	elif [ "$rc_test" -eq 124 -o "$rc_test" -eq 123 ] ; then
-		# These exit codes are reserved
-		rc_exit=125
-	fi
+	rc_exit="0"
 fi
+
+
+# We always write the real exit code of the test ($rc_test) to one of the files
+# rc-{ok,skipped,failed}, depending on which it is.
+#
+# Note that there might be other rc-failed-{dump,tainted} files with additional
+# errors. Note that if such files exist, the overall state will always be
+# failed too (and an "rc-failed" file exists).
+#
+# On failure, we also write the combined "$rc_exit" code from "test-wrapper.sh"
+# to "rc-failed-exit" file.
+#
+# This means, failed tests will have a "rc-failed" file, and additional
+# "rc-failed-*" files exist for further information.
+if [ "$rc_exit" -eq 0 ] ; then
+	RC_FILENAME="rc-ok"
+elif [ "$rc_exit" -eq 77 ] ; then
+	RC_FILENAME="rc-skipped"
+else
+	RC_FILENAME="rc-failed"
+	echo "$rc_exit" > "$NFT_TEST_TESTTMPDIR/rc-failed-exit"
+fi
+echo "$rc_test" > "$NFT_TEST_TESTTMPDIR/$RC_FILENAME"
 
 END_TIME="$(cut -d ' ' -f1 /proc/uptime)"
 WALL_TIME="$(awk -v start="$START_TIME" -v end="$END_TIME" "BEGIN { print(end - start) }")"
