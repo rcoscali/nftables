@@ -12,6 +12,7 @@ libtool \
 		--show-leak-kinds=all \
 		--num-callers=100 \
 		--error-exitcode=122 \
+		--vgdb-prefix="$NFT_TEST_TMPDIR_ORIG/vgdb-pipe-nft-test-$SUFFIX" \
 		$NFT_TEST_VALGRIND_OPTS \
 		"$NFT_REAL" \
 		"$@" \

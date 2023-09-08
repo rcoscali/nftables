@@ -257,6 +257,11 @@ START_TIME="$(cut -d ' ' -f1 /proc/uptime)"
 
 _TMPDIR="${TMPDIR:-/tmp}"
 
+# Export the orignal TMPDIR for the tests. "test-wrapper.sh" sets TMPDIR to
+# NFT_TEST_TESTTMPDIR, so that temporary files are placed along side the
+# test data. In some cases, we may want to know the original TMPDIR.
+export NFT_TEST_TMPDIR_ORIG="$_TMPDIR"
+
 if [ "$NFT_TEST_HAS_REALROOT" = "" ] ; then
 	# The caller didn't set NFT_TEST_HAS_REALROOT and didn't specify
 	# -R/--without-root option. Autodetect it based on `id -u`.
