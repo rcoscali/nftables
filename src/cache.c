@@ -1027,8 +1027,10 @@ static int implicit_chain_cache(struct netlink_ctx *ctx, struct table *table,
 	int ret = 0;
 
 	list_for_each_entry(chain, &table->chain_bindings, cache.list) {
-		filter.list.table = table->handle.table.name;
-		filter.list.chain = chain->handle.chain.name;
+		filter.list = (typeof(filter.list)) {
+			.table = table->handle.table.name,
+			.chain = chain->handle.chain.name,
+		};
 		ret = rule_init_cache(ctx, table, &filter);
 	}
 
