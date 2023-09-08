@@ -118,6 +118,7 @@ usage() {
 	echo " -U|--no-unshare : Sets NFT_TEST_UNSHARE_CMD=\"\"."
 	echo " -k|--keep-logs  : Sets NFT_TEST_KEEP_LOGS=y."
 	echo " -s|--sequential : Sets NFT_TEST_JOBS=0, which also enables global cleanups."
+	echo " -Q|--quick      : Sets NFT_TEST_SKIP_slow=y."
 	echo " --              : Separate options from tests."
 	echo " [TESTS...]      : Other options are treated as test names,"
 	echo "                   that is, executables that are run by the runner."
@@ -174,6 +175,8 @@ usage() {
 	echo " NFT_TEST_HAVE_<FEATURE>=*|y: Some tests requires certain features or will be skipped."
 	echo "                 The features are autodetected, but you can force it by setting the variable."
 	echo "                 Supported <FEATURE>s are: ${_HAVE_OPTS[@]}."
+	echo " NFT_TEST_SKIP_<OPTION>=*|y: if set, certain tests are skipped."
+	echo "                 Supported <OPTION>s are: ${_SKIP_OPTS[@]}."
 }
 
 NFT_TEST_BASEDIR="$(dirname "$0")"
@@ -184,6 +187,13 @@ export NFT_TEST_BASEDIR
 _HAVE_OPTS=( json )
 for KEY in $(compgen -v | grep '^NFT_TEST_HAVE_' | sort) ; do
 	if ! array_contains "${KEY#NFT_TEST_HAVE_}" "${_HAVE_OPTS[@]}" ; then
+		unset "$KEY"
+	fi
+done
+
+_SKIP_OPTS=( slow )
+for KEY in $(compgen -v | grep '^NFT_TEST_SKIP_' | sort) ; do
+	if ! array_contains "${KEY#NFT_TEST_SKIP_}" "${_SKIP_OPTS[@]}" ; then
 		unset "$KEY"
 	fi
 done
@@ -199,6 +209,7 @@ KMEMLEAK="$(bool_y "$KMEMLEAK")"
 NFT_TEST_KEEP_LOGS="$(bool_y "$NFT_TEST_KEEP_LOGS")"
 NFT_TEST_HAS_REALROOT="$NFT_TEST_HAS_REALROOT"
 NFT_TEST_JOBS="${NFT_TEST_JOBS:-$_NFT_TEST_JOBS_DEFAULT}"
+NFT_TEST_SKIP_slow="$(bool_y "$NFT_TEST_SKIP_slow")"
 DO_LIST_TESTS=
 
 TESTS=()
@@ -237,6 +248,9 @@ while [ $# -gt 0 ] ; do
 			;;
 		-s|--sequential)
 			NFT_TEST_JOBS=0
+			;;
+		-Q|--quick)
+			NFT_TEST_SKIP_slow=y
 			;;
 		--)
 			TESTS+=( "$@" )
@@ -438,6 +452,10 @@ msg_info "conf: NFT_TEST_KEEP_LOGS=$(printf '%q' "$NFT_TEST_KEEP_LOGS")"
 msg_info "conf: NFT_TEST_JOBS=$NFT_TEST_JOBS"
 msg_info "conf: TMPDIR=$(printf '%q' "$_TMPDIR")"
 echo
+for KEY in $(compgen -v | grep '^NFT_TEST_SKIP_' | sort) ; do
+	msg_info "conf: $KEY=$(printf '%q' "${!KEY}")"
+	export "$KEY"
+done
 for KEY in $(compgen -v | grep '^NFT_TEST_HAVE_' | sort) ; do
 	msg_info "conf: $KEY=$(printf '%q' "${!KEY}")"
 	export "$KEY"

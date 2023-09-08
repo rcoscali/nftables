@@ -54,23 +54,39 @@ TEST_TAGS_PARSED=0
 ensure_TEST_TAGS() {
 	if [ "$TEST_TAGS_PARSED" = 0 ] ; then
 		TEST_TAGS_PARSED=1
-		TEST_TAGS=( $(sed -n '1,10 { s/^.*\<\(NFT_TEST_REQUIRES\)\>\s*(\s*\(NFT_TEST_HAVE_[a-zA-Z0-9_]\+\)\s*).*$/\1(\2)/p }' "$1" 2>/dev/null || : ) )
+		TEST_TAGS=( $(sed -n '1,10 { s/^.*\<\(NFT_TEST_REQUIRES\|NFT_TEST_SKIP\)\>\s*(\s*\(NFT_TEST_SKIP_[a-zA-Z0-9_]\+\|NFT_TEST_HAVE_[a-zA-Z0-9_]\+\)\s*).*$/\1(\2)/p }' "$1" 2>/dev/null || : ) )
 	fi
 }
 
 rc_test=0
 
-for KEY in $(compgen -v | grep '^NFT_TEST_HAVE_') ; do
-	if [ "${!KEY}" != n ]; then
-		continue
-	fi
-	ensure_TEST_TAGS "$TEST"
-	if array_contains "NFT_TEST_REQUIRES($KEY)" "${TEST_TAGS[@]}" ; then
-		echo "Test skipped due to $KEY=n (test has \"NFT_TEST_REQUIRES($KEY)\" tag)" >> "$NFT_TEST_TESTTMPDIR/testout.log"
-		rc_test=77
-		break
-	fi
-done
+if [ "$rc_test" -eq 0 ] ; then
+	for KEY in $(compgen -v | grep '^NFT_TEST_HAVE_') ; do
+		if [ "${!KEY}" != n ]; then
+			continue
+		fi
+		ensure_TEST_TAGS "$TEST"
+		if array_contains "NFT_TEST_REQUIRES($KEY)" "${TEST_TAGS[@]}" ; then
+			echo "Test skipped due to $KEY=n (test has \"NFT_TEST_REQUIRES($KEY)\" tag)" >> "$NFT_TEST_TESTTMPDIR/testout.log"
+			rc_test=77
+			break
+		fi
+	done
+fi
+
+if [ "$rc_test" -eq 0 ] ; then
+	for KEY in $(compgen -v | grep '^NFT_TEST_SKIP_') ; do
+		if [ "${!KEY}" != y ]; then
+			continue
+		fi
+		ensure_TEST_TAGS "$TEST"
+		if array_contains "NFT_TEST_SKIP($KEY)" "${TEST_TAGS[@]}" ; then
+			echo "Test skipped due to $KEY=y (test has \"NFT_TEST_SKIP($KEY)\" tag)" >> "$NFT_TEST_TESTTMPDIR/testout.log"
+			rc_test=77
+			break
+		fi
+	done
+fi
 
 if [ "$rc_test" -eq 0 ] ; then
 	"$TEST" &>> "$NFT_TEST_TESTTMPDIR/testout.log" || rc_test=$?

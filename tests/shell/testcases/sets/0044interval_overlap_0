@@ -1,5 +1,7 @@
 #!/bin/sh -e
 #
+# NFT_TEST_SKIP(NFT_TEST_SKIP_slow)
+#
 # 0044interval_overlap_0 - Add overlapping and non-overlapping intervals
 #
 # Check that adding overlapping intervals to a set returns an error, unless:
