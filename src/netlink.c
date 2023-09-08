@@ -16,7 +16,6 @@
 #include <libmnl/libmnl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <stdlib.h>
 #include <inttypes.h>
 
 #include <libnftnl/table.h>

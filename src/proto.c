@@ -12,7 +12,6 @@
 #include <nft.h>
 
 #include <stddef.h>
-#include <stdlib.h>
 #include <string.h>
 #include <net/if_arp.h>
 #include <arpa/inet.h>

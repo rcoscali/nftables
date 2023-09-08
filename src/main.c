@@ -10,7 +10,6 @@
 
 #include <nft.h>
 
-#include <stdlib.h>
 #include <stddef.h>
 #include <unistd.h>
 #include <stdio.h>

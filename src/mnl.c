@@ -35,7 +35,6 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <stdlib.h>
 #include <utils.h>
 #include <nftables.h>
 #include <linux/netfilter.h>

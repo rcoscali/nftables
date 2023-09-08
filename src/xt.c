@@ -9,7 +9,6 @@
 
 #include <nft.h>
 
-#include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include <net/if.h>

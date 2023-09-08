@@ -11,7 +11,6 @@
 #include <nft.h>
 
 #include <stddef.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <inttypes.h>
 #include <string.h>

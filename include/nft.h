@@ -6,5 +6,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #endif /* NFTABLES_NFT_H */

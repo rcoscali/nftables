@@ -15,7 +15,6 @@
 #include <utils.h>
 #include <iface.h>
 #include <errno.h>
-#include <stdlib.h>
 #include <cache.h>
 #include <string.h>
 
