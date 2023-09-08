@@ -16,4 +16,11 @@ $NFT flush ruleset
 
 RULESET='{"nftables":[{"flush":{"ruleset":null}},{"add":{"table":{"family":"netdev","name":"test_table"}}},{"add":{"chain":{"family":"netdev","table":"test_table","name":"test_chain","type":"filter","hook":"ingress","prio":0,"dev":"d0","policy":"accept"}}}]}'
 
-$NFT -j -f - <<< $RULESET
+if [ "$NFT_TEST_HAVE_json" != n ]; then
+	$NFT -j -f - <<< $RULESET
+fi
+
+if [ "$NFT_TEST_HAVE_json" = n ]; then
+	echo "Test partially skipped due to missing JSON support."
+	exit 77
+fi

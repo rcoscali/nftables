@@ -5,6 +5,16 @@
 #
 # For some printf debugging, you can also patch this file.
 
+array_contains() {
+	local needle="$1"
+	local a
+	shift
+	for a; do
+		[ "$a" = "$needle" ] && return 0
+	done
+	return 1
+}
+
 TEST="$1"
 TESTBASE="$(basename "$TEST")"
 TESTDIR="$(dirname "$TEST")"
@@ -40,8 +50,31 @@ if [ "$NFT_TEST_HAS_UNSHARED_MOUNT" = y ] ; then
 	fi
 fi
 
+TEST_TAGS_PARSED=0
+ensure_TEST_TAGS() {
+	if [ "$TEST_TAGS_PARSED" = 0 ] ; then
+		TEST_TAGS_PARSED=1
+		TEST_TAGS=( $(sed -n '1,10 { s/^.*\<\(NFT_TEST_REQUIRES\)\>\s*(\s*\(NFT_TEST_HAVE_[a-zA-Z0-9_]\+\)\s*).*$/\1(\2)/p }' "$1" 2>/dev/null || : ) )
+	fi
+}
+
 rc_test=0
-"$TEST" &> "$NFT_TEST_TESTTMPDIR/testout.log" || rc_test=$?
+
+for KEY in $(compgen -v | grep '^NFT_TEST_HAVE_') ; do
+	if [ "${!KEY}" != n ]; then
+		continue
+	fi
+	ensure_TEST_TAGS "$TEST"
+	if array_contains "NFT_TEST_REQUIRES($KEY)" "${TEST_TAGS[@]}" ; then
+		echo "Test skipped due to $KEY=n (test has \"NFT_TEST_REQUIRES($KEY)\" tag)" >> "$NFT_TEST_TESTTMPDIR/testout.log"
+		rc_test=77
+		break
+	fi
+done
+
+if [ "$rc_test" -eq 0 ] ; then
+	"$TEST" &>> "$NFT_TEST_TESTTMPDIR/testout.log" || rc_test=$?
+fi
 
 $NFT list ruleset > "$NFT_TEST_TESTTMPDIR/ruleset-after"
 

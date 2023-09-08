@@ -11,6 +11,16 @@ if [[ -t 1 && -z "$NO_COLOR" ]] ; then
 	RESET=$'\e[0m'
 fi
 
+array_contains() {
+	local needle="$1"
+	local a
+	shift
+	for a; do
+		[ "$a" = "$needle" ] && return 0
+	done
+	return 1
+}
+
 _msg() {
 	local level="$1"
 	shift
@@ -160,12 +170,23 @@ usage() {
 	echo "                 kernel modules)."
 	echo "                 Parallel jobs requires unshare and are disabled with NFT_TEST_UNSHARE_CMD=\"\"."
 	echo " TMPDIR=<PATH> : select a different base directory for the result data."
+	echo
+	echo " NFT_TEST_HAVE_<FEATURE>=*|y: Some tests requires certain features or will be skipped."
+	echo "                 The features are autodetected, but you can force it by setting the variable."
+	echo "                 Supported <FEATURE>s are: ${_HAVE_OPTS[@]}."
 }
 
 NFT_TEST_BASEDIR="$(dirname "$0")"
 
 # Export the base directory. It may be used by tests.
 export NFT_TEST_BASEDIR
+
+_HAVE_OPTS=( json )
+for KEY in $(compgen -v | grep '^NFT_TEST_HAVE_' | sort) ; do
+	if ! array_contains "${KEY#NFT_TEST_HAVE_}" "${_HAVE_OPTS[@]}" ; then
+		unset "$KEY"
+	fi
+done
 
 _NFT_TEST_JOBS_DEFAULT="$(nproc)"
 [ "$_NFT_TEST_JOBS_DEFAULT" -gt 0 ] 2>/dev/null || _NFT_TEST_JOBS_DEFAULT=1
@@ -367,6 +388,16 @@ if [ ${ret} -eq 126 ] || [ ${ret} -eq 127 ]; then
 	msg_error "cannot execute nft command: $NFT"
 fi
 
+NFT_REAL="${NFT_REAL-$NFT}"
+
+if [ -z "${NFT_TEST_HAVE_json+x}" ] ; then
+	NFT_TEST_HAVE_json=y
+	$NFT_TEST_UNSHARE_CMD "$NFT_REAL" -j list ruleset &>/dev/null || NFT_TEST_HAVE_json=n
+else
+	NFT_TEST_HAVE_json="$(bool_n "$NFT_TEST_HAVE_json")"
+fi
+export NFT_TEST_HAVE_json
+
 if [ "$NFT_TEST_JOBS" -eq 0 ] ; then
 	MODPROBE="$(which modprobe)"
 	if [ ! -x "$MODPROBE" ] ; then
@@ -392,8 +423,6 @@ chmod 755 "$NFT_TEST_TMPDIR"
 
 exec &> >(tee "$NFT_TEST_TMPDIR/test.log")
 
-NFT_REAL="${NFT_REAL-$NFT}"
-
 msg_info "conf: NFT=$(printf '%q' "$NFT")"
 msg_info "conf: NFT_REAL=$(printf '%q' "$NFT_REAL")"
 msg_info "conf: VERBOSE=$(printf '%q' "$VERBOSE")"
@@ -408,6 +437,11 @@ msg_info "conf: NFT_TEST_HAS_UNSHARED_MOUNT=$(printf '%q' "$NFT_TEST_HAS_UNSHARE
 msg_info "conf: NFT_TEST_KEEP_LOGS=$(printf '%q' "$NFT_TEST_KEEP_LOGS")"
 msg_info "conf: NFT_TEST_JOBS=$NFT_TEST_JOBS"
 msg_info "conf: TMPDIR=$(printf '%q' "$_TMPDIR")"
+echo
+for KEY in $(compgen -v | grep '^NFT_TEST_HAVE_' | sort) ; do
+	msg_info "conf: $KEY=$(printf '%q' "${!KEY}")"
+	export "$KEY"
+done
 
 NFT_TEST_LATEST="$_TMPDIR/nft-test.latest.$USER"
 
