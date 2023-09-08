@@ -511,19 +511,24 @@ fi
 print_test_header() {
 	local msglevel="$1"
 	local testfile="$2"
-	local status="$3"
-	local suffix="$4"
+	local testidx_completed="$3"
+	local status="$4"
+	local suffix="$5"
 	local text
+	local s_idx
+
+	s_idx="${#TESTS[@]}"
+	align_text text right "${#s_idx}" "$testidx_completed"
+	s_idx="$text/${#TESTS[@]}"
 
 	align_text text left 12 "[$status]"
-	_msg "$msglevel" "$text $testfile${suffix:+: $suffix}"
+	_msg "$msglevel" "$text $s_idx $testfile${suffix:+: $suffix}"
 }
 
 print_test_result() {
 	local NFT_TEST_TESTTMPDIR="$1"
 	local testfile="$2"
 	local rc_got="$3"
-	shift 3
 
 	local result_msg_level="I"
 	local result_msg_suffix=""
@@ -553,7 +558,7 @@ print_test_result() {
 		result_msg_files=( "$NFT_TEST_TESTTMPDIR/testout.log" )
 	fi
 
-	print_test_header "$result_msg_level" "$testfile" "$result_msg_status" "$result_msg_suffix"
+	print_test_header "$result_msg_level" "$testfile" "$((ok + skipped + failed))" "$result_msg_status" "$result_msg_suffix"
 
 	if [ "$VERBOSE" = "y" ] ; then
 		local f
@@ -575,9 +580,10 @@ declare -A JOBS_PIDLIST
 
 job_start() {
 	local testfile="$1"
+	local testidx="$2"
 
 	if [ "$NFT_TEST_JOBS" -le 1 ] ; then
-		print_test_header I "$testfile" "EXECUTING" ""
+		print_test_header I "$testfile" "$testidx" "EXECUTING" ""
 	fi
 
 	NFT_TEST_TESTTMPDIR="${JOBS_TEMPDIR["$testfile"]}" \
@@ -619,7 +625,7 @@ for testfile in "${TESTS[@]}" ; do
 	chmod 755 "$NFT_TEST_TESTTMPDIR"
 	JOBS_TEMPDIR["$testfile"]="$NFT_TEST_TESTTMPDIR"
 
-	job_start "$testfile" &
+	job_start "$testfile" "$TESTIDX" &
 	JOBS_PIDLIST[$!]="$testfile"
 	((JOBS_N_RUNNING++))
 done
