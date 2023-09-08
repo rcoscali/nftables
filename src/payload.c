@@ -251,7 +251,7 @@ static struct expr *payload_expr_parse_udata(const struct nftnl_udata *attr)
 		expr->payload.offset = offset;
 		expr->payload.is_raw = true;
 		expr->len = len;
-		dtype = dtype_clone(&xinteger_type);
+		dtype = datatype_clone(&xinteger_type);
 		dtype->size = len;
 		dtype->byteorder = BYTEORDER_BIG_ENDIAN;
 		dtype->refcnt = 1;

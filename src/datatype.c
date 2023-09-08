@@ -1199,7 +1199,7 @@ static struct error_record *concat_type_parse(struct parse_ctx *ctx,
 		     sym->dtype->desc);
 }
 
-static struct datatype *dtype_alloc(void)
+static struct datatype *datatype_alloc(void)
 {
 	struct datatype *dtype;
 
@@ -1230,7 +1230,7 @@ void datatype_set(struct expr *expr, const struct datatype *dtype)
 	expr->dtype = datatype_get(dtype);
 }
 
-struct datatype *dtype_clone(const struct datatype *orig_dtype)
+struct datatype *datatype_clone(const struct datatype *orig_dtype)
 {
 	struct datatype *dtype;
 
@@ -1286,7 +1286,7 @@ const struct datatype *concat_type_alloc(uint32_t type)
 	}
 	strncat(desc, ")", sizeof(desc) - strlen(desc) - 1);
 
-	dtype		= dtype_alloc();
+	dtype		= datatype_alloc();
 	dtype->type	= type;
 	dtype->size	= size;
 	dtype->subtypes = subtypes;
@@ -1306,7 +1306,7 @@ const struct datatype *set_datatype_alloc(const struct datatype *orig_dtype,
 	if (orig_dtype != &integer_type)
 		return orig_dtype;
 
-	dtype = dtype_clone(orig_dtype);
+	dtype = datatype_clone(orig_dtype);
 	dtype->byteorder = byteorder;
 
 	return dtype;

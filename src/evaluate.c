@@ -1519,7 +1519,7 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 		if (!key && i->dtype->type == TYPE_INTEGER) {
 			struct datatype *clone;
 
-			clone = dtype_clone(i->dtype);
+			clone = datatype_clone(i->dtype);
 			clone->size = i->len;
 			clone->byteorder = i->byteorder;
 			clone->refcnt = 1;
@@ -4547,7 +4547,7 @@ static int set_expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 		    i->dtype->type == TYPE_INTEGER) {
 			struct datatype *dtype;
 
-			dtype = dtype_clone(i->dtype);
+			dtype = datatype_clone(i->dtype);
 			dtype->size = i->len;
 			dtype->byteorder = i->byteorder;
 			dtype->refcnt = 1;
