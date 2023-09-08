@@ -49,6 +49,7 @@ read tainted_after < /proc/sys/kernel/tainted
 
 DUMPPATH="$TESTDIR/dumps"
 DUMPFILE="$DUMPPATH/$TESTBASE.nft"
+NODUMPFILE="$DUMPPATH/$TESTBASE.nodump"
 
 dump_written=
 
@@ -59,9 +60,14 @@ dump_written=
 #
 # It also will only happen for tests, that have a "$DUMPPATH" directory. There
 # might be tests, that don't want to have dumps created. The existence of the
-# directory controls that.
-if [ "$rc_test" -eq 0 -a "$DUMPGEN" = y -a -d "$DUMPPATH" ] ; then
+# directory controls that. Tests that have a "$NODUMPFILE" file, don't get a dump generated.
+if [ "$rc_test" -eq 0 -a "$DUMPGEN" = y -a -d "$DUMPPATH" -a ! -f "$NODUMPFILE" ] ; then
 	dump_written=y
+	if [ ! -f "$DUMPFILE" ] ; then
+		# No dumpfile exists yet. We generate both a .nft and a .nodump
+		# file. The user can pick which one to commit to git.
+		: > "$NODUMPFILE"
+	fi
 	cat "$NFT_TEST_TESTTMPDIR/ruleset-after" > "$DUMPFILE"
 fi
 
