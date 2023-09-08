@@ -1,0 +1,13 @@
+table ip x {
+	set y {
+		type ipv4_addr
+		size 128
+		flags dynamic,timeout
+		timeout 30s
+	}
+
+	chain test {
+		update @y { ip saddr timeout 1d2h3m4s10ms }
+		update @y { ip daddr timeout 100ms }
+	}
+}
