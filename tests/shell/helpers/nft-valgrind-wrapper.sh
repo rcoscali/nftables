@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-SUFFIX="$(date "+%Y%m%d-%H%M%S.%6N.$$")"
+SUFFIX="$(date "+%H%M%S.%6N").$$"
 
 rc=0
 libtool \
@@ -12,7 +12,7 @@ libtool \
 		--show-leak-kinds=all \
 		--num-callers=100 \
 		--error-exitcode=122 \
-		--vgdb-prefix="$NFT_TEST_TMPDIR_ORIG/vgdb-pipe-nft-test-$SUFFIX" \
+		--vgdb-prefix="$_NFT_TEST_VALGRIND_VGDB_PREFIX-$SUFFIX" \
 		$NFT_TEST_VALGRIND_OPTS \
 		"$NFT_REAL" \
 		"$@" \

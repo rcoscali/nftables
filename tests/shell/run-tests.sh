@@ -426,6 +426,8 @@ fi
 
 declare -A JOBS_PIDLIST
 
+_NFT_TEST_VALGRIND_VGDB_PREFIX=
+
 cleanup_on_exit() {
 	pids_search=''
 	for pid in "${!JOBS_PIDLIST[@]}" ; do
@@ -442,13 +444,17 @@ cleanup_on_exit() {
 	if [ "$NFT_TEST_KEEP_LOGS" != y -a -n "$NFT_TEST_TMPDIR" ] ; then
 		rm -rf "$NFT_TEST_TMPDIR"
 	fi
+	if [ -n "$_NFT_TEST_VALGRIND_VGDB_PREFIX" ] ; then
+		rm -rf "$_NFT_TEST_VALGRIND_VGDB_PREFIX"* &>/dev/null
+	fi
 }
 
 trap 'exit 130' SIGINT
 trap 'exit 143' SIGTERM
 trap 'rc=$?; cleanup_on_exit; exit $rc' EXIT
 
-NFT_TEST_TMPDIR="$(mktemp --tmpdir="$_TMPDIR" -d "nft-test.$(date '+%Y%m%d-%H%M%S.%3N').XXXXXX")" ||
+TIMESTAMP=$(date '+%Y%m%d-%H%M%S.%3N')
+NFT_TEST_TMPDIR="$(mktemp --tmpdir="$_TMPDIR" -d "nft-test.$TIMESTAMP.XXXXXX")" ||
 	msg_error "Failure to create temp directory in \"$_TMPDIR\""
 chmod 755 "$NFT_TEST_TMPDIR"
 
@@ -493,6 +499,8 @@ msg_info "info: NFT_TEST_TMPDIR=$(printf '%q' "$NFT_TEST_TMPDIR")"
 if [ "$VALGRIND" == "y" ]; then
 	NFT="$NFT_TEST_BASEDIR/helpers/nft-valgrind-wrapper.sh"
 	msg_info "info: NFT=$(printf '%q' "$NFT")"
+	_NFT_TEST_VALGRIND_VGDB_PREFIX="$NFT_TEST_TMPDIR_ORIG/vgdb-pipe-nft-test-$TIMESTAMP.$$.$RANDOM"
+	export _NFT_TEST_VALGRIND_VGDB_PREFIX
 fi
 
 kernel_cleanup() {
