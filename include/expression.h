@@ -120,7 +120,11 @@ enum symbol_types {
  * @maxval:	expected maximum value
  */
 struct expr_ctx {
+	/* expr_ctx does not own the reference to dtype. The caller must ensure
+	 * the valid lifetime.
+	 */
 	const struct datatype	*dtype;
+
 	enum byteorder		byteorder;
 	unsigned int		len;
 	unsigned int		maxval;

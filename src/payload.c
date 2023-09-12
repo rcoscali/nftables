@@ -253,8 +253,7 @@ static struct expr *payload_expr_parse_udata(const struct nftnl_udata *attr)
 		dtype = datatype_clone(&xinteger_type);
 		dtype->size = len;
 		dtype->byteorder = BYTEORDER_BIG_ENDIAN;
-		dtype->refcnt = 1;
-		expr->dtype = dtype;
+		__datatype_set(expr, dtype);
 	}
 
 	if (ud[NFTNL_UDATA_SET_KEY_PAYLOAD_INNER_DESC]) {
