@@ -1012,7 +1012,7 @@ static struct expr *concat_expr_parse_udata(const struct nftnl_udata *attr)
 	if (!dtype)
 		goto err_free;
 
-	concat_expr->dtype = datatype_get(dtype);
+	__datatype_set(concat_expr, dtype);
 	concat_expr->len = len;
 
 	return concat_expr;
