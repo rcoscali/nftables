@@ -424,12 +424,29 @@ if [ ! -x "$DIFF" ] ; then
 	DIFF=true
 fi
 
+declare -A JOBS_PIDLIST
+
 cleanup_on_exit() {
+	pids_search=''
+	for pid in "${!JOBS_PIDLIST[@]}" ; do
+		kill -- "-$pid" &>/dev/null
+		pids_search="$pids_search\\|\\<$pid\\>"
+	done
+	if [ -n "$pids_search" ] ; then
+		pids_search="${pids_search:2}"
+		for i in {1..100}; do
+			ps xh -o pgrp | grep -q "$pids_search" || break
+			sleep 0.01
+		done
+	fi
 	if [ "$NFT_TEST_KEEP_LOGS" != y -a -n "$NFT_TEST_TMPDIR" ] ; then
 		rm -rf "$NFT_TEST_TMPDIR"
 	fi
 }
-trap cleanup_on_exit EXIT
+
+trap 'exit 130' SIGINT
+trap 'exit 143' SIGTERM
+trap 'rc=$?; cleanup_on_exit; exit $rc' EXIT
 
 NFT_TEST_TMPDIR="$(mktemp --tmpdir="$_TMPDIR" -d "nft-test.$(date '+%Y%m%d-%H%M%S.%3N').XXXXXX")" ||
 	msg_error "Failure to create temp directory in \"$_TMPDIR\""
@@ -628,7 +645,6 @@ print_test_result() {
 }
 
 declare -A JOBS_TEMPDIR
-declare -A JOBS_PIDLIST
 
 job_start() {
 	local testfile="$1"
@@ -656,7 +672,8 @@ job_wait()
 	while [ "$JOBS_N_RUNNING" -gt 0 -a "$JOBS_N_RUNNING" -ge "$num_jobs" ] ; do
 		wait -n -p JOBCOMPLETED
 		local rc_got="$?"
-		testfile2="${JOBS_PIDLIST[$JOBCOMPLETED]}"
+		local testfile2="${JOBS_PIDLIST[$JOBCOMPLETED]}"
+		unset JOBS_PIDLIST[$JOBCOMPLETED]
 		print_test_result "${JOBS_TEMPDIR["$testfile2"]}" "$testfile2" "$rc_got"
 		((JOBS_N_RUNNING--))
 		check_kmemleak
@@ -677,8 +694,12 @@ for testfile in "${TESTS[@]}" ; do
 	chmod 755 "$NFT_TEST_TESTTMPDIR"
 	JOBS_TEMPDIR["$testfile"]="$NFT_TEST_TESTTMPDIR"
 
-	job_start "$testfile" "$TESTIDX" &
-	JOBS_PIDLIST[$!]="$testfile"
+	[[ -o monitor ]] && set_old_state='set -m' || set_old_state='set +m'
+	set -m
+	( job_start "$testfile" "$TESTIDX" ) &
+	pid=$!
+	eval "$set_old_state"
+	JOBS_PIDLIST[$pid]="$testfile"
 	((JOBS_N_RUNNING++))
 done
 
