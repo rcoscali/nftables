@@ -21,6 +21,31 @@ array_contains() {
 	return 1
 }
 
+strtonum() {
+	local s="$1"
+	local n
+	local n2
+
+	re='^[[:space:]]*([0-9]+)[[:space:]]*$'
+	if [[ "$s" =~ $re ]] ; then
+		n="${BASH_REMATCH[1]}"
+		if [ "$(( n + 0 ))" = "$n" ] ; then
+			echo "$n"
+			return 0
+		fi
+	fi
+	re='^[[:space:]]*0x([0-9a-fA-F]+)[[:space:]]*$'
+	if [[ "$s" =~ $re ]] ; then
+		n="${BASH_REMATCH[1]}"
+		n2="$(( 16#$n + 0 ))"
+		if [ "$n2" = "$(printf '%d' "0x$n" 2>/dev/null)" ] ; then
+			echo "$n2"
+			return 0
+		fi
+	fi
+	return 1
+}
+
 _msg() {
 	local level="$1"
 	shift
@@ -170,6 +195,9 @@ usage() {
 	echo "                 Setting this to \"0\" means also to perform global cleanups between tests (remove"
 	echo "                 kernel modules)."
 	echo "                 Parallel jobs requires unshare and are disabled with NFT_TEST_UNSHARE_CMD=\"\"."
+	echo " NFT_TEST_RANDOM_SEED=<SEED>: The test runner will export the environment variable NFT_TEST_RANDOM_SEED"
+	echo "                 set to a random number. This can be used as a stable seed for tests to randomize behavior."
+	echo "                 Set this to a fixed value to get reproducible behavior."
 	echo " TMPDIR=<PATH> : select a different base directory for the result data."
 	echo
 	echo " NFT_TEST_HAVE_<FEATURE>=*|y: Some tests requires certain features or will be skipped."
@@ -209,8 +237,25 @@ KMEMLEAK="$(bool_y "$KMEMLEAK")"
 NFT_TEST_KEEP_LOGS="$(bool_y "$NFT_TEST_KEEP_LOGS")"
 NFT_TEST_HAS_REALROOT="$NFT_TEST_HAS_REALROOT"
 NFT_TEST_JOBS="${NFT_TEST_JOBS:-$_NFT_TEST_JOBS_DEFAULT}"
+NFT_TEST_RANDOM_SEED="$NFT_TEST_RANDOM_SEED"
 NFT_TEST_SKIP_slow="$(bool_y "$NFT_TEST_SKIP_slow")"
 DO_LIST_TESTS=
+
+if [ -z "$NFT_TEST_RANDOM_SEED" ] ; then
+	# Choose a random value.
+	n="$SRANDOM"
+else
+	# Parse as number.
+	n="$(strtonum "$NFT_TEST_RANDOM_SEED")"
+	if [ -z "$n" ] ; then
+		# If not a number, pick a hash based on the SHA-sum of the seed.
+		n="$(printf "%d" "0x$(sha256sum <<<"NFT_TEST_RANDOM_SEED:$NFT_TEST_RANDOM_SEED" | sed -n '1 { s/^\(........\).*/\1/p }')")"
+	fi
+fi
+# Limit a 31 bit decimal so tests can rely on this being in a certain
+# restricted form.
+NFT_TEST_RANDOM_SEED="$(( $n % 0x80000000 ))"
+export NFT_TEST_RANDOM_SEED
 
 TESTS=()
 
@@ -473,6 +518,7 @@ msg_info "conf: NFT_TEST_HAS_UNSHARED=$(printf '%q' "$NFT_TEST_HAS_UNSHARED")"
 msg_info "conf: NFT_TEST_HAS_UNSHARED_MOUNT=$(printf '%q' "$NFT_TEST_HAS_UNSHARED_MOUNT")"
 msg_info "conf: NFT_TEST_KEEP_LOGS=$(printf '%q' "$NFT_TEST_KEEP_LOGS")"
 msg_info "conf: NFT_TEST_JOBS=$NFT_TEST_JOBS"
+msg_info "conf: NFT_TEST_RANDOM_SEED=$NFT_TEST_RANDOM_SEED"
 msg_info "conf: TMPDIR=$(printf '%q' "$_TMPDIR")"
 echo
 for KEY in $(compgen -v | grep '^NFT_TEST_SKIP_' | sort) ; do
