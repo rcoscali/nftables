@@ -3454,7 +3454,7 @@ static struct cmd *json_parse_cmd_add_object(struct json_ctx *ctx,
 			obj_free(obj);
 			return NULL;
 		}
-		obj->ct_helper.l3proto = l3proto;
+		obj->ct_timeout.l3proto = l3proto;
 
 		init_list_head(&obj->ct_timeout.timeout_list);
 		if (json_parse_ct_timeout_policy(ctx, root, obj)) {
