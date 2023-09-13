@@ -143,6 +143,7 @@ usage() {
 	echo " -U|--no-unshare : Sets NFT_TEST_UNSHARE_CMD=\"\"."
 	echo " -k|--keep-logs  : Sets NFT_TEST_KEEP_LOGS=y."
 	echo " -s|--sequential : Sets NFT_TEST_JOBS=0, which also enables global cleanups."
+	echo "                   Also sets NFT_TEST_SHUFFLE_TESTS=n if left unspecified."
 	echo " -Q|--quick      : Sets NFT_TEST_SKIP_slow=y."
 	echo " --              : Separate options from tests."
 	echo " [TESTS...]      : Other options are treated as test names,"
@@ -198,6 +199,9 @@ usage() {
 	echo " NFT_TEST_RANDOM_SEED=<SEED>: The test runner will export the environment variable NFT_TEST_RANDOM_SEED"
 	echo "                 set to a random number. This can be used as a stable seed for tests to randomize behavior."
 	echo "                 Set this to a fixed value to get reproducible behavior."
+	echo " NFT_TEST_SHUFFLE_TESTS=*|n|y: control whether to randomly shuffle the order of tests. By default, if"
+	echo "                 tests are specified explicitly, they are not shuffled while they are shuffled when"
+	echo "                 all tests are run. The shuffling is based on NFT_TEST_RANDOM_SEED."
 	echo " TMPDIR=<PATH> : select a different base directory for the result data."
 	echo
 	echo " NFT_TEST_HAVE_<FEATURE>=*|y: Some tests requires certain features or will be skipped."
@@ -238,6 +242,7 @@ NFT_TEST_KEEP_LOGS="$(bool_y "$NFT_TEST_KEEP_LOGS")"
 NFT_TEST_HAS_REALROOT="$NFT_TEST_HAS_REALROOT"
 NFT_TEST_JOBS="${NFT_TEST_JOBS:-$_NFT_TEST_JOBS_DEFAULT}"
 NFT_TEST_RANDOM_SEED="$NFT_TEST_RANDOM_SEED"
+NFT_TEST_SHUFFLE_TESTS="$NFT_TEST_SHUFFLE_TESTS"
 NFT_TEST_SKIP_slow="$(bool_y "$NFT_TEST_SKIP_slow")"
 DO_LIST_TESTS=
 
@@ -293,6 +298,9 @@ while [ $# -gt 0 ] ; do
 			;;
 		-s|--sequential)
 			NFT_TEST_JOBS=0
+			if [ -z "$NFT_TEST_SHUFFLE_TESTS" ] ; then
+				NFT_TEST_SHUFFLE_TESTS=n
+			fi
 			;;
 		-Q|--quick)
 			NFT_TEST_SKIP_slow=y
@@ -314,6 +322,9 @@ find_tests() {
 if [ "${#TESTS[@]}" -eq 0 ] ; then
 	TESTS=( $(find_tests "$NFT_TEST_BASEDIR/testcases/") )
 	test "${#TESTS[@]}" -gt 0 || msg_error "Could not find tests"
+	if [ -z "$NFT_TEST_SHUFFLE_TESTS" ] ; then
+		NFT_TEST_SHUFFLE_TESTS=y
+	fi
 fi
 
 TESTSOLD=( "${TESTS[@]}" )
@@ -327,6 +338,8 @@ for t in "${TESTSOLD[@]}" ; do
 		msg_error "Unknown test \"$t\""
 	fi
 done
+
+NFT_TEST_SHUFFLE_TESTS="$(bool_y "$NFT_TEST_SHUFFLE_TESTS")"
 
 if [ "$DO_LIST_TESTS" = y ] ; then
 	printf '%s\n' "${TESTS[@]}"
@@ -519,6 +532,7 @@ msg_info "conf: NFT_TEST_HAS_UNSHARED_MOUNT=$(printf '%q' "$NFT_TEST_HAS_UNSHARE
 msg_info "conf: NFT_TEST_KEEP_LOGS=$(printf '%q' "$NFT_TEST_KEEP_LOGS")"
 msg_info "conf: NFT_TEST_JOBS=$NFT_TEST_JOBS"
 msg_info "conf: NFT_TEST_RANDOM_SEED=$NFT_TEST_RANDOM_SEED"
+msg_info "conf: NFT_TEST_SHUFFLE_TESTS=$NFT_TEST_SHUFFLE_TESTS"
 msg_info "conf: TMPDIR=$(printf '%q' "$_TMPDIR")"
 echo
 for KEY in $(compgen -v | grep '^NFT_TEST_SKIP_' | sort) ; do
@@ -733,6 +747,10 @@ job_wait()
 		check_kmemleak
 	done
 }
+
+if [ "$NFT_TEST_SHUFFLE_TESTS" = y ] ; then
+	TESTS=( $(printf '%s\n' "${TESTS[@]}" | shuf --random-source=<("$NFT_TEST_BASEDIR/helpers/random-source.sh" "nft-test-shuffle-tests" "$NFT_TEST_RANDOM_SEED") ) )
+fi
 
 TESTIDX=0
 JOBS_N_RUNNING=0
