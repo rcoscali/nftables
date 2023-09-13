@@ -2797,7 +2797,14 @@ static struct stmt *json_parse_optstrip_stmt(struct json_ctx *ctx,
 {
 	struct expr *expr = json_parse_expr(ctx, value);
 
-	return expr ? optstrip_stmt_alloc(int_loc, expr) : NULL;
+	if (!expr ||
+	    expr->etype != EXPR_EXTHDR ||
+	    expr->exthdr.op != NFT_EXTHDR_OP_TCPOPT) {
+		json_error(ctx, "Illegal TCP optstrip argument");
+		return NULL;
+	}
+
+	return optstrip_stmt_alloc(int_loc, expr);
 }
 
 static struct stmt *json_parse_stmt(struct json_ctx *ctx, json_t *root)
