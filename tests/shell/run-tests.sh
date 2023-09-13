@@ -514,7 +514,7 @@ trap 'exit 143' SIGTERM
 trap 'rc=$?; cleanup_on_exit; exit $rc' EXIT
 
 TIMESTAMP=$(date '+%Y%m%d-%H%M%S.%3N')
-NFT_TEST_TMPDIR="$(mktemp --tmpdir="$_TMPDIR" -d "nft-test.$TIMESTAMP.XXXXXX")" ||
+NFT_TEST_TMPDIR="$(mktemp --tmpdir="$_TMPDIR" -d "nft-test.$TIMESTAMP$NFT_TEST_TMPDIR_TAG.XXXXXX")" ||
 	msg_error "Failure to create temp directory in \"$_TMPDIR\""
 chmod 755 "$NFT_TEST_TMPDIR"
 
