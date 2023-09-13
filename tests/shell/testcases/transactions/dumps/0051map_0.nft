@@ -1,7 +1,0 @@
-table ip x {
-	chain m {
-	}
-
-	chain y {
-	}
-}
