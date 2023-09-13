@@ -316,7 +316,7 @@ while [ $# -gt 0 ] ; do
 done
 
 find_tests() {
-	find "$1" -type f -executable | sort
+	find "$1" -type f -executable | LANG=C sort
 }
 
 if [ "${#TESTS[@]}" -eq 0 ] ; then
