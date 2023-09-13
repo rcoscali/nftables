@@ -320,7 +320,9 @@ find_tests() {
 }
 
 if [ "${#TESTS[@]}" -eq 0 ] ; then
-	TESTS=( $(find_tests "$NFT_TEST_BASEDIR/testcases/") )
+	d="$NFT_TEST_BASEDIR/testcases/"
+	d="${d#./}"
+	TESTS=( $(find_tests "$d") )
 	test "${#TESTS[@]}" -gt 0 || msg_error "Could not find tests"
 	if [ -z "$NFT_TEST_SHUFFLE_TESTS" ] ; then
 		NFT_TEST_SHUFFLE_TESTS=y
