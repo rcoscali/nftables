@@ -3299,7 +3299,7 @@ static int json_parse_ct_timeout_policy(struct json_ctx *ctx,
 	json_t *tmp, *val;
 	const char *key;
 
-	if (!json_unpack(root, "{s:o}", "policy", &tmp))
+	if (json_unpack(root, "{s:o}", "policy", &tmp))
 		return 0;
 
 	if (!json_is_object(tmp)) {
