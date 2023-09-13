@@ -821,4 +821,10 @@ if [ "$failed" -gt 0 -o "$NFT_TEST_KEEP_LOGS" = y ] ; then
 	NFT_TEST_TMPDIR=
 fi
 
-[ "$failed" -eq 0 ]
+if [ "$failed" -gt 0 ] ; then
+	exit 1
+elif [ "$ok" -eq 0 -a "$skipped" -gt 0 ] ; then
+	exit 77
+else
+	exit 0
+fi
