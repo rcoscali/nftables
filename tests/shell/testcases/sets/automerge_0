@@ -44,7 +44,7 @@ do
 done
 
 tmpfile3=$(mktemp)
-shuf $tmpfile2 > $tmpfile3
+shuf "$tmpfile2" --random-source=<("$NFT_TEST_BASEDIR/helpers/random-source.sh" "automerge-shuf-tmpfile2" "$NFT_TEST_RANDOM_SEED") > "$tmpfile3"
 i=0
 cat $tmpfile3 | while read line && [ $i -lt 10 ]
 do
