@@ -1725,13 +1725,18 @@ static struct stmt *json_parse_match_stmt(struct json_ctx *ctx,
 		    !strcmp(opstr, expr_op_symbols[op]))
 			break;
 	}
-	if (op == __OP_MAX) {
+	switch (op) {
+	case OP_EQ ... OP_NEG:
+		break;
+	case __OP_MAX:
 		if (!strcmp(opstr, "in")) {
 			op = OP_IMPLICIT;
-		} else {
-			json_error(ctx, "Unknown relational op '%s'.", opstr);
-			return NULL;
+			break;
 		}
+		/* fall through */
+	default:
+		json_error(ctx, "Invalid relational op '%s'.", opstr);
+		return NULL;
 	}
 
 	left = json_parse_expr(ctx, jleft);
