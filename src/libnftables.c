@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 static int nft_netlink(struct nft_ctx *nft,
 		       struct list_head *cmds, struct list_head *msgs,
@@ -657,12 +658,45 @@ retry:
 	return rc;
 }
 
+/* need to use stat() to, fopen() will block for named fifos and
+ * libjansson makes no checks before or after open either.
+ */
+static struct error_record *filename_is_useable(struct nft_ctx *nft, const char *name)
+{
+	unsigned int type;
+	struct stat sb;
+	int err;
+
+	err = stat(name, &sb);
+	if (err)
+		return error(&internal_location, "Could not open file \"%s\": %s\n",
+			     name, strerror(errno));
+
+	type = sb.st_mode & S_IFMT;
+
+	if (type == S_IFREG || type == S_IFIFO)
+		return NULL;
+
+	if (type == S_IFCHR && 0 == strcmp(name, "/dev/stdin"))
+		return NULL;
+
+	return error(&internal_location, "Not a regular file: \"%s\"\n", name);
+}
+
 static int __nft_run_cmd_from_filename(struct nft_ctx *nft, const char *filename)
 {
+	struct error_record *erec;
 	struct cmd *cmd, *next;
 	int rc, parser_rc;
 	LIST_HEAD(msgs);
 	LIST_HEAD(cmds);
+
+	erec = filename_is_useable(nft, filename);
+	if (erec) {
+		erec_print(&nft->output, erec, nft->debug_mask);
+		erec_destroy(erec);
+		return -1;
+	}
 
 	rc = load_cmdline_vars(nft, &msgs);
 	if (rc < 0)
