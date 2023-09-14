@@ -15,21 +15,21 @@ if [ ! -w "$tmpdir" ] ; then
         exit 0
 fi
 
-git clone "$dir" "$tmpdir" >/dev/null 2>>"$log_file"
+git clone "$dir" "$tmpdir" &>>"$log_file"
 cd "$tmpdir" || exit
 
-if ! autoreconf -fi >"$log_file" 2>>"$log_file" ; then
+if ! autoreconf -fi &>>"$log_file" ; then
 	echo "Something went wrong. Check the log '${log_file}' for details."
 	exit 1
 fi
 
-if ! ./configure >"$log_file" 2>>"$log_file" ; then
+if ! ./configure &>>"$log_file" ; then
 	echo "Something went wrong. Check the log '${log_file}' for details."
 	exit 1
 fi
 
 echo  "Testing build with distcheck"
-if ! make distcheck >/dev/null 2>>"$log_file" ; then
+if ! make distcheck &>>"$log_file" ; then
 	echo "Something went wrong. Check the log '${log_file}' for details."
 	exit 1
 fi
@@ -39,8 +39,8 @@ echo "Build works. Now, testing compile options"
 
 for var in "${argument[@]}" ; do
 	echo "[EXECUTING] Testing compile option $var"
-	./configure "$var" >/dev/null 2>>"$log_file"
-	make -j 8 >/dev/null 2>>"$log_file"
+	./configure "$var" &>>"$log_file"
+	make -j 8 &>>"$log_file"
 	rt=$?
 	echo -en "\033[1A\033[K" # clean the [EXECUTING] foobar line
 
