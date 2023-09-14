@@ -937,12 +937,13 @@ struct set *netlink_delinearize_set(struct netlink_ctx *ctx,
 	const struct nftnl_udata *ud[NFTNL_UDATA_SET_MAX + 1] = {};
 	enum byteorder keybyteorder = BYTEORDER_INVALID;
 	enum byteorder databyteorder = BYTEORDER_INVALID;
-	struct expr *typeof_expr_key, *typeof_expr_data;
 	struct setelem_parse_ctx set_parse_ctx;
 	const struct datatype *datatype = NULL;
 	const struct datatype *keytype = NULL;
 	const struct datatype *dtype2 = NULL;
 	const struct datatype *dtype = NULL;
+	struct expr *typeof_expr_data = NULL;
+	struct expr *typeof_expr_key = NULL;
 	const char *udata, *comment = NULL;
 	uint32_t flags, key, objtype = 0;
 	uint32_t data_interval = 0;
@@ -950,9 +951,6 @@ struct set *netlink_delinearize_set(struct netlink_ctx *ctx,
 	struct set *set;
 	uint32_t ulen;
 	uint32_t klen;
-
-	typeof_expr_key = NULL;
-	typeof_expr_data = NULL;
 
 	if (nftnl_set_is_set(nls, NFTNL_SET_USERDATA)) {
 		udata = nftnl_set_get_data(nls, NFTNL_SET_USERDATA, &ulen);
@@ -1043,8 +1041,8 @@ struct set *netlink_delinearize_set(struct netlink_ctx *ctx,
 		if (set_udata_key_valid(typeof_expr_data, dlen)) {
 			typeof_expr_data->len = klen;
 			set->data = typeof_expr_data;
+			typeof_expr_data = NULL;
 		} else {
-			expr_free(typeof_expr_data);
 			set->data = constant_expr_alloc(&netlink_location,
 							dtype2,
 							databyteorder, klen,
@@ -1064,9 +1062,9 @@ struct set *netlink_delinearize_set(struct netlink_ctx *ctx,
 
 	if (set_udata_key_valid(typeof_expr_key, klen)) {
 		set->key = typeof_expr_key;
+		typeof_expr_key = NULL;
 		set->key_typeof_valid = true;
 	} else {
-		expr_free(typeof_expr_key);
 		set->key = constant_expr_alloc(&netlink_location, dtype,
 					       keybyteorder, klen,
 					       NULL);
@@ -1100,6 +1098,8 @@ struct set *netlink_delinearize_set(struct netlink_ctx *ctx,
 	}
 
 out:
+	expr_free(typeof_expr_data);
+	expr_free(typeof_expr_key);
 	datatype_free(datatype);
 	datatype_free(keytype);
 	datatype_free(dtype2);
