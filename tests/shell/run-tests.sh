@@ -4,11 +4,16 @@ GREEN=""
 YELLOW=""
 RED=""
 RESET=""
-if [[ -t 1 && -z "$NO_COLOR" ]] ; then
-	GREEN=$'\e[32m'
-	YELLOW=$'\e[33m'
-	RED=$'\e[31m'
-	RESET=$'\e[0m'
+if [ -z "$NO_COLOR" ] ; then
+	if [ -n "$CLICOLOR_FORCE" ] || [[ -t 1 ]] ; then
+		# See https://bixense.com/clicolors/ . We only check isatty() on
+		# file descriptor 1, to decide whether colorizing happens (although,
+		# we might also colorize on other places/FDs).
+		GREEN=$'\e[32m'
+		YELLOW=$'\e[33m'
+		RED=$'\e[31m'
+		RESET=$'\e[0m'
+	fi
 fi
 
 array_contains() {
