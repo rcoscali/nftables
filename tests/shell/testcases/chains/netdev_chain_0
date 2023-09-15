@@ -1,24 +1,18 @@
 #!/bin/bash
 
-ip link add d0 type dummy || {
-        echo "Skipping, no dummy interface available"
-        exit 77
-}
-trap "ip link del d0" EXIT
-
-ip link add d1 type dummy || {
-        echo "Skipping, no dummy interface available"
-        exit 77
-}
-trap "ip link del d1" EXIT
-
-ip link add d2 type dummy || {
-        echo "Skipping, no dummy interface available"
-        exit 77
-}
-trap "ip link del d2" EXIT
-
 set -e
+
+iface_cleanup() {
+	ip link del d0 &>/dev/null || :
+	ip link del d1 &>/dev/null || :
+	ip link del d2 &>/dev/null || :
+}
+trap 'iface_cleanup' EXIT
+iface_cleanup
+
+ip link add d0 type dummy
+ip link add d1 type dummy
+ip link add d2 type dummy
 
 RULESET="table netdev x {
 	chain y {
