@@ -1142,7 +1142,6 @@ static int expr_evaluate_prefix(struct eval_ctx *ctx, struct expr **expr)
 		mpz_prefixmask(mask->value, base->len, prefix->prefix_len);
 		break;
 	case TYPE_STRING:
-		mpz_init2(mask->value, base->len);
 		mpz_bitmask(mask->value, prefix->prefix_len);
 		break;
 	}
