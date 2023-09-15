@@ -571,11 +571,19 @@ msg_info "conf: NFT_TEST_SHUFFLE_TESTS=$NFT_TEST_SHUFFLE_TESTS"
 msg_info "conf: TMPDIR=$(printf '%q' "$_TMPDIR")"
 echo
 for KEY in $(compgen -v | grep '^NFT_TEST_SKIP_' | sort) ; do
-	msg_info "conf: $KEY=$(printf '%q' "${!KEY}")"
+	v="${!KEY}"
+	if [ "$v" = y ] ; then
+		v="$YELLOW$v$RESET"
+	fi
+	msg_info "conf: $KEY=$v"
 	export "$KEY"
 done
 for KEY in $(compgen -v | grep '^NFT_TEST_HAVE_' | sort) ; do
-	msg_info "conf: $KEY=$(printf '%q' "${!KEY}")"
+	v="${!KEY}"
+	if [ "$v" = n ] ; then
+		v="$YELLOW$v$RESET"
+	fi
+	msg_info "conf: $KEY=$v"
 	export "$KEY"
 done
 
