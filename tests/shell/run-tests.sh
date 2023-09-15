@@ -180,7 +180,7 @@ usage() {
 	echo "                 with rootless the test would fail. Tests will check for [ "\$NFT_TEST_HAS_SOCKET_LIMITS" = y ]"
 	echo "                 and skip. You may set NFT_TEST_HAS_SOCKET_LIMITS=n if you ensure those limits are"
 	echo "                 suitable to run the test rootless. Otherwise will be autodetected."
-	echo "                 Set /proc/sys/net/core/{wmem_max,rmem_max} to at least 2MB to get them to pass automatically."
+	echo "                 Set /proc/sys/net/core/{wmem_max,rmem_max} to at least 4MB to get them to pass automatically."
 	echo " NFT_TEST_UNSHARE_CMD=cmd : when set, this is the command line for an unshare"
 	echo "                 command, which is used to sandbox each test invocation. By"
 	echo "                 setting it to empty, no unsharing is done."
@@ -391,8 +391,8 @@ export NFT_TEST_HAS_REALROOT
 if [ "$NFT_TEST_HAS_SOCKET_LIMITS" = "" ] ; then
 	if [ "$NFT_TEST_HAS_REALROOT" = y ] ; then
 		NFT_TEST_HAS_SOCKET_LIMITS=n
-	elif [ "$(cat /proc/sys/net/core/wmem_max 2>/dev/null)" -ge $((2000*1024)) ] 2>/dev/null && \
-	     [ "$(cat /proc/sys/net/core/rmem_max 2>/dev/null)" -ge $((2000*1024)) ] 2>/dev/null ; then
+	elif [ "$(cat /proc/sys/net/core/wmem_max 2>/dev/null)" -ge $((4000*1024)) ] 2>/dev/null && \
+	     [ "$(cat /proc/sys/net/core/rmem_max 2>/dev/null)" -ge $((4000*1024)) ] 2>/dev/null ; then
 		NFT_TEST_HAS_SOCKET_LIMITS=n
 	else
 		NFT_TEST_HAS_SOCKET_LIMITS=y
