@@ -222,6 +222,23 @@ NFT_TEST_BASEDIR="$(dirname "$0")"
 export NFT_TEST_BASEDIR
 
 _HAVE_OPTS=( json )
+_HAVE_OPTS_NFT=()
+shopt -s nullglob
+F=( "$NFT_TEST_BASEDIR/features/"*.nft )
+shopt -u nullglob
+for file in "${F[@]}"; do
+	feat="${file##*/}"
+	feat="${feat%.nft}"
+	re="^[a-z_0-9]+$"
+	if [[ "$feat" =~ $re ]] && ! array_contains "$feat" "${_HAVE_OPTS[@]}" ; then
+		_HAVE_OPTS_NFT+=( "$feat" )
+	else
+		msg_warn "Ignore feature file \"$file\""
+	fi
+done
+_HAVE_OPTS+=( "${_HAVE_OPTS_NFT[@]}" )
+_HAVE_OPTS=( $(printf '%s\n' "${_HAVE_OPTS[@]}" | LANG=C sort) )
+
 for KEY in $(compgen -v | grep '^NFT_TEST_HAVE_' | sort) ; do
 	if ! array_contains "${KEY#NFT_TEST_HAVE_}" "${_HAVE_OPTS[@]}" ; then
 		unset "$KEY"
@@ -476,6 +493,17 @@ else
 	NFT_TEST_HAVE_json="$(bool_n "$NFT_TEST_HAVE_json")"
 fi
 export NFT_TEST_HAVE_json
+
+for feat in "${_HAVE_OPTS_NFT[@]}" ; do
+	var="NFT_TEST_HAVE_$feat"
+	if [ -z "${!var+x}" ] ; then
+		val='y'
+		$NFT_TEST_UNSHARE_CMD "$NFT_REAL" --check -f "$NFT_TEST_BASEDIR/features/$feat.nft" &>/dev/null || val='n'
+	else
+		val="$(bool_n "${!var}")"
+	fi
+	eval "export $var=$val"
+done
 
 if [ "$NFT_TEST_JOBS" -eq 0 ] ; then
 	MODPROBE="$(which modprobe)"
