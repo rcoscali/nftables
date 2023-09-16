@@ -1396,21 +1396,6 @@ void nft_cmd_expand(struct cmd *cmd)
 		nft_cmd_expand_chain(chain, &new_cmds);
 		list_splice(&new_cmds, &cmd->list);
 		break;
-	default:
-		break;
-	}
-}
-
-void nft_cmd_post_expand(struct cmd *cmd)
-{
-	struct list_head new_cmds;
-	struct set *set;
-	struct cmd *new;
-	struct handle h;
-
-	init_list_head(&new_cmds);
-
-	switch (cmd->obj) {
 	case CMD_OBJ_SET:
 	case CMD_OBJ_MAP:
 		set = cmd->set;
@@ -1641,7 +1626,13 @@ static int do_add_set(struct netlink_ctx *ctx, struct cmd *cmd,
 			return -1;
 	}
 
-	return mnl_nft_set_add(ctx, cmd, flags);
+	if (mnl_nft_set_add(ctx, cmd, flags) < 0)
+		return -1;
+
+	if (set_is_anonymous(set->flags))
+		return __do_add_elements(ctx, cmd, set, set->init, flags);
+
+	return 0;
 }
 
 static int do_command_add(struct netlink_ctx *ctx, struct cmd *cmd, bool excl)
