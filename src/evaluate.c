@@ -4595,6 +4595,29 @@ static int set_expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 	return 0;
 }
 
+static int elems_evaluate(struct eval_ctx *ctx, struct set *set)
+{
+	ctx->set = set;
+	if (set->init != NULL) {
+		__expr_set_context(&ctx->ectx, set->key->dtype,
+				   set->key->byteorder, set->key->len, 0);
+		if (expr_evaluate(ctx, &set->init) < 0)
+			return -1;
+		if (set->init->etype != EXPR_SET)
+			return expr_error(ctx->msgs, set->init, "Set %s: Unexpected initial type %s, missing { }?",
+					  set->handle.set.name, expr_name(set->init));
+	}
+
+	if (set_is_interval(ctx->set->flags) &&
+	    !(ctx->set->flags & NFT_SET_CONCAT) &&
+	    interval_set_eval(ctx, ctx->set, set->init) < 0)
+		return -1;
+
+	ctx->set = NULL;
+
+	return 0;
+}
+
 static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 {
 	struct set *existing_set = NULL;
@@ -4693,23 +4716,6 @@ static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 	}
 
 	set->existing_set = existing_set;
-	ctx->set = set;
-	if (set->init != NULL) {
-		__expr_set_context(&ctx->ectx, set->key->dtype,
-				   set->key->byteorder, set->key->len, 0);
-		if (expr_evaluate(ctx, &set->init) < 0)
-			return -1;
-		if (set->init->etype != EXPR_SET)
-			return expr_error(ctx->msgs, set->init, "Set %s: Unexpected initial type %s, missing { }?",
-					  set->handle.set.name, expr_name(set->init));
-	}
-
-	if (set_is_interval(ctx->set->flags) &&
-	    !(ctx->set->flags & NFT_SET_CONCAT) &&
-	    interval_set_eval(ctx, ctx->set, set->init) < 0)
-		return -1;
-
-	ctx->set = NULL;
 
 	return 0;
 }
@@ -5182,6 +5188,8 @@ static int cmd_evaluate_add(struct eval_ctx *ctx, struct cmd *cmd)
 	case CMD_OBJ_SET:
 		handle_merge(&cmd->set->handle, &cmd->handle);
 		return set_evaluate(ctx, cmd->set);
+	case CMD_OBJ_SETELEMS:
+		return elems_evaluate(ctx, cmd->set);
 	case CMD_OBJ_RULE:
 		handle_merge(&cmd->rule->handle, &cmd->handle);
 		return rule_evaluate(ctx, cmd->rule, cmd->op);

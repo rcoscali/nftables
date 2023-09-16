@@ -1458,7 +1458,13 @@ static int do_add_set(struct netlink_ctx *ctx, struct cmd *cmd,
 			return -1;
 	}
 
-	return mnl_nft_set_add(ctx, cmd, flags);
+	if (mnl_nft_set_add(ctx, cmd, flags) < 0)
+		return -1;
+
+	if (set_is_anonymous(set->flags))
+		return __do_add_elements(ctx, cmd, set, set->init, flags);
+
+	return 0;
 }
 
 static int do_command_add(struct netlink_ctx *ctx, struct cmd *cmd, bool excl)

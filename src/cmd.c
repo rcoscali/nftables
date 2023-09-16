@@ -402,21 +402,6 @@ void nft_cmd_expand(struct cmd *cmd)
 		nft_cmd_expand_chain(chain, &new_cmds);
 		list_splice(&new_cmds, &cmd->list);
 		break;
-	default:
-		break;
-	}
-}
-
-void nft_cmd_post_expand(struct cmd *cmd)
-{
-	struct list_head new_cmds;
-	struct set *set;
-	struct cmd *new;
-	struct handle h;
-
-	init_list_head(&new_cmds);
-
-	switch (cmd->obj) {
 	case CMD_OBJ_SET:
 	case CMD_OBJ_MAP:
 		set = cmd->set;
