@@ -221,8 +221,7 @@ NFT_TEST_BASEDIR="$(dirname "$0")"
 # Export the base directory. It may be used by tests.
 export NFT_TEST_BASEDIR
 
-_HAVE_OPTS=( json )
-_HAVE_OPTS_NFT=()
+_HAVE_OPTS=()
 shopt -s nullglob
 F=( "$NFT_TEST_BASEDIR/features/"*.nft "$NFT_TEST_BASEDIR/features/"*.sh )
 shopt -u nullglob
@@ -230,13 +229,12 @@ for file in "${F[@]}"; do
 	feat="${file##*/}"
 	feat="${feat%.*}"
 	re="^[a-z_0-9]+$"
-	if [[ "$feat" =~ $re ]] && ! array_contains "$feat" "${_HAVE_OPTS[@]}" "${_HAVE_OPTS_NFT[@]}" && [[ "$file" != *.sh || -x "$file" ]] ; then
-		_HAVE_OPTS_NFT+=( "$feat" )
+	if [[ "$feat" =~ $re ]] && ! array_contains "$feat" "${_HAVE_OPTS[@]}" && [[ "$file" != *.sh || -x "$file" ]] ; then
+		_HAVE_OPTS+=( "$feat" )
 	else
 		msg_warn "Ignore feature file \"$file\""
 	fi
 done
-_HAVE_OPTS+=( "${_HAVE_OPTS_NFT[@]}" )
 _HAVE_OPTS=( $(printf '%s\n' "${_HAVE_OPTS[@]}" | LANG=C sort) )
 
 for KEY in $(compgen -v | grep '^NFT_TEST_HAVE_' | sort) ; do
@@ -486,14 +484,6 @@ fi
 
 NFT_REAL="${NFT_REAL-$NFT}"
 
-if [ -z "${NFT_TEST_HAVE_json+x}" ] ; then
-	NFT_TEST_HAVE_json=y
-	$NFT_TEST_UNSHARE_CMD "$NFT_REAL" -j list ruleset &>/dev/null || NFT_TEST_HAVE_json=n
-else
-	NFT_TEST_HAVE_json="$(bool_n "$NFT_TEST_HAVE_json")"
-fi
-export NFT_TEST_HAVE_json
-
 feature_probe()
 {
 	local with_path="$NFT_TEST_BASEDIR/features/$1"
@@ -511,7 +501,7 @@ feature_probe()
 	return 1
 }
 
-for feat in "${_HAVE_OPTS_NFT[@]}" ; do
+for feat in "${_HAVE_OPTS[@]}" ; do
 	var="NFT_TEST_HAVE_$feat"
 	if [ -z "${!var+x}" ] ; then
 		val='y'
