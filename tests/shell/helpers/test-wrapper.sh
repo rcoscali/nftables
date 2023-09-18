@@ -124,7 +124,7 @@ rc_dump=0
 if [ "$rc_test" -ne 77 -a -f "$DUMPFILE" ] ; then
 	if [ "$dump_written" != y ] ; then
 		if ! $DIFF -u "$DUMPFILE" "$NFT_TEST_TESTTMPDIR/ruleset-after" &> "$NFT_TEST_TESTTMPDIR/ruleset-diff" ; then
-			rc_dump=124
+			rc_dump=1
 		else
 			rm -f "$NFT_TEST_TESTTMPDIR/ruleset-diff"
 		fi
@@ -135,27 +135,27 @@ if [ "$rc_dump" -ne 0 ] ; then
 fi
 
 rc_valgrind=0
-[ -f "$NFT_TEST_TESTTMPDIR/rc-failed-valgrind" ] && rc_valgrind=122
+[ -f "$NFT_TEST_TESTTMPDIR/rc-failed-valgrind" ] && rc_valgrind=1
 
 rc_tainted=0
 if [ "$tainted_before" != "$tainted_after" ] ; then
 	echo "$tainted_after" > "$NFT_TEST_TESTTMPDIR/rc-failed-tainted"
-	rc_tainted=123
+	rc_tainted=1
 fi
 
 if [ "$rc_valgrind" -ne 0 ] ; then
-	rc_exit="$rc_valgrind"
+	rc_exit=122
 elif [ "$rc_tainted" -ne 0 ] ; then
-	rc_exit="$rc_tainted"
+	rc_exit=123
 elif [ "$rc_test" -ge 118 -a "$rc_test" -le 124 ] ; then
 	# Special exit codes are reserved. Coerce them.
-	rc_exit="125"
+	rc_exit=125
 elif [ "$rc_test" -ne 0 ] ; then
 	rc_exit="$rc_test"
 elif [ "$rc_dump" -ne 0 ] ; then
-	rc_exit="$rc_dump"
+	rc_exit=124
 else
-	rc_exit="0"
+	rc_exit=0
 fi
 
 
