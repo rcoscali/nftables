@@ -125,6 +125,7 @@ if [ "$rc_test" -ne 77 -a -f "$DUMPFILE" ] ; then
 	if [ "$dump_written" != y ] ; then
 		if ! $DIFF -u "$DUMPFILE" "$NFT_TEST_TESTTMPDIR/ruleset-after" &> "$NFT_TEST_TESTTMPDIR/ruleset-diff" ; then
 			rc_dump=124
+		else
 			rm -f "$NFT_TEST_TESTTMPDIR/ruleset-diff"
 		fi
 	fi
