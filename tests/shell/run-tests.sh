@@ -1,5 +1,9 @@
 #!/bin/bash
 
+unset LANGUAGE
+export LANG=C
+export LC_ALL=C
+
 GREEN=""
 YELLOW=""
 RED=""
@@ -235,7 +239,7 @@ for file in "${F[@]}"; do
 		msg_warn "Ignore feature file \"$file\""
 	fi
 done
-_HAVE_OPTS=( $(printf '%s\n' "${_HAVE_OPTS[@]}" | LANG=C sort) )
+_HAVE_OPTS=( $(printf '%s\n' "${_HAVE_OPTS[@]}" | sort) )
 
 for KEY in $(compgen -v | grep '^NFT_TEST_HAVE_' | sort) ; do
 	if ! array_contains "${KEY#NFT_TEST_HAVE_}" "${_HAVE_OPTS[@]}" ; then
@@ -336,7 +340,7 @@ while [ $# -gt 0 ] ; do
 done
 
 find_tests() {
-	find "$1" -type f -executable | LANG=C sort
+	find "$1" -type f -executable | sort
 }
 
 if [ "${#TESTS[@]}" -eq 0 ] ; then
