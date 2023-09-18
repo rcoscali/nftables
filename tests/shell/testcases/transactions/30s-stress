@@ -27,6 +27,17 @@ if [ "$NFT_TEST_HAS_SOCKET_LIMITS" = y ] ; then
 	exit 77
 fi
 
+if [ -z "${NFT_TEST_HAVE_chain_binding+x}" ] ; then
+	NFT_TEST_HAVE_chain_binding=n
+	mydir="$(dirname "$0")"
+	$NFT --check -f "$mydir/../../features/chain_binding.nft"
+	if [ $? -eq 0 ];then
+		NFT_TEST_HAVE_chain_binding=y
+	else
+		echo "Assuming anonymous chains are not supported"
+	fi
+fi
+
 testns=testns-$(mktemp -u "XXXXXXXX")
 tmp=""
 
@@ -42,8 +53,8 @@ failslab_defaults() {
 	# allow all slabs to fail (if process is tagged).
 	find /sys/kernel/slab/ -wholename '*/kmalloc-[0-9]*/failslab' -type f -exec sh -c 'echo 1 > {}' \;
 
-	# no limit on the number of failures
-	echo -1 > /sys/kernel/debug/failslab/times
+	# no limit on the number of failures, or clause works around old kernels that reject negative integer.
+	echo -1 > /sys/kernel/debug/failslab/times 2>/dev/null || printf '%#x -1' > /sys/kernel/debug/failslab/times
 
 	# Set to 2 for full dmesg traces for each injected error
 	echo 0 > /sys/kernel/debug/failslab/verbose
@@ -102,6 +113,15 @@ nft_with_fault_inject()
 trap cleanup EXIT
 tmp=$(mktemp)
 
+jump_or_goto()
+{
+	if [ $((RANDOM & 1)) -eq 0 ] ;then
+		echo -n "jump"
+	else
+		echo -n "goto"
+	fi
+}
+
 random_verdict()
 {
 	max="$1"
@@ -113,7 +133,8 @@ random_verdict()
 	rnd=$((RANDOM%max))
 
 	if [ $rnd -gt 0 ];then
-		printf "jump chain%03u" "$((rnd+1))"
+		jump_or_goto
+		printf " chain%03u" "$((rnd+1))"
 		return
 	fi
 
@@ -422,6 +443,21 @@ stress_all()
 	randmonitor &
 }
 
+gen_anon_chain_jump()
+{
+	echo -n "insert rule inet $@ "
+	jump_or_goto
+
+	if [ "$NFT_TEST_HAVE_chain_binding" = n ] ; then
+		echo " defaultchain"
+		return
+	fi
+
+	echo -n " { "
+	jump_or_goto
+	echo " defaultchain; counter; }"
+}
+
 gen_ruleset() {
 echo > "$tmp"
 for table in $tables; do
@@ -463,12 +499,13 @@ for table in $tables; do
 	echo "insert rule inet $table $chain ip6 saddr { ::1, dead::beef } counter" comment hash >> "$tmp"
 	echo "insert rule inet $table $chain ip saddr { 1.2.3.4 - 5.6.7.8, 127.0.0.1 } comment rbtree" >> "$tmp"
 	# bitmap 1byte, with anon chain jump
-	echo "insert rule inet $table $chain ip protocol { 6, 17 } jump { jump defaultchain; counter; }" >> "$tmp"
+	gen_anon_chain_jump "$table $chain ip protocol { 6, 17 }" >> "$tmp"
+
 	# bitmap 2byte
 	echo "insert rule inet $table $chain tcp dport != { 22, 23, 80 } goto defaultchain" >> "$tmp"
 	echo "insert rule inet $table $chain tcp dport { 1-1024, 8000-8080 } jump defaultchain comment rbtree" >> "$tmp"
 	# pipapo (concat + set), with goto anonymous chain.
-	echo "insert rule inet $table $chain ip saddr . tcp dport { 1.2.3.4 . 1-1024, 1.2.3.6 - 1.2.3.10 . 8000-8080, 1.2.3.4 . 8080, 1.2.3.6 - 1.2.3.10 . 22 } goto { jump defaultchain; counter; }" >> "$tmp"
+	gen_anon_chain_jump "$table $chain ip saddr . tcp dport { 1.2.3.4 . 1-1024, 1.2.3.6 - 1.2.3.10 . 8000-8080, 1.2.3.4 . 8080, 1.2.3.6 - 1.2.3.10 . 22 }" >> "$tmp"
 
 	# add a few anonymous sets. rhashtable is convered by named sets below.
 	c=$((RANDOM%$count))
@@ -477,12 +514,12 @@ for table in $tables; do
 	echo "insert rule inet $table $chain ip6 saddr { ::1, dead::beef } counter" comment hash >> "$tmp"
 	echo "insert rule inet $table $chain ip saddr { 1.2.3.4 - 5.6.7.8, 127.0.0.1 } comment rbtree" >> "$tmp"
 	# bitmap 1byte, with anon chain jump
-	echo "insert rule inet $table $chain ip protocol { 6, 17 } jump { jump defaultchain; counter; }" >> "$tmp"
+	gen_anon_chain_jump "$table $chain ip protocol { 6, 17 }" >> "$tmp"
 	# bitmap 2byte
 	echo "insert rule inet $table $chain tcp dport != { 22, 23, 80 } goto defaultchain" >> "$tmp"
 	echo "insert rule inet $table $chain tcp dport { 1-1024, 8000-8080 } jump defaultchain comment rbtree" >> "$tmp"
 	# pipapo (concat + set), with goto anonymous chain.
-	echo "insert rule inet $table $chain ip saddr . tcp dport { 1.2.3.4 . 1-1024, 1.2.3.6 - 1.2.3.10 . 8000-8080, 1.2.3.4 . 8080, 1.2.3.6 - 1.2.3.10 . 22 } goto { jump defaultchain; counter; }" >> "$tmp"
+	gen_anon_chain_jump "$table $chain ip saddr . tcp dport { 1.2.3.4 . 1-1024, 1.2.3.6 - 1.2.3.10 . 8000-8080, 1.2.3.4 . 8080, 1.2.3.6 - 1.2.3.10 . 22 }" >> "$tmp"
 
 	# add constant/immutable sets
 	size=$((RANDOM%5120000))
@@ -594,3 +631,7 @@ run_test
 rm -f "$tmp"
 tmp=""
 sleep 4
+
+if [ "$NFT_TEST_HAVE_chain_binding" = n ] ; then
+	echo "Ran a modified version of the test due to NFT_TEST_HAVE_chain_binding=n"
+fi
