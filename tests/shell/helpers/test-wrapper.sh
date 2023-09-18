@@ -134,6 +134,35 @@ if [ "$rc_dump" -ne 0 ] ; then
 	echo "$DUMPFILE" > "$NFT_TEST_TESTTMPDIR/rc-failed-dump"
 fi
 
+rc_chkdump=0
+# check that a flush after the test succeeds. We anyway need a clean ruleset
+# for the `nft --check` next.
+$NFT flush ruleset &> "$NFT_TEST_TESTTMPDIR/rc-failed-chkdump" || rc_chkdump=1
+if [ -f "$DUMPFILE" ] ; then
+	# We have a dumpfile. Call `nft --check` to possibly cover new code
+	# paths.
+	if [ "$rc_test" -eq 77 ] ; then
+		# The test was skipped. Possibly we don't have the required
+		# features to process this file. Ignore any output and exit
+		# code, but still call the program (for valgrind or sanitizer
+		# issue we hope to find).
+		$NFT --check -f "$DUMPFILE" &>/dev/null || :
+	else
+		$NFT --check -f "$DUMPFILE" &>> "$NFT_TEST_TESTTMPDIR/rc-failed-chkdump" || rc_chkdump=1
+	fi
+fi
+if [ -s "$NFT_TEST_TESTTMPDIR/rc-failed-chkdump" ] ; then
+	# Non-empty output? That is wrong.
+	rc_chkdump=1
+elif [ "$rc_chkdump" -eq 0 ] ; then
+	rm -rf "$NFT_TEST_TESTTMPDIR/rc-failed-chkdump"
+fi
+if [ "$rc_chkdump" -ne 0 ] ; then
+	# Ensure we don't have empty output files. Always write something, so
+	# that `grep ^ -R` lists the file.
+	echo -e "<<<<<\n\nCalling \`nft --check\` (or \`nft flush ruleset\`) failed for \"$DUMPFILE\"" >> "$NFT_TEST_TESTTMPDIR/rc-failed-chkdump"
+fi
+
 rc_valgrind=0
 [ -f "$NFT_TEST_TESTTMPDIR/rc-failed-valgrind" ] && rc_valgrind=1
 
@@ -154,6 +183,8 @@ elif [ "$rc_test" -ne 0 ] ; then
 	rc_exit="$rc_test"
 elif [ "$rc_dump" -ne 0 ] ; then
 	rc_exit=124
+elif [ "$rc_chkdump" -ne 0 ] ; then
+	rc_exit=121
 else
 	rc_exit=0
 fi
