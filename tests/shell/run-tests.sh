@@ -30,6 +30,18 @@ array_contains() {
 	return 1
 }
 
+colorize_keywords() {
+	local out_variable="$1"
+	local color="$2"
+	local val="$3"
+	local val2
+	shift 3
+
+	printf -v val2 '%q' "$val"
+	array_contains "$val" "$@" && val2="$color$val2$RESET"
+	printf -v "$out_variable" '%s' "$val2"
+}
+
 strtonum() {
 	local s="$1"
 	local n
@@ -571,7 +583,8 @@ msg_info "conf: DUMPGEN=$(printf '%q' "$DUMPGEN")"
 msg_info "conf: VALGRIND=$(printf '%q' "$VALGRIND")"
 msg_info "conf: KMEMLEAK=$(printf '%q' "$KMEMLEAK")"
 msg_info "conf: NFT_TEST_HAS_REALROOT=$(printf '%q' "$NFT_TEST_HAS_REALROOT")"
-msg_info "conf: NFT_TEST_HAS_SOCKET_LIMITS=$(printf '%q' "$NFT_TEST_HAS_SOCKET_LIMITS")"
+colorize_keywords value "$YELLOW" "$NFT_TEST_HAS_SOCKET_LIMITS" y
+msg_info "conf: NFT_TEST_HAS_SOCKET_LIMITS=$value"
 msg_info "conf: NFT_TEST_UNSHARE_CMD=$(printf '%q' "$NFT_TEST_UNSHARE_CMD")"
 msg_info "conf: NFT_TEST_HAS_UNSHARED=$(printf '%q' "$NFT_TEST_HAS_UNSHARED")"
 msg_info "conf: NFT_TEST_HAS_UNSHARED_MOUNT=$(printf '%q' "$NFT_TEST_HAS_UNSHARED_MOUNT")"
@@ -582,19 +595,13 @@ msg_info "conf: NFT_TEST_SHUFFLE_TESTS=$NFT_TEST_SHUFFLE_TESTS"
 msg_info "conf: TMPDIR=$(printf '%q' "$_TMPDIR")"
 echo
 for KEY in $(compgen -v | grep '^NFT_TEST_SKIP_' | sort) ; do
-	v="${!KEY}"
-	if [ "$v" = y ] ; then
-		v="$YELLOW$v$RESET"
-	fi
-	msg_info "conf: $KEY=$v"
+	colorize_keywords value "$YELLOW" "${!KEY}" y
+	msg_info "conf: $KEY=$value"
 	export "$KEY"
 done
 for KEY in $(compgen -v | grep '^NFT_TEST_HAVE_' | sort) ; do
-	v="${!KEY}"
-	if [ "$v" = n ] ; then
-		v="$YELLOW$v$RESET"
-	fi
-	msg_info "conf: $KEY=$v"
+	colorize_keywords value "$YELLOW" "${!KEY}" n
+	msg_info "conf: $KEY=$value"
 	export "$KEY"
 done
 
