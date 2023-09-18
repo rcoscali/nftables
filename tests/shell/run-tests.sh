@@ -224,13 +224,13 @@ export NFT_TEST_BASEDIR
 _HAVE_OPTS=( json )
 _HAVE_OPTS_NFT=()
 shopt -s nullglob
-F=( "$NFT_TEST_BASEDIR/features/"*.nft )
+F=( "$NFT_TEST_BASEDIR/features/"*.nft "$NFT_TEST_BASEDIR/features/"*.sh )
 shopt -u nullglob
 for file in "${F[@]}"; do
 	feat="${file##*/}"
-	feat="${feat%.nft}"
+	feat="${feat%.*}"
 	re="^[a-z_0-9]+$"
-	if [[ "$feat" =~ $re ]] && ! array_contains "$feat" "${_HAVE_OPTS[@]}" ; then
+	if [[ "$feat" =~ $re ]] && ! array_contains "$feat" "${_HAVE_OPTS[@]}" "${_HAVE_OPTS_NFT[@]}" && [[ "$file" != *.sh || -x "$file" ]] ; then
 		_HAVE_OPTS_NFT+=( "$feat" )
 	else
 		msg_warn "Ignore feature file \"$file\""
@@ -494,11 +494,28 @@ else
 fi
 export NFT_TEST_HAVE_json
 
+feature_probe()
+{
+	local with_path="$NFT_TEST_BASEDIR/features/$1"
+
+	if [ -r "$with_path.nft" ] ; then
+		$NFT_TEST_UNSHARE_CMD "$NFT_REAL" --check -f "$with_path.nft" &>/dev/null
+		return $?
+	fi
+
+	if [ -x "$with_path.sh" ] ; then
+		NFT="$NFT_REAL" $NFT_TEST_UNSHARE_CMD "$with_path.sh" &>/dev/null
+		return $?
+	fi
+
+	return 1
+}
+
 for feat in "${_HAVE_OPTS_NFT[@]}" ; do
 	var="NFT_TEST_HAVE_$feat"
 	if [ -z "${!var+x}" ] ; then
 		val='y'
-		$NFT_TEST_UNSHARE_CMD "$NFT_REAL" --check -f "$NFT_TEST_BASEDIR/features/$feat.nft" &>/dev/null || val='n'
+		feature_probe "$feat" || val='n'
 	else
 		val="$(bool_n "${!var}")"
 	fi
