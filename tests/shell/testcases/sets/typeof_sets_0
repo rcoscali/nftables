@@ -4,11 +4,20 @@
 # s1 and s2 are identical, they just use different
 # ways for declaration.
 
-EXPECTED="table inet t {
-	set s1 {
+OSFSET=""
+OSFCHAIN=""
+if [ "$NFT_TEST_HAVE_osf" != n ] ; then
+	OSFSET="set s1 {
 		typeof osf name
 		elements = { \"Linux\" }
-	}
+	}"
+	OSFCHAIN="chain c1 {
+		osf name @s1 accept
+	}"
+fi
+
+EXPECTED="table inet t {
+	$OSFSET
 
 	set s2 {
 		typeof vlan id
@@ -60,9 +69,7 @@ EXPECTED="table inet t {
 		elements = { 3567 . 1.2.3.4 }
 	}
 
-	chain c1 {
-		osf name @s1 accept
-	}
+	$OSFCHAIN
 
 	chain c2 {
 		ether type vlan vlan id @s2 accept
@@ -104,3 +111,7 @@ EXPECTED="table inet t {
 set -e
 $NFT -f - <<< $EXPECTED
 
+if [ "$NFT_TEST_HAVE_osf" = n ] ; then
+	echo "Partial test due to NFT_TEST_HAVE_osf=n. Skip"
+	exit 77
+fi

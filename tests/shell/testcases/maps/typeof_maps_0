@@ -4,11 +4,18 @@
 # without typeof, this is 'type string' and 'type integer',
 # but neither could be used because it lacks size information.
 
-EXPECTED="table inet t {
-	map m1 {
+OSFMAP=""
+OSFRULE=""
+if [ "$NFT_TEST_HAVE_osf" != n ] ; then
+	OSFMAP="map m1 {
 		typeof osf name : ct mark
 		elements = { "Linux" : 0x00000001 }
-	}
+	}"
+	OSFRULE="ct mark set osf name map @m1"
+fi
+
+EXPECTED="table inet t {
+	$OSFMAP
 
 	map m2 {
 		typeof vlan id : mark
@@ -33,7 +40,7 @@ EXPECTED="table inet t {
 	}
 
 	chain c {
-		ct mark set osf name map @m1
+		$OSFRULE
 		ether type vlan meta mark set vlan id map @m2
 		meta mark set ip saddr . ip daddr map @m3
 		iifname . ip protocol . th dport vmap @m4
@@ -45,3 +52,7 @@ EXPECTED="table inet t {
 set -e
 $NFT -f - <<< $EXPECTED
 
+if [ "$NFT_TEST_HAVE_osf" = n ] ; then
+	echo "Partial test due to NFT_TEST_HAVE_osf=n. Skip"
+	exit 77
+fi
