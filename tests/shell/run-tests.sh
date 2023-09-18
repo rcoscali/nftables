@@ -704,7 +704,6 @@ print_test_header() {
 	local testfile="$2"
 	local testidx_completed="$3"
 	local status="$4"
-	local suffix="$5"
 	local text
 	local s_idx
 
@@ -713,7 +712,7 @@ print_test_header() {
 	s_idx="$text/${#TESTS[@]}"
 
 	align_text text left 12 "[$status]"
-	_msg "$msglevel" "$text $s_idx $testfile${suffix:+: $suffix}"
+	_msg "$msglevel" "$text $s_idx $testfile"
 }
 
 print_test_result() {
@@ -722,7 +721,6 @@ print_test_result() {
 	local rc_got="$3"
 
 	local result_msg_level="I"
-	local result_msg_suffix=""
 	local result_msg_files=( "$NFT_TEST_TESTTMPDIR/testout.log" "$NFT_TEST_TESTTMPDIR/ruleset-diff" )
 	local result_msg_status
 
@@ -743,13 +741,12 @@ print_test_result() {
 			result_msg_status="DUMP FAIL"
 		else
 			result_msg_status="FAILED"
-			result_msg_suffix="got $rc_got"
 		fi
 		result_msg_status="$RED$result_msg_status$RESET"
 		result_msg_files=( "$NFT_TEST_TESTTMPDIR/testout.log" )
 	fi
 
-	print_test_header "$result_msg_level" "$testfile" "$((ok + skipped + failed))" "$result_msg_status" "$result_msg_suffix"
+	print_test_header "$result_msg_level" "$testfile" "$((ok + skipped + failed))" "$result_msg_status"
 
 	if [ "$VERBOSE" = "y" ] ; then
 		local f
@@ -773,7 +770,7 @@ job_start() {
 	local testidx="$2"
 
 	if [ "$NFT_TEST_JOBS" -le 1 ] ; then
-		print_test_header I "$testfile" "$testidx" "EXECUTING" ""
+		print_test_header I "$testfile" "$testidx" "EXECUTING"
 	fi
 
 	NFT_TEST_TESTTMPDIR="${JOBS_TEMPDIR["$testfile"]}" \
