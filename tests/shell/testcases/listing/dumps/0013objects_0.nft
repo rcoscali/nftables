@@ -25,5 +25,3 @@ table ip test {
 	chain input {
 	}
 }
-table ip test-ip {
-}
