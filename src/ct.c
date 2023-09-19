@@ -217,7 +217,7 @@ static struct error_record *ct_label_type_parse(struct parse_ctx *ctx,
 	return NULL;
 }
 
-static const struct datatype ct_label_type = {
+const struct datatype ct_label_type = {
 	.type		= TYPE_CT_LABEL,
 	.name		= "ct_label",
 	.desc		= "conntrack label",
