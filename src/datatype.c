@@ -62,6 +62,7 @@ static const struct datatype *datatypes[TYPE_MAX + 1] = {
 	[TYPE_CT_DIR]		= &ct_dir_type,
 	[TYPE_CT_STATUS]	= &ct_status_type,
 	[TYPE_ICMP6_TYPE]	= &icmp6_type_type,
+	[TYPE_CT_LABEL]		= &ct_label_type,
 	[TYPE_PKTTYPE]		= &pkttype_type,
 	[TYPE_ICMP_CODE]	= &icmp_code_type,
 	[TYPE_ICMPV6_CODE]	= &icmpv6_code_type,
