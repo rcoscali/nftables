@@ -6,6 +6,6 @@ table ip t {
 	}
 
 	chain c {
-		tcp dport 80 meter m size 128 { ip saddr limit rate 10/second }
+		tcp dport 80 meter m size 128 { ip saddr limit rate 10/second burst 5 packets }
 	}
 }
