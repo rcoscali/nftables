@@ -196,7 +196,6 @@ struct nft_ctx *nft_ctx_new(uint32_t flags)
 
 	if (!init_once) {
 		init_once = true;
-		gmp_init();
 #ifdef HAVE_LIBXTABLES
 		xt_init();
 #endif

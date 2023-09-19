@@ -224,7 +224,6 @@ struct input_descriptor {
 
 void ct_label_table_init(struct nft_ctx *ctx);
 void mark_table_init(struct nft_ctx *ctx);
-void gmp_init(void);
 void realm_table_rt_init(struct nft_ctx *ctx);
 void devgroup_table_init(struct nft_ctx *ctx);
 void xt_init(void);
