@@ -191,15 +191,11 @@ void nft_ctx_clear_include_paths(struct nft_ctx *ctx)
 EXPORT_SYMBOL(nft_ctx_new);
 struct nft_ctx *nft_ctx_new(uint32_t flags)
 {
-	static bool init_once;
 	struct nft_ctx *ctx;
 
-	if (!init_once) {
-		init_once = true;
 #ifdef HAVE_LIBXTABLES
-		xt_init();
+	xt_init();
 #endif
-	}
 
 	ctx = xzalloc(sizeof(struct nft_ctx));
 	nft_init(ctx);
