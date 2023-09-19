@@ -75,6 +75,7 @@ static const struct datatype *datatypes[TYPE_MAX + 1] = {
 	[TYPE_ECN]		= &ecn_type,
 	[TYPE_FIB_ADDR]         = &fib_addr_type,
 	[TYPE_BOOLEAN]		= &boolean_type,
+	[TYPE_CT_EVENTBIT]	= &ct_event_type,
 	[TYPE_IFNAME]		= &ifname_type,
 	[TYPE_IGMP_TYPE]	= &igmp_type_type,
 	[TYPE_TIME_DATE]	= &date_type,

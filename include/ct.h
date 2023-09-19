@@ -40,5 +40,6 @@ extern const struct datatype ct_dir_type;
 extern const struct datatype ct_state_type;
 extern const struct datatype ct_status_type;
 extern const struct datatype ct_label_type;
+extern const struct datatype ct_event_type;
 
 #endif /* NFTABLES_CT_H */

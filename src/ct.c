@@ -132,7 +132,7 @@ static const struct symbol_table ct_events_tbl = {
 	},
 };
 
-static const struct datatype ct_event_type = {
+const struct datatype ct_event_type = {
 	.type		= TYPE_CT_EVENTBIT,
 	.name		= "ct_event",
 	.desc		= "conntrack event bits",
