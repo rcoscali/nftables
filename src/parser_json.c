@@ -2594,7 +2594,7 @@ static struct stmt *json_parse_meter_stmt(struct json_ctx *ctx,
 	json_t *jkey, *jstmt;
 	struct stmt *stmt;
 	const char *name;
-	uint32_t size = 0xffff;
+	uint32_t size = 0;
 
 	if (json_unpack_err(ctx, value, "{s:s, s:o, s:o}",
 			    "name", &name, "key", &jkey, "stmt", &jstmt))
