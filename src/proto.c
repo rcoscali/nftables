@@ -1281,7 +1281,7 @@ const struct proto_desc proto_netdev = {
 	},
 };
 
-static const struct proto_desc *proto_definitions[PROTO_DESC_MAX + 1] = {
+static const struct proto_desc *const proto_definitions[PROTO_DESC_MAX + 1] = {
 	[PROTO_DESC_AH]		= &proto_ah,
 	[PROTO_DESC_ESP]	= &proto_esp,
 	[PROTO_DESC_COMP]	= &proto_comp,
@@ -1300,6 +1300,7 @@ static const struct proto_desc *proto_definitions[PROTO_DESC_MAX + 1] = {
 	[PROTO_DESC_VLAN]	= &proto_vlan,
 	[PROTO_DESC_ETHER]	= &proto_eth,
 	[PROTO_DESC_VXLAN]	= &proto_vxlan,
+	[PROTO_DESC_GENEVE]	= &proto_geneve,
 	[PROTO_DESC_GRE]	= &proto_gre,
 	[PROTO_DESC_GRETAP]	= &proto_gretap,
 };
