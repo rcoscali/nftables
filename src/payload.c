@@ -802,18 +802,16 @@ static uint8_t icmp_dep_to_type(enum icmp_hdr_field_type t)
 static bool payload_may_dependency_kill_icmp(struct payload_dep_ctx *ctx, struct expr *expr)
 {
 	const struct expr *dep = payload_dependency_get(ctx, expr->payload.base);
-	uint8_t icmp_type;
+	enum icmp_hdr_field_type icmp_dep;
 
-	icmp_type = expr->payload.tmpl->icmp_dep;
-	if (icmp_type == PROTO_ICMP_ANY)
+	icmp_dep = expr->payload.tmpl->icmp_dep;
+	if (icmp_dep == PROTO_ICMP_ANY)
 		return false;
 
 	if (dep->left->payload.desc != expr->payload.desc)
 		return false;
 
-	icmp_type = icmp_dep_to_type(expr->payload.tmpl->icmp_dep);
-
-	return ctx->icmp_type == icmp_type;
+	return ctx->icmp_type == icmp_dep_to_type(icmp_dep);
 }
 
 static bool payload_may_dependency_kill_ll(struct payload_dep_ctx *ctx, struct expr *expr)
