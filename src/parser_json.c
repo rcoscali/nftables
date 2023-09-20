@@ -3447,7 +3447,7 @@ static struct cmd *json_parse_cmd_add_object(struct json_ctx *ctx,
 {
 	const char *family, *tmp, *rate_unit = "packets", *burst_unit = "bytes";
 	uint32_t l3proto = NFPROTO_UNSPEC;
-	int inv = 0, flags = 0, i;
+	int inv = 0, flags = 0, i, j;
 	struct handle h = { 0 };
 	struct obj *obj;
 	json_t *jflags;
@@ -3634,11 +3634,12 @@ static struct cmd *json_parse_cmd_add_object(struct json_ctx *ctx,
 	case CMD_OBJ_SYNPROXY:
 		obj->type = NFT_OBJECT_SYNPROXY;
 		if (json_unpack_err(ctx, root, "{s:i, s:i}",
-				    "mss", &obj->synproxy.mss,
-				    "wscale", &obj->synproxy.wscale)) {
+				    "mss", &i, "wscale", &j)) {
 			obj_free(obj);
 			return NULL;
 		}
+		obj->synproxy.mss = i;
+		obj->synproxy.wscale = j;
 		obj->synproxy.flags |= NF_SYNPROXY_OPT_MSS;
 		obj->synproxy.flags |= NF_SYNPROXY_OPT_WSCALE;
 		if (!json_unpack(root, "{s:o}", "flags", &jflags)) {
