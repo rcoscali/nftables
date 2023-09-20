@@ -3500,7 +3500,7 @@ static struct cmd *json_parse_cmd_add_object(struct json_ctx *ctx,
 		}
 		json_unpack(root, "{s:s}", "rate_unit", &rate_unit);
 		json_unpack(root, "{s:b}", "inv", &inv);
-		json_unpack(root, "{s:I}", "burst", &obj->limit.burst);
+		json_unpack(root, "{s:i}", "burst", &obj->limit.burst);
 		json_unpack(root, "{s:s}", "burst_unit", &burst_unit);
 
 		if (!strcmp(rate_unit, "packets")) {
