@@ -893,6 +893,8 @@ static struct expr *set_make_key(const struct nftnl_udata *attr)
 
 	etype = nftnl_udata_get_u32(ud[NFTNL_UDATA_SET_TYPEOF_EXPR]);
 	ops = expr_ops_by_type(etype);
+	if (!ops)
+		return NULL;
 
 	expr = ops->parse_udata(ud[NFTNL_UDATA_SET_TYPEOF_DATA]);
 	if (!expr)
