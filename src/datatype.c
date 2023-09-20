@@ -1211,7 +1211,7 @@ static struct datatype *datatype_alloc(void)
 	return dtype;
 }
 
-struct datatype *datatype_get(const struct datatype *ptr)
+const struct datatype *datatype_get(const struct datatype *ptr)
 {
 	struct datatype *dtype = (struct datatype *)ptr;
 
