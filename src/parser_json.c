@@ -3374,7 +3374,7 @@ static struct cmd *json_parse_cmd_add_flowtable(struct json_ctx *ctx,
 	if (op == CMD_DELETE || op == CMD_LIST || op == CMD_DESTROY)
 		return cmd_alloc(op, cmd_obj, &h, int_loc, NULL);
 
-	if (json_unpack_err(ctx, root, "{s:s, s:I}",
+	if (json_unpack_err(ctx, root, "{s:s, s:i}",
 			    "hook", &hook,
 			    "prio", &prio)) {
 		handle_free(&h);
