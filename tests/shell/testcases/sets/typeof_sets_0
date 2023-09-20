@@ -23,6 +23,16 @@ INPUT_OSF_CHAIN="
 	}
 "
 
+INPUT_SCTP_CHAIN="
+	chain c7 {
+		sctp chunk init num-inbound-streams @s7 accept
+	}
+"
+
+if [ "$NFT_TEST_HAVE_sctp_chunks" = n ] ; then
+	INPUT_SCTP_CHAIN=
+fi
+
 if [ "$NFT_TEST_HAVE_osf" = n ] ; then
 	if [ "$((RANDOM % 2))" -eq 1 ] ; then
 		# Regardless of $NFT_TEST_HAVE_osf, we can define the set.
@@ -98,11 +108,7 @@ $INPUT_OSF_CHAIN
 	chain c6 {
 		tcp option maxseg size @s6 accept
 	}
-
-	chain c7 {
-		sctp chunk init num-inbound-streams @s7 accept
-	}
-
+$INPUT_SCTP_CHAIN
 	chain c8 {
 		ip version @s8 accept
 	}
@@ -187,11 +193,7 @@ $INPUT_OSF_CHAIN
 	chain c6 {
 		tcp option maxseg size @s6 accept
 	}
-
-	chain c7 {
-		sctp chunk init num-inbound-streams @s7 accept
-	}
-
+$INPUT_SCTP_CHAIN
 	chain c8 {
 		ip version @s8 accept
 	}
@@ -216,5 +218,9 @@ $DIFF -u <($NFT list ruleset) - <<<"$EXPECTED" || die $'diff failed between rule
 
 if [ "$NFT_TEST_HAVE_osf" = n ] ; then
 	echo "Partial test due to NFT_TEST_HAVE_osf=n. Skip"
+	exit 77
+fi
+if [ "$NFT_TEST_HAVE_sctp_chunks" = n ] ; then
+	echo "Partial test due to NFT_TEST_HAVE_sctp_chunks=n. Skip"
 	exit 77
 fi
