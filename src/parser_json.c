@@ -3447,8 +3447,8 @@ static struct cmd *json_parse_cmd_add_object(struct json_ctx *ctx,
 {
 	const char *family, *tmp, *rate_unit = "packets", *burst_unit = "bytes";
 	uint32_t l3proto = NFPROTO_UNSPEC;
+	int inv = 0, flags = 0, i;
 	struct handle h = { 0 };
-	int inv = 0, flags = 0;
 	struct obj *obj;
 	json_t *jflags;
 
@@ -3599,11 +3599,12 @@ static struct cmd *json_parse_cmd_add_object(struct json_ctx *ctx,
 				return NULL;
 			}
 		}
-		if (!json_unpack(root, "{s:o}", "dport", &tmp))
-			obj->ct_expect.dport = atoi(tmp);
-		json_unpack(root, "{s:I}", "timeout", &obj->ct_expect.timeout);
-		if (!json_unpack(root, "{s:o}", "size", &tmp))
-			obj->ct_expect.size = atoi(tmp);
+		if (!json_unpack(root, "{s:i}", "dport", &i))
+			obj->ct_expect.dport = i;
+		if (!json_unpack(root, "{s:i}", "timeout", &i))
+			obj->ct_expect.timeout = i;
+		if (!json_unpack(root, "{s:i}", "size", &i))
+			obj->ct_expect.size = i;
 		break;
 	case CMD_OBJ_LIMIT:
 		obj->type = NFT_OBJECT_LIMIT;
