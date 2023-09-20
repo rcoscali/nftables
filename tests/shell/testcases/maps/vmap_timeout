@@ -42,8 +42,12 @@ for i in $(seq 1 100) ; do
 	$NFT add element inet filter portaddrmap "$batched_addr"
 done
 
-$NFT add element inet filter portaddrmap { "* timeout 2s : drop" }
-$NFT add element inet filter portmap { "* timeout 3s : drop" }
+if [ "$NFT_TEST_HAVE_catchall_element" = n ] ; then
+	echo "Partial test due to NFT_TEST_HAVE_catchall_element=n."
+else
+	$NFT add element inet filter portaddrmap { "* timeout 2s : drop" }
+	$NFT add element inet filter portmap { "* timeout 3s : drop" }
+fi
 
 # wait for elements to time out
 sleep 5
