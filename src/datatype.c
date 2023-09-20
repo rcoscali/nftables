@@ -1310,7 +1310,7 @@ const struct datatype *concat_type_alloc(uint32_t type)
 }
 
 const struct datatype *set_datatype_alloc(const struct datatype *orig_dtype,
-					  unsigned int byteorder)
+					  enum byteorder byteorder)
 {
 	struct datatype *dtype;
 

@@ -301,7 +301,7 @@ concat_subtype_lookup(uint32_t type, unsigned int n)
 }
 
 extern const struct datatype *
-set_datatype_alloc(const struct datatype *orig_dtype, unsigned int byteorder);
+set_datatype_alloc(const struct datatype *orig_dtype, enum byteorder byteorder);
 
 extern void time_print(uint64_t msec, struct output_ctx *octx);
 extern struct error_record *time_parse(const struct location *loc,

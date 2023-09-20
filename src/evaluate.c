@@ -1340,8 +1340,8 @@ static int expr_evaluate_bitwise(struct eval_ctx *ctx, struct expr **expr)
 {
 	struct expr *op = *expr, *left = op->left;
 	const struct datatype *dtype;
+	enum byteorder byteorder;
 	unsigned int max_len;
-	int byteorder;
 
 	if (ctx->stmt_len > left->len) {
 		max_len = ctx->stmt_len;
