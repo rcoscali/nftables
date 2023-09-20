@@ -422,6 +422,7 @@ int nft_lex(void *, void *, void *);
 %token ICMP6			"icmpv6"
 %token PPTR			"param-problem"
 %token MAXDELAY			"max-delay"
+%token TADDR			"taddr"
 
 %token AH			"ah"
 %token RESERVED			"reserved"
@@ -5746,6 +5747,8 @@ icmp6_hdr_field		:	TYPE		close_scope_type	{ $$ = ICMP6HDR_TYPE; }
 			|	ID		{ $$ = ICMP6HDR_ID; }
 			|	SEQUENCE	{ $$ = ICMP6HDR_SEQ; }
 			|	MAXDELAY	{ $$ = ICMP6HDR_MAXDELAY; }
+			|	TADDR		{ $$ = ICMP6HDR_TADDR; }
+			|	DADDR		{ $$ = ICMP6HDR_DADDR; }
 			;
 
 auth_hdr_expr		:	AH	auth_hdr_field	close_scope_ah

@@ -589,6 +589,8 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 	"param-problem"		{ return PPTR; }
 	"max-delay"		{ return MAXDELAY; }
 	"mtu"			{ return MTU; }
+	"taddr"			{ return TADDR; }
+	"daddr"			{ return DADDR; }
 }
 <SCANSTATE_EXPR_AH,SCANSTATE_EXPR_ESP,SCANSTATE_ICMP,SCANSTATE_TCP>{
 	"sequence"		{ return SEQUENCE; }
