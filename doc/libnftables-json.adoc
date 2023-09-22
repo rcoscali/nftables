@@ -686,11 +686,6 @@ processing continues with the next rule in the same chain.
 ==== OPERATORS
 
 [horizontal]
-*&*:: Binary AND
-*|*:: Binary OR
-*^*:: Binary XOR
-*<<*:: Left shift
-*>>*:: Right shift
 *==*:: Equal
 *!=*:: Not equal
 *<*:: Less than
