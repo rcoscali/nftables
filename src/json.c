@@ -165,6 +165,8 @@ static json_t *set_print_json(struct output_ctx *octx, const struct set *set)
 		json_array_append_new(tmp, json_pack("s", "interval"));
 	if (set->flags & NFT_SET_TIMEOUT)
 		json_array_append_new(tmp, json_pack("s", "timeout"));
+	if (set->flags & NFT_SET_EVAL)
+		json_array_append_new(tmp, json_pack("s", "dynamic"));
 
 	if (json_array_size(tmp) > 0) {
 		json_object_set_new(root, "flags", tmp);
