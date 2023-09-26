@@ -2323,6 +2323,63 @@ static struct stmt *json_parse_set_stmt(struct json_ctx *ctx,
 	return stmt;
 }
 
+static struct stmt *json_parse_map_stmt(struct json_ctx *ctx,
+					const char *key, json_t *value)
+{
+	struct expr *expr, *expr2, *expr_data;
+	json_t *elem, *data, *stmt_json;
+	const char *opstr, *set;
+	struct stmt *stmt;
+	int op;
+
+	if (json_unpack_err(ctx, value, "{s:s, s:o, s:o, s:s}",
+			    "op", &opstr, "elem", &elem, "data", &data, "map", &set))
+		return NULL;
+
+	if (!strcmp(opstr, "add")) {
+		op = NFT_DYNSET_OP_ADD;
+	} else if (!strcmp(opstr, "update")) {
+		op = NFT_DYNSET_OP_UPDATE;
+	} else if (!strcmp(opstr, "delete")) {
+		op = NFT_DYNSET_OP_DELETE;
+	} else {
+		json_error(ctx, "Unknown map statement op '%s'.", opstr);
+		return NULL;
+	}
+
+	expr = json_parse_set_elem_expr_stmt(ctx, elem);
+	if (!expr) {
+		json_error(ctx, "Illegal map statement element.");
+		return NULL;
+	}
+
+	expr_data = json_parse_set_elem_expr_stmt(ctx, data);
+	if (!expr_data) {
+		json_error(ctx, "Illegal map expression data.");
+		expr_free(expr);
+		return NULL;
+	}
+
+	if (set[0] != '@') {
+		json_error(ctx, "Illegal map reference in map statement.");
+		expr_free(expr);
+		expr_free(expr_data);
+		return NULL;
+	}
+	expr2 = symbol_expr_alloc(int_loc, SYMBOL_SET, NULL, set + 1);
+
+	stmt = map_stmt_alloc(int_loc);
+	stmt->map.op = op;
+	stmt->map.key = expr;
+	stmt->map.data = expr_data;
+	stmt->map.set = expr2;
+
+	if (!json_unpack(value, "{s:o}", "stmt", &stmt_json))
+		json_parse_set_stmt_list(ctx, &stmt->set.stmt_list, stmt_json);
+
+	return stmt;
+}
+
 static int json_parse_log_flag(struct json_ctx *ctx,
 			       json_t *root, int *flags)
 {
@@ -2746,6 +2803,7 @@ static struct stmt *json_parse_stmt(struct json_ctx *ctx, json_t *root)
 		{ "redirect", json_parse_nat_stmt },
 		{ "reject", json_parse_reject_stmt },
 		{ "set", json_parse_set_stmt },
+		{ "map", json_parse_map_stmt },
 		{ "log", json_parse_log_stmt },
 		{ "ct helper", json_parse_cthelper_stmt },
 		{ "ct timeout", json_parse_cttimeout_stmt },

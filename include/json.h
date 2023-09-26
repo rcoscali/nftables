@@ -83,6 +83,7 @@ json_t *nat_stmt_json(const struct stmt *stmt, struct output_ctx *octx);
 json_t *reject_stmt_json(const struct stmt *stmt, struct output_ctx *octx);
 json_t *counter_stmt_json(const struct stmt *stmt, struct output_ctx *octx);
 json_t *set_stmt_json(const struct stmt *stmt, struct output_ctx *octx);
+json_t *map_stmt_json(const struct stmt *stmt, struct output_ctx *octx);
 json_t *log_stmt_json(const struct stmt *stmt, struct output_ctx *octx);
 json_t *objref_stmt_json(const struct stmt *stmt, struct output_ctx *octx);
 json_t *meter_stmt_json(const struct stmt *stmt, struct output_ctx *octx);
