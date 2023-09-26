@@ -3136,6 +3136,7 @@ static int string_to_set_flag(const char *str)
 		{ NFT_SET_CONSTANT, "constant" },
 		{ NFT_SET_INTERVAL, "interval" },
 		{ NFT_SET_TIMEOUT, "timeout" },
+		{ NFT_SET_EVAL,	"dynamic" },
 	};
 	unsigned int i;
 
