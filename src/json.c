@@ -1520,6 +1520,25 @@ json_t *set_stmt_json(const struct stmt *stmt, struct output_ctx *octx)
 	return json_pack("{s:o}", "set", root);
 }
 
+json_t *map_stmt_json(const struct stmt *stmt, struct output_ctx *octx)
+{
+	json_t *root;
+
+	root = json_pack("{s:s, s:o, s:o, s:s+}",
+			 "op", set_stmt_op_names[stmt->map.op],
+			 "elem", expr_print_json(stmt->map.key, octx),
+			 "data", expr_print_json(stmt->map.data, octx),
+			 "map", "@", stmt->map.set->set->handle.set.name);
+
+	if (!list_empty(&stmt->map.stmt_list)) {
+		json_object_set_new(root, "stmt",
+				    set_stmt_list_json(&stmt->map.stmt_list,
+						       octx));
+	}
+
+	return json_pack("{s:o}", "map", root);
+}
+
 json_t *objref_stmt_json(const struct stmt *stmt, struct output_ctx *octx)
 {
 	const char *name;

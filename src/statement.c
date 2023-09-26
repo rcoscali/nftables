@@ -848,6 +848,7 @@ static const struct stmt_ops map_stmt_ops = {
 	.name		= "map",
 	.print		= map_stmt_print,
 	.destroy	= map_stmt_destroy,
+	.json		= map_stmt_json,
 };
 
 struct stmt *map_stmt_alloc(const struct location *loc)
