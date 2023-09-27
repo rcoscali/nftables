@@ -711,14 +711,13 @@ static void netlink_gen_bitwise(struct netlink_linearize_ctx *ctx,
 	while (left->etype == EXPR_BINOP && left->left != NULL &&
 	       (left->op == OP_AND || left->op == OP_OR || left->op == OP_XOR))
 		binops[n++] = left = left->left;
-	n--;
 
-	netlink_gen_expr(ctx, binops[n--], dreg);
+	netlink_gen_expr(ctx, binops[--n], dreg);
 
 	mpz_bitmask(mask, expr->len);
 	mpz_set_ui(xor, 0);
-	for (; n >= 0; n--) {
-		i = binops[n];
+	while (n > 0) {
+		i = binops[--n];
 		mpz_set(val, i->right->value);
 
 		switch (i->op) {
