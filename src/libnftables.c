@@ -16,7 +16,6 @@
 #include <iface.h>
 #include <cmd.h>
 #include <errno.h>
-#include <string.h>
 
 static int nft_netlink(struct nft_ctx *nft,
 		       struct list_head *cmds, struct list_head *msgs)

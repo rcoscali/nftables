@@ -6,7 +6,6 @@
 #include <netinet/in.h>
 #include <libnftnl/object.h>	/* For NFTNL_CTTIMEOUT_ARRAY_MAX. */
 #include <linux/netfilter/nf_tables.h>
-#include <string.h>
 #include <cache.h>
 
 /**

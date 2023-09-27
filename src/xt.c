@@ -10,7 +10,6 @@
 #include <nft.h>
 
 #include <time.h>
-#include <string.h>
 #include <net/if.h>
 #include <getopt.h>
 #include <ctype.h>	/* for isspace */

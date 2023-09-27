@@ -16,7 +16,6 @@
 #include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <string.h>
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <pwd.h>

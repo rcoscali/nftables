@@ -12,7 +12,6 @@
 #include <nft.h>
 
 #include <stddef.h>
-#include <string.h>
 #include <net/if_arp.h>
 #include <arpa/inet.h>
 #include <linux/netfilter.h>

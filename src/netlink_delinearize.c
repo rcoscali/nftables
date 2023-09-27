@@ -11,7 +11,6 @@
 
 #include <nft.h>
 
-#include <string.h>
 #include <limits.h>
 #include <linux/netfilter/nf_tables.h>
 #include <arpa/inet.h>

@@ -11,7 +11,6 @@
 #include <exthdr.h>
 #include <sctp_chunk.h>
 
-#include <string.h>
 
 #define PHT(__token, __offset, __len) \
 	PROTO_HDR_TEMPLATE(__token, &integer_type, BYTEORDER_BIG_ENDIAN, \

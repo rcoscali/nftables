@@ -16,7 +16,6 @@
 #include <datatype.h>
 #include <gmputil.h>
 #include <utils.h>
-#include <string.h>
 #include <fib.h>
 
 #include <linux/rtnetlink.h>

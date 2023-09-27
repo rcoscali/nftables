@@ -15,7 +15,6 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <inttypes.h>
-#include <string.h>
 
 #include <netinet/ip.h>
 #include <linux/netfilter.h>

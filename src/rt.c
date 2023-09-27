@@ -13,7 +13,6 @@
 #include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <string.h>
 #include <arpa/inet.h>
 #include <linux/netfilter.h>
 

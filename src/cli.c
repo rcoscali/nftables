@@ -18,7 +18,6 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <errno.h>
-#include <string.h>
 #include <ctype.h>
 #include <limits.h>
 #ifdef HAVE_LIBREADLINE

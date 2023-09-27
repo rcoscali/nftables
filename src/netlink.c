@@ -11,7 +11,6 @@
 
 #include <nft.h>
 
-#include <string.h>
 #include <errno.h>
 #include <libmnl/libmnl.h>
 #include <netinet/in.h>

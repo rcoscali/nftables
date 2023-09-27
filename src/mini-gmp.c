@@ -47,7 +47,6 @@ see https://www.gnu.org/licenses/.  */
 #include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
-#include <string.h>
 
 #include "mini-gmp.h"
 

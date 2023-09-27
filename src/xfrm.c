@@ -17,7 +17,6 @@
 #include <datatype.h>
 #include <gmputil.h>
 #include <utils.h>
-#include <string.h>
 
 #include <netinet/ip.h>
 #include <linux/netfilter.h>

@@ -16,7 +16,6 @@
 #include <iface.h>
 #include <errno.h>
 #include <cache.h>
-#include <string.h>
 
 void cmd_add_loc(struct cmd *cmd, uint16_t offset, const struct location *loc)
 {

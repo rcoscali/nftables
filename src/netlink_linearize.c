@@ -14,7 +14,6 @@
 #include <linux/netfilter/nf_tables.h>
 #include <linux/netfilter/nf_log.h>
 
-#include <string.h>
 #include <rule.h>
 #include <statement.h>
 #include <expression.h>

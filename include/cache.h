@@ -1,8 +1,6 @@
 #ifndef _NFT_CACHE_H_
 #define _NFT_CACHE_H_
 
-#include <string.h>
-
 #include <list.h>
 
 struct handle;

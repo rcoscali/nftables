@@ -14,7 +14,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <string.h>
 
 #include <nftables.h>
 #include <utils.h>

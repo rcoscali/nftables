@@ -12,7 +12,6 @@
 
 #include <stddef.h>
 #include <stdio.h>
-#include <string.h>
 #include <arpa/inet.h>
 #include <linux/netfilter.h>
 #include <linux/netfilter_arp.h>

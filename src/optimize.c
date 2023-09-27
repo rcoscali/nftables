@@ -13,7 +13,6 @@
 
 #include <nft.h>
 
-#include <string.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <nftables.h>

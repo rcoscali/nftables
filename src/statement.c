@@ -13,7 +13,6 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <inttypes.h>
-#include <string.h>
 #include <syslog.h>
 #include <rule.h>
 

@@ -11,7 +11,6 @@
 #include <nftables.h>
 #include <expression.h>
 #include <utils.h>
-#include <string.h>
 #include <osf.h>
 #include <json.h>
 

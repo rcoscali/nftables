@@ -8,7 +8,6 @@
 
 #include <nft.h>
 
-#include <string.h>
 #include <limits.h>
 #include <utils.h>
 #include <misspell.h>
