@@ -175,7 +175,7 @@ table inet filter {
 		log prefix "NFT REJECT FWD " flags ether flags ip options limit rate 5/second burst 10 packets reject
 	}
 	chain public_forward {
-		udp dport { sip, 7078-7097 } oifname $voip_if jump {
+		udp dport { 5060, 7078-7097 } oifname $voip_if jump {
 			ip6 saddr $sip_whitelist_ip6 accept
 			meta nfproto ipv6 log prefix "NFT DROP SIP " flags ether flags ip options limit rate 5/second burst 10 packets drop
 		}
@@ -199,7 +199,7 @@ table inet filter {
 		icmpv6 type { destination-unreachable, packet-too-big, time-exceeded, parameter-problem, echo-request } oifname $public_if accept
 
 		ip6 daddr $sip_whitelist_ip6 jump {
-			udp dport { 3478, sip } accept
+			udp dport { 3478, 5060 } accept
 			udp sport { 7078-7097 } accept
 			tcp dport 5061 accept
 		}
