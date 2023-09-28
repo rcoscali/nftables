@@ -1242,7 +1242,7 @@ struct datatype *datatype_clone(const struct datatype *orig_dtype)
 {
 	struct datatype *dtype;
 
-	dtype = xzalloc(sizeof(*dtype));
+	dtype = xmalloc(sizeof(*dtype));
 	*dtype = *orig_dtype;
 	dtype->name = xstrdup(orig_dtype->name);
 	dtype->desc = xstrdup(orig_dtype->desc);
