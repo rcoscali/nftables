@@ -708,3 +708,21 @@ bridge
   [ payload load 4b @ network header + 16 => reg 9 ]
   [ lookup reg 1 set __map%d dreg 0 ]
 
+# ip saddr 1.2.3.4 ip daddr 3.4.5.6
+bridge test-bridge input
+  [ meta load protocol => reg 1 ]
+  [ cmp eq reg 1 0x00000008 ]
+  [ payload load 4b @ network header + 12 => reg 1 ]
+  [ cmp eq reg 1 0x04030201 ]
+  [ payload load 4b @ network header + 16 => reg 1 ]
+  [ cmp eq reg 1 0x06050403 ]
+
+# ip saddr 1.2.3.4 counter ip daddr 3.4.5.6
+bridge test-bridge input
+  [ meta load protocol => reg 1 ]
+  [ cmp eq reg 1 0x00000008 ]
+  [ payload load 4b @ network header + 12 => reg 1 ]
+  [ cmp eq reg 1 0x04030201 ]
+  [ counter pkts 0 bytes 0 ]
+  [ payload load 4b @ network header + 16 => reg 1 ]
+  [ cmp eq reg 1 0x06050403 ]
