@@ -850,7 +850,12 @@ echo ""
 kmemleak_found=0
 check_kmemleak_force
 
-if [ "$failed" -gt 0 ] || [ "$NFT_TEST_FAIL_ON_SKIP" = y -a "$skipped" -gt 0 ] ; then
+failed_total="$failed"
+if [ "$NFT_TEST_FAIL_ON_SKIP" = y ] ; then
+	failed_total="$((failed_total + skipped))"
+fi
+
+if [ "$failed_total" -gt 0 ] ; then
 	RR="$RED"
 elif [ "$skipped" -gt 0 ] ; then
 	RR="$YELLOW"
@@ -875,7 +880,7 @@ END_TIME="$(cut -d ' ' -f1 /proc/uptime)"
 WALL_TIME="$(awk -v start="$START_TIME" -v end="$END_TIME" "BEGIN { print(end - start) }")"
 printf "%s\n" "$WALL_TIME" "$START_TIME" "$END_TIME" > "$NFT_TEST_TMPDIR/times"
 
-if [ "$failed" -gt 0 -o "$NFT_TEST_KEEP_LOGS" = y ] ; then
+if [ "$failed_total" -gt 0 -o "$NFT_TEST_KEEP_LOGS" = y ] ; then
 	msg_info "check the temp directory \"$NFT_TEST_TMPDIR\" (\"$NFT_TEST_LATEST\")"
 	msg_info "   ls -lad \"$NFT_TEST_LATEST\"/*/*"
 	msg_info "   grep -R ^ \"$NFT_TEST_LATEST\"/"
