@@ -23,11 +23,11 @@ START_TIME="$(cut -d ' ' -f1 /proc/uptime)"
 
 export TMPDIR="$NFT_TEST_TESTTMPDIR"
 
-CLEANUP_UMOUNT_RUN_NETNS=n
+CLEANUP_UMOUNT_VAR_RUN=n
 
 cleanup() {
-	if [ "$CLEANUP_UMOUNT_RUN_NETNS" = y ] ; then
-		umount "/var/run/netns" || :
+	if [ "$CLEANUP_UMOUNT_VAR_RUN" = y ] ; then
+		umount "/var/run" &>/dev/null || :
 	fi
 }
 
@@ -38,16 +38,20 @@ printf '%s\n' "$TEST" > "$NFT_TEST_TESTTMPDIR/name"
 read tainted_before < /proc/sys/kernel/tainted
 
 if [ "$NFT_TEST_HAS_UNSHARED_MOUNT" = y ] ; then
-	# We have a private mount namespace. We will mount /run/netns as a tmpfs,
-	# this is useful because `ip netns add` wants to add files there.
+	# We have a private mount namespace. We will mount /var/run/ as a tmpfs.
 	#
-	# When running as rootless, this is necessary to get such tests to
-	# pass.  When running rootful, it's still useful to not touch the
-	# "real" /var/run/netns of the system.
-	mkdir -p /var/run/netns
-	if mount -t tmpfs --make-private "/var/run/netns" ; then
-		CLEANUP_UMOUNT_RUN_NETNS=y
+	# The main purpose is so that we can create /var/run/netns, which is
+	# required for `ip netns add` to work.  When running as rootless, this
+	# is necessary to get such tests to pass. When running rootful, it's
+	# still useful to not touch the "real" /var/run/netns of the system.
+	#
+	# Note that this also hides everything that might reside in /var/run.
+	# That is desirable, as tests should not depend on content there (or if
+	# they do, we need to explicitly handle it as appropriate).
+	if mount -t tmpfs --make-private "/var/run" ; then
+		CLEANUP_UMOUNT_VAR_RUN=y
 	fi
+	mkdir -p /var/run/netns
 fi
 
 TEST_TAGS_PARSED=0
