@@ -1748,3 +1748,64 @@
     }
 ]
 
+# ip saddr 1.2.3.4 ip daddr 3.4.5.6
+[
+    {
+        "match": {
+            "left": {
+                "payload": {
+                    "field": "saddr",
+                    "protocol": "ip"
+                }
+            },
+            "op": "==",
+            "right": "1.2.3.4"
+        }
+    },
+    {
+        "match": {
+            "left": {
+                "payload": {
+                    "field": "daddr",
+                    "protocol": "ip"
+                }
+            },
+            "op": "==",
+            "right": "3.4.5.6"
+        }
+    }
+]
+
+# ip saddr 1.2.3.4 counter ip daddr 3.4.5.6
+[
+    {
+        "match": {
+            "left": {
+                "payload": {
+                    "field": "saddr",
+                    "protocol": "ip"
+                }
+            },
+            "op": "==",
+            "right": "1.2.3.4"
+        }
+    },
+    {
+        "counter": {
+            "bytes": 0,
+            "packets": 0
+        }
+    },
+    {
+        "match": {
+            "left": {
+                "payload": {
+                    "field": "daddr",
+                    "protocol": "ip"
+                }
+            },
+            "op": "==",
+            "right": "3.4.5.6"
+        }
+    }
+]
