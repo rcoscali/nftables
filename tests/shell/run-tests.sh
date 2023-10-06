@@ -166,6 +166,9 @@ usage() {
 	echo " -s|--sequential : Sets NFT_TEST_JOBS=0, which also enables global cleanups."
 	echo "                   Also sets NFT_TEST_SHUFFLE_TESTS=n if left unspecified."
 	echo " -Q|--quick      : Sets NFT_TEST_SKIP_slow=y."
+	echo " -S|--setup-host : Modify the host to run as rootless. Otherwise, some tests will be"
+	echo "                   skipped. Basically, this bumps /proc/sys/net/core/{wmem_max,rmem_max}."
+	echo "                   Must run as root and this option must be specified alone."
 	echo " --              : Separate options from tests."
 	echo " [TESTS...]      : Other options are treated as test names,"
 	echo "                   that is, executables that are run by the runner."
@@ -302,10 +305,25 @@ export NFT_TEST_RANDOM_SEED
 
 TESTS=()
 
+SETUP_HOST=
+SETUP_HOST_OTHER=
+
+ARGV_ORIG=( "$@" )
+
 while [ $# -gt 0 ] ; do
 	A="$1"
 	shift
 	case "$A" in
+		-S|--setup-host)
+			;;
+		*)
+			SETUP_HOST_OTHER=y
+			;;
+	esac
+	case "$A" in
+		-S|--setup-host)
+			SETUP_HOST="$A"
+			;;
 		-v)
 			VERBOSE=y
 			;;
@@ -352,6 +370,34 @@ while [ $# -gt 0 ] ; do
 			;;
 	esac
 done
+
+sysctl_bump() {
+	local sysctl="$1"
+	local val="$2"
+	local cur;
+
+	cur="$(cat "$sysctl" 2>/dev/null)" || :
+	if [ -n "$cur" -a "$cur" -ge "$val" ] ; then
+		echo "# Skip: echo $val > $sysctl (current value $cur)"
+		return 0
+	fi
+	echo "    echo $val > $sysctl (previous value $cur)"
+	echo "$val" > "$sysctl"
+}
+
+setup_host() {
+	echo "Setting up host for running as rootless (requires root)."
+	sysctl_bump /proc/sys/net/core/rmem_max $((4000*1024)) || return $?
+	sysctl_bump /proc/sys/net/core/wmem_max $((4000*1024)) || return $?
+}
+
+if [ -n "$SETUP_HOST" ] ; then
+	if [ "$SETUP_HOST_OTHER" = y ] ; then
+		msg_error "The $SETUP_HOST option must be specified alone."
+	fi
+	setup_host
+	exit $?
+fi
 
 find_tests() {
 	find "$1" -type f -executable | sort
