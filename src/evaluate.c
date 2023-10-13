@@ -2480,7 +2480,7 @@ static int expr_evaluate_relational(struct eval_ctx *ctx, struct expr **expr)
 			    right->dtype->basetype == NULL ||
 			    right->dtype->basetype->type != TYPE_BITMASK)
 				return expr_binary_error(ctx->msgs, left, right,
-							 "negation can only be used with singleton bitmask values");
+							 "negation can only be used with singleton bitmask values.  Did you mean \"!=\"?");
 		}
 
 		switch (right->etype) {
