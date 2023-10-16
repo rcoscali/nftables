@@ -163,6 +163,7 @@ usage() {
 	echo " -R|--without-realroot : Sets NFT_TEST_HAS_REALROOT=n."
 	echo " -U|--no-unshare : Sets NFT_TEST_UNSHARE_CMD=\"\"."
 	echo " -k|--keep-logs  : Sets NFT_TEST_KEEP_LOGS=y."
+	echo " -x              : Sets NFT_TEST_VERBOSE_TEST=y."
 	echo " -s|--sequential : Sets NFT_TEST_JOBS=0, which also enables global cleanups."
 	echo "                   Also sets NFT_TEST_SHUFFLE_TESTS=n if left unspecified."
 	echo " -Q|--quick      : Sets NFT_TEST_SKIP_slow=y."
@@ -181,6 +182,8 @@ usage() {
 	echo " NFT_REAL=<CMD> : Real nft comand. Usually this is just the same as \$NFT,"
 	echo "                 however, you may set NFT='valgrind nft' and NFT_REAL to the real command."
 	echo " VERBOSE=*|y   : Enable verbose output."
+	echo " NFT_TEST_VERBOSE_TEST=*|y: if true, enable verbose output for tests. For bash scripts, this means"
+	echo "                 to pass \"-x\" to the interpreter."
 	echo " DUMPGEN=*|y   : Regenerate dump files. Dump files are only recreated if the"
 	echo "                 test completes successfully and the \"dumps\" directory for the"
 	echo "                 test exits."
@@ -275,6 +278,7 @@ _NFT_TEST_JOBS_DEFAULT="$(nproc)"
 _NFT_TEST_JOBS_DEFAULT="$(( _NFT_TEST_JOBS_DEFAULT + (_NFT_TEST_JOBS_DEFAULT + 1) / 2 ))"
 
 VERBOSE="$(bool_y "$VERBOSE")"
+NFT_TEST_VERBOSE_TEST="$(bool_y "$NFT_TEST_VERBOSE_TEST")"
 DUMPGEN="$(bool_y "$DUMPGEN")"
 VALGRIND="$(bool_y "$VALGRIND")"
 KMEMLEAK="$(bool_y "$KMEMLEAK")"
@@ -326,6 +330,9 @@ while [ $# -gt 0 ] ; do
 			;;
 		-v)
 			VERBOSE=y
+			;;
+		-x)
+			NFT_TEST_VERBOSE_TEST=y
 			;;
 		-g)
 			DUMPGEN=y
@@ -627,6 +634,7 @@ exec &> >(tee "$NFT_TEST_TMPDIR/test.log")
 msg_info "conf: NFT=$(printf '%q' "$NFT")"
 msg_info "conf: NFT_REAL=$(printf '%q' "$NFT_REAL")"
 msg_info "conf: VERBOSE=$(printf '%q' "$VERBOSE")"
+msg_info "conf: NFT_TEST_VERBOSE_TEST=$(printf '%q' "$NFT_TEST_VERBOSE_TEST")"
 msg_info "conf: DUMPGEN=$(printf '%q' "$DUMPGEN")"
 msg_info "conf: VALGRIND=$(printf '%q' "$VALGRIND")"
 msg_info "conf: KMEMLEAK=$(printf '%q' "$KMEMLEAK")"
@@ -832,7 +840,12 @@ job_start() {
 	fi
 
 	NFT_TEST_TESTTMPDIR="${JOBS_TEMPDIR["$testfile"]}" \
-	NFT="$NFT" NFT_REAL="$NFT_REAL" DIFF="$DIFF" DUMPGEN="$DUMPGEN" $NFT_TEST_UNSHARE_CMD "$NFT_TEST_BASEDIR/helpers/test-wrapper.sh" "$testfile"
+	NFT="$NFT" \
+	NFT_REAL="$NFT_REAL" \
+	DIFF="$DIFF" \
+	DUMPGEN="$DUMPGEN" \
+	NFT_TEST_VERBOSE_TEST="$NFT_TEST_VERBOSE_TEST" \
+	$NFT_TEST_UNSHARE_CMD "$NFT_TEST_BASEDIR/helpers/test-wrapper.sh" "$testfile"
 	local rc_got=$?
 
 	if [ "$NFT_TEST_JOBS" -le 1 ] ; then

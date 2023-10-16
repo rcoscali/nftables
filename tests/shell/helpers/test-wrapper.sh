@@ -93,7 +93,20 @@ if [ "$rc_test" -eq 0 ] ; then
 fi
 
 if [ "$rc_test" -eq 0 ] ; then
-	"$TEST" &>> "$NFT_TEST_TESTTMPDIR/testout.log" || rc_test=$?
+	CMD=( "$TEST" )
+	if [ "$NFT_TEST_VERBOSE_TEST" = y ] ; then
+		X="$(sed -n '1 s/^#!\(\/bin\/bash\>.*$\)/\1/p' "$TEST" 2>/dev/null)"
+		if [ -n "$X" ] ; then
+			# Note that kernel parses the shebang differently and does not
+			# word splitting for the arguments. We do split the arguments here
+			# which would matter if there are spaces. For our tests, there
+			# are either no arguments or only one argument without space. So
+			# this is good enough.
+			CMD=( $X -x "$TEST" )
+		fi
+	fi
+	printf "Command: $(printf '%q ' "${CMD[@]}")\n" &>> "$NFT_TEST_TESTTMPDIR/testout.log"
+	"${CMD[@]}" &>> "$NFT_TEST_TESTTMPDIR/testout.log" || rc_test=$?
 fi
 
 $NFT list ruleset > "$NFT_TEST_TESTTMPDIR/ruleset-after"
