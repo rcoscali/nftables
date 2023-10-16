@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # table with invalid expression (masquerade called from filter table).
 # nft must return an error.  Also catch nfnetlink retry loops that
