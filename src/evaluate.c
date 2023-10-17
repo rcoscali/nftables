@@ -4175,8 +4175,13 @@ static int stmt_evaluate_log_prefix(struct eval_ctx *ctx, struct stmt *stmt)
 	size_t offset = 0;
 	struct expr *expr;
 
-	if (stmt->log.prefix->etype != EXPR_LIST)
+	if (stmt->log.prefix->etype != EXPR_LIST) {
+		if (stmt->log.prefix &&
+		    div_round_up(stmt->log.prefix->len, BITS_PER_BYTE) >= NF_LOG_PREFIXLEN)
+			return expr_error(ctx->msgs, stmt->log.prefix, "log prefix is too long");
+
 		return 0;
+	}
 
 	prefix[0] = '\0';
 
