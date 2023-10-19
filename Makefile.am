@@ -2,6 +2,8 @@ ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST =
 
+###############################################################################
+
 pkginclude_HEADERS = \
 	include/nftables/libnftables.h \
 	$(NULL)
@@ -72,10 +74,47 @@ noinst_HEADERS = \
 	\
 	$(NULL)
 
+###############################################################################
+
 SUBDIRS =	src	\
-		files	\
 		doc	\
 		examples
+
+###############################################################################
+
+dist_pkgdata_DATA = \
+	files/nftables/all-in-one.nft \
+	files/nftables/arp-filter.nft \
+	files/nftables/bridge-filter.nft \
+	files/nftables/inet-filter.nft \
+	files/nftables/inet-nat.nft \
+	files/nftables/ipv4-filter.nft \
+	files/nftables/ipv4-mangle.nft \
+	files/nftables/ipv4-nat.nft \
+	files/nftables/ipv4-raw.nft \
+	files/nftables/ipv6-filter.nft \
+	files/nftables/ipv6-mangle.nft \
+	files/nftables/ipv6-nat.nft \
+	files/nftables/ipv6-raw.nft \
+	files/nftables/netdev-ingress.nft \
+	$(NULL)
+
+pkgdocdir = ${docdir}/examples
+
+dist_pkgdoc_SCRIPTS = \
+	files/examples/ct_helpers.nft \
+	files/examples/load_balancing.nft \
+	files/examples/secmark.nft \
+	files/examples/sets_and_maps.nft \
+	$(NULL)
+
+pkgsysconfdir = ${sysconfdir}/nftables/osf
+
+dist_pkgsysconf_DATA = \
+	files/osf/pf.os \
+	$(NULL)
+
+###############################################################################
 
 EXTRA_DIST += \
 	py/pyproject.toml \
@@ -85,6 +124,8 @@ EXTRA_DIST += \
 	py/src/nftables.py \
 	py/src/schema.json \
 	$(NULL)
+
+###############################################################################
 
 EXTRA_DIST += \
 	files \

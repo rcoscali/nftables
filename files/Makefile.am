@@ -1,3 +1,0 @@
-SUBDIRS =	nftables \
-		examples \
-		osf

@@ -118,10 +118,6 @@ AC_CONFIG_FILES([					\
 		Makefile				\
 		libnftables.pc				\
 		src/Makefile				\
-		files/Makefile				\
-		files/examples/Makefile			\
-		files/nftables/Makefile			\
-		files/osf/Makefile			\
 		doc/Makefile				\
 		examples/Makefile			\
 		])
