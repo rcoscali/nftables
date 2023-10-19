@@ -1,6 +1,34 @@
+# This is _NOT_ the library release version, it's an API version.
+# Extracted from Chapter 6 "Library interface versions" of the libtool docs.
+#
+# <snippet>
+# Here are a set of rules to help you update your library version information:
+#
+# 1. Start with version information of `0:0:0' for each libtool library.
+# 2. Update the version information only immediately before a public release
+# of your software. More frequent updates are unnecessary, and only guarantee
+# that the current interface number gets larger faster.
+# 3. If the library source code has changed at all since the last update,
+# then increment revision (`c:r:a' becomes `c:r+1:a').
+# 4. If any interfaces have been added, removed, or changed since the last
+# update, increment current, and set revision to 0.
+# 5. If any interfaces have been added since the last public release, then
+# increment age.
+# 6. If any interfaces have been removed since the last public release, then
+# set age to 0.
+# </snippet>
+#
+libnftables_LIBVERSION = 2:0:1
+
+###############################################################################
+
 ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST =
+BUILT_SOURCES =
+lib_LTLIBRARIES =
+noinst_LTLIBRARIES =
+sbin_PROGRAMS =
 
 ###############################################################################
 
@@ -76,7 +104,191 @@ noinst_HEADERS = \
 
 ###############################################################################
 
-SUBDIRS =	src	\
+AM_CPPFLAGS = \
+	"-I$(srcdir)/include" \
+	"-DDEFAULT_INCLUDE_PATH=\"${sysconfdir}\"" \
+	$(LIBMNL_CFLAGS) \
+	$(LIBNFTNL_CFLAGS) \
+	$(NULL)
+
+if BUILD_DEBUG
+AM_CPPFLAGS += -g -DDEBUG
+endif
+if BUILD_XTABLES
+AM_CPPFLAGS += $(XTABLES_CFLAGS)
+endif
+if BUILD_MINIGMP
+AM_CPPFLAGS += -DHAVE_MINIGMP
+endif
+if BUILD_JSON
+AM_CPPFLAGS += -DHAVE_JSON
+endif
+if BUILD_XTABLES
+AM_CPPFLAGS += -DHAVE_XTABLES
+endif
+
+AM_CFLAGS = \
+	-Wall \
+	\
+	-Waggregate-return \
+	-Wbad-function-cast \
+	-Wcast-align \
+	-Wdeclaration-after-statement \
+	-Wformat-nonliteral \
+	-Wformat-security \
+	-Winit-self \
+	-Wmissing-declarations \
+	-Wmissing-format-attribute \
+	-Wmissing-prototypes \
+	-Wsign-compare \
+	-Wstrict-prototypes \
+	-Wundef \
+	-Wunused \
+	-Wwrite-strings \
+	\
+	$(GCC_FVISIBILITY_HIDDEN) \
+	\
+	$(NULL)
+
+AM_YFLAGS = -d -Wno-yacc
+
+###############################################################################
+
+BUILT_SOURCES += src/parser_bison.h
+
+# yacc and lex generate dirty code
+noinst_LTLIBRARIES += src/libparser.la
+
+src_libparser_la_SOURCES = \
+	src/parser_bison.y \
+	src/scanner.l \
+	$(NULL)
+
+src_libparser_la_CFLAGS = \
+	$(AM_CFLAGS) \
+	-Wno-implicit-function-declaration \
+	-Wno-missing-declarations \
+	-Wno-missing-prototypes \
+	-Wno-nested-externs \
+	-Wno-redundant-decls \
+	-Wno-undef \
+	-Wno-unused-but-set-variable \
+	$(NULL)
+
+###############################################################################
+
+if BUILD_MINIGMP
+
+noinst_LTLIBRARIES += src/libminigmp.la
+
+src_libminigmp_la_SOURCES = src/mini-gmp.c
+
+src_libminigmp_la_CFLAGS = \
+	$(AM_CFLAGS) \
+	-Wno-sign-compare \
+	$(NULL)
+
+endif
+
+###############################################################################
+
+lib_LTLIBRARIES += src/libnftables.la
+
+src_libnftables_la_SOURCES = \
+	src/libnftables.map \
+	\
+	src/cache.c \
+	src/cmd.c \
+	src/ct.c \
+	src/datatype.c \
+	src/dccpopt.c \
+	src/erec.c \
+	src/evaluate.c \
+	src/expression.c \
+	src/exthdr.c \
+	src/fib.c \
+	src/gmputil.c \
+	src/hash.c \
+	src/iface.c \
+	src/intervals.c \
+	src/ipopt.c \
+	src/libnftables.c \
+	src/mergesort.c \
+	src/meta.c \
+	src/misspell.c \
+	src/mnl.c \
+	src/monitor.c \
+	src/netlink.c \
+	src/netlink_delinearize.c \
+	src/netlink_linearize.c \
+	src/nfnl_osf.c \
+	src/nftutils.c \
+	src/nftutils.h \
+	src/numgen.c \
+	src/optimize.c \
+	src/osf.c \
+	src/owner.c \
+	src/payload.c \
+	src/print.c \
+	src/proto.c \
+	src/rt.c \
+	src/rule.c \
+	src/sctp_chunk.c \
+	src/segtree.c \
+	src/socket.c \
+	src/statement.c \
+	src/tcpopt.c \
+	src/utils.c \
+	src/xfrm.c \
+	$(NULL)
+
+src_libnftables_la_SOURCES += src/xt.c
+
+if BUILD_JSON
+src_libnftables_la_SOURCES += \
+	src/json.c \
+	src/parser_json.c \
+	$(NULL)
+endif
+
+src_libnftables_la_LDFLAGS = \
+	-version-info "${libnftables_LIBVERSION}" \
+	-Wl,--version-script="$(srcdir)/src//libnftables.map" \
+	$(NULL)
+
+src_libnftables_la_LIBADD = \
+	$(LIBMNL_LIBS) \
+	$(LIBNFTNL_LIBS) \
+	src/libparser.la \
+	$(NULL)
+
+if BUILD_MINIGMP
+src_libnftables_la_LIBADD += src/libminigmp.la
+endif
+
+if BUILD_XTABLES
+src_libnftables_la_LIBADD += $(XTABLES_LIBS)
+endif
+
+if BUILD_JSON
+src_libnftables_la_LIBADD += $(JANSSON_LIBS)
+endif
+
+###############################################################################
+
+sbin_PROGRAMS += src/nft
+
+src_nft_SOURCES = src/main.c
+
+if BUILD_CLI
+src_nft_SOURCES += src/cli.c
+endif
+
+src_nft_LDADD = src/libnftables.la
+
+###############################################################################
+
+SUBDIRS = \
 		doc	\
 		examples
 
