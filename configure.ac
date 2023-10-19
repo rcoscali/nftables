@@ -118,7 +118,6 @@ AC_CONFIG_FILES([					\
 		Makefile				\
 		libnftables.pc				\
 		doc/Makefile				\
-		examples/Makefile			\
 		])
 AC_OUTPUT
 

@@ -26,9 +26,11 @@ ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST =
 BUILT_SOURCES =
+LDADD =
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
 sbin_PROGRAMS =
+check_PROGRAMS =
 
 ###############################################################################
 
@@ -288,9 +290,20 @@ src_nft_LDADD = src/libnftables.la
 
 ###############################################################################
 
-SUBDIRS = \
-		doc	\
-		examples
+SUBDIRS = doc
+
+###############################################################################
+
+
+check_PROGRAMS += examples/nft-buffer
+
+examples_nft_buffer_AM_CPPFLAGS = -I$(srcdir)/include
+examples_nft_buffer_LDADD = src/libnftables.la
+
+check_PROGRAMS += examples/nft-json-file
+
+examples_nft_json_file_AM_CPPFLAGS = -I$(srcdir)/include
+examples_nft_json_file_LDADD = src/libnftables.la
 
 ###############################################################################
 
