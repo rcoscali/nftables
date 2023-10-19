@@ -4523,6 +4523,12 @@ meter_key_expr_alloc	:	concat_expr
 
 set_elem_expr		:	set_elem_expr_alloc
 			|	set_elem_expr_alloc		set_elem_expr_options
+			|	set_elem_expr_alloc		set_elem_expr_options	set_elem_stmt_list
+			{
+				$$ = $1;
+				list_splice_tail($3, &$$->stmt_list);
+				xfree($3);
+			}
 			;
 
 set_elem_key_expr	:	set_lhs_expr		{ $$ = $1; }
