@@ -123,7 +123,6 @@ AC_CONFIG_FILES([					\
 		files/nftables/Makefile			\
 		files/osf/Makefile			\
 		doc/Makefile				\
-		py/Makefile				\
 		examples/Makefile			\
 		])
 AC_OUTPUT

@@ -1,5 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4
 
+EXTRA_DIST =
+
 pkginclude_HEADERS = \
 	include/nftables/libnftables.h \
 	$(NULL)
@@ -73,11 +75,21 @@ noinst_HEADERS = \
 SUBDIRS =	src	\
 		files	\
 		doc	\
-		examples\
-		py
+		examples
 
-EXTRA_DIST =	tests	\
-		files
+EXTRA_DIST += \
+	py/pyproject.toml \
+	py/setup.cfg \
+	py/setup.py \
+	py/src/__init__.py \
+	py/src/nftables.py \
+	py/src/schema.json \
+	$(NULL)
+
+EXTRA_DIST += \
+	files \
+	tests \
+	$(NULL)
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libnftables.pc
