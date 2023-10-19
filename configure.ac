@@ -117,7 +117,6 @@ AC_CHECK_DECLS([getprotobyname_r, getprotobynumber_r, getservbyport_r], [], [], 
 AC_CONFIG_FILES([					\
 		Makefile				\
 		libnftables.pc				\
-		doc/Makefile				\
 		])
 AC_OUTPUT
 

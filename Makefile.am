@@ -31,6 +31,8 @@ lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
 sbin_PROGRAMS =
 check_PROGRAMS =
+dist_man_MANS =
+CLEANFILES =
 
 ###############################################################################
 
@@ -290,11 +292,6 @@ src_nft_LDADD = src/libnftables.la
 
 ###############################################################################
 
-SUBDIRS = doc
-
-###############################################################################
-
-
 check_PROGRAMS += examples/nft-buffer
 
 examples_nft_buffer_AM_CPPFLAGS = -I$(srcdir)/include
@@ -304,6 +301,59 @@ check_PROGRAMS += examples/nft-json-file
 
 examples_nft_json_file_AM_CPPFLAGS = -I$(srcdir)/include
 examples_nft_json_file_LDADD = src/libnftables.la
+
+###############################################################################
+
+if BUILD_MAN
+
+dist_man_MANS += \
+	doc/nft.8 \
+	doc/libnftables-json.5 \
+	doc/libnftables.3 \
+	$(NULL)
+
+A2X_OPTS_MANPAGE = \
+	-L \
+	--doctype manpage \
+	--format manpage \
+	-D "${builddir}/doc" \
+	$(NULL)
+
+ASCIIDOC_MAIN = doc/nft.txt
+
+ASCIIDOC_INCLUDES = \
+	doc/data-types.txt \
+	doc/payload-expression.txt \
+	doc/primary-expression.txt \
+	doc/stateful-objects.txt \
+	doc/statements.txt \
+	$(NULL)
+
+ASCIIDOCS = \
+	$(ASCIIDOC_MAIN) \
+	$(ASCIIDOC_INCLUDES) \
+	$(NULL)
+
+EXTRA_DIST += \
+	$(ASCIIDOCS) \
+	doc/libnftables-json.adoc \
+	doc/libnftables.adoc \
+	$(NULL)
+
+CLEANFILES += doc/*~
+
+doc/nft.8: $(ASCIIDOCS)
+	$(AM_V_GEN)$(A2X) $(A2X_OPTS_MANPAGE) $<
+
+.adoc.3:
+	$(AM_V_GEN)$(A2X) $(A2X_OPTS_MANPAGE) $<
+
+.adoc.5:
+	$(AM_V_GEN)$(A2X) $(A2X_OPTS_MANPAGE) $<
+
+MAINTAINERCLEANFILES = ${dist_man_MANS}
+
+endif
 
 ###############################################################################
 
