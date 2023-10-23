@@ -1,9 +1,23 @@
 #!/bin/bash
 
-EXPECTED='table ip filter {
+set -e
+
+COMMENT128="12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678"
+
+# test for pass with comment that is 128 bytes long.
+rc=0
+$NFT add table ip filter \{ quota foo1 \{ comment "\"${COMMENT128}\"" \}\; \}\; || rc="$?"
+test "$rc" = 0
+
+# test for failure with comment that is 128+1 bytes long.
+rc=0
+$NFT add table ip filter \{ quota foo2 \{ comment "\"${COMMENT128}x\"" \}\; \}\; || rc="$?"
+test "$rc" = 1
+
+RULESET='table ip filter {
 	quota q {
 		over 1200 bytes
-		comment "test1"
+		comment "'"$COMMENT128"'"
 	}
 
 	counter c {
@@ -39,6 +53,4 @@ EXPECTED='table ip filter {
 }
 '
 
-set -e
-
-$NFT -f - <<< "$EXPECTED"
+$NFT -f - <<< "$RULESET"
