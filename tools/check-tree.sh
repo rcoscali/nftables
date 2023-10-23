@@ -2,6 +2,10 @@
 
 # Preform various consistency checks of the source tree.
 
+unset LANGUAGE
+export LANG=C
+export LC_ALL=C
+
 die() {
 	printf '%s\n' "$*"
 	exit 1
@@ -56,7 +60,7 @@ check_shell_dumps() {
 	fi
 }
 
-SHELL_TESTS=( $(find "tests/shell/testcases/" -type f -executable | LANG=C sort) )
+SHELL_TESTS=( $(find "tests/shell/testcases/" -type f -executable | sort) )
 
 if [ "${#SHELL_TESTS[@]}" -eq 0 ] ; then
 	echo "No executable tests under \"tests/shell/testcases/\" found"
@@ -75,8 +79,19 @@ if [ "${SHELL_TESTS[*]}" != "${SHELL_TESTS2[*]}" ] ; then
 fi
 
 ##############################################################################
+#
+F=( $(find tests/shell/testcases/ -type f | grep '^tests/shell/testcases/[^/]\+/dumps/[^/]\+\.\(nft\|nodump\)$' -v | sort) )
+IGNORED_FILES=( tests/shell/testcases/bogons/nft-f/* )
+for f in "${F[@]}" ; do
+	if ! array_contains "$f" "${SHELL_TESTS[@]}" "${IGNORED_FILES[@]}" ; then
+		echo "Unexpected file \"$f\""
+		EXIT_CODE=1
+	fi
+done
 
-FILES=( $(find "tests/shell/testcases/" -type f | sed -n 's#\(tests/shell/testcases\(/.*\)\?/\)dumps/\(.*\)\.\(nft\|nodump\)$#\0#p' | LANG=C sort) )
+##############################################################################
+
+FILES=( $(find "tests/shell/testcases/" -type f | sed -n 's#\(tests/shell/testcases\(/.*\)\?/\)dumps/\(.*\)\.\(nft\|nodump\)$#\0#p' | sort) )
 
 for f in "${FILES[@]}" ; do
 	f2="$(echo "$f" | sed -n 's#\(tests/shell/testcases\(/.*\)\?/\)dumps/\(.*\)\.\(nft\|nodump\)$#\1\3#p')"
