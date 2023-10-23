@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <syslog.h>
+#include <net/if.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <netinet/if_ether.h>
@@ -158,7 +159,7 @@ static struct expr *ifname_expr_alloc(const struct location *location,
 		return NULL;
 	}
 
-	if (length > 16) {
+	if (length >= IFNAMSIZ) {
 		xfree(name);
 		erec_queue(error(location, "interface name too long"), queue);
 		return NULL;
