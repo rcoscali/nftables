@@ -1465,10 +1465,10 @@ const struct datatype policy_type = {
 
 #define SYSFS_CGROUPSV2_PATH	"/sys/fs/cgroup"
 
-static const char *cgroupv2_get_path(const char *path, uint64_t id)
+static char *cgroupv2_get_path(const char *path, uint64_t id)
 {
-	const char *cgroup_path = NULL;
 	char dent_name[PATH_MAX + 1];
+	char *cgroup_path = NULL;
 	struct dirent *dent;
 	struct stat st;
 	DIR *d;
@@ -1506,7 +1506,7 @@ static void cgroupv2_type_print(const struct expr *expr,
 				struct output_ctx *octx)
 {
 	uint64_t id = mpz_get_uint64(expr->value);
-	const char *cgroup_path;
+	char *cgroup_path;
 
 	cgroup_path = cgroupv2_get_path(SYSFS_CGROUPSV2_PATH, id);
 	if (cgroup_path)
