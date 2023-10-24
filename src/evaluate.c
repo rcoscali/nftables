@@ -4027,7 +4027,7 @@ static int stmt_evaluate_chain(struct eval_ctx *ctx, struct stmt *stmt)
 		memset(&h, 0, sizeof(h));
 		handle_merge(&h, &chain->handle);
 		h.family = ctx->rule->handle.family;
-		xfree(h.table.name);
+		free_const(h.table.name);
 		h.table.name = xstrdup(ctx->rule->handle.table.name);
 		h.chain.location = stmt->location;
 		h.chain_id = chain->handle.chain_id;
@@ -4047,9 +4047,9 @@ static int stmt_evaluate_chain(struct eval_ctx *ctx, struct stmt *stmt)
 			struct handle h2 = {};
 
 			handle_merge(&rule->handle, &ctx->rule->handle);
-			xfree(rule->handle.table.name);
+			free_const(rule->handle.table.name);
 			rule->handle.table.name = xstrdup(ctx->rule->handle.table.name);
-			xfree(rule->handle.chain.name);
+			free_const(rule->handle.chain.name);
 			rule->handle.chain.name = NULL;
 			rule->handle.chain_id = chain->handle.chain_id;
 			if (rule_evaluate(&rule_ctx, rule, CMD_INVALID) < 0)
@@ -5152,7 +5152,7 @@ static int ct_timeout_evaluate(struct eval_ctx *ctx, struct obj *obj)
 
 		ct->timeout[ts->timeout_index] = ts->timeout_value;
 		list_del(&ts->head);
-		xfree(ts->timeout_str);
+		free_const(ts->timeout_str);
 		xfree(ts);
 	}
 

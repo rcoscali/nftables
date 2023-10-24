@@ -124,7 +124,7 @@ void xt_stmt_xlate(const struct stmt *stmt, struct output_ctx *octx)
 
 void xt_stmt_destroy(struct stmt *stmt)
 {
-	xfree(stmt->xt.name);
+	free_const(stmt->xt.name);
 	xfree(stmt->xt.info);
 }
 

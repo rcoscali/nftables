@@ -104,11 +104,11 @@ int timeout_str2num(uint16_t l4proto, struct timeout_state *ts)
 
 void handle_free(struct handle *h)
 {
-	xfree(h->table.name);
-	xfree(h->chain.name);
-	xfree(h->set.name);
-	xfree(h->flowtable.name);
-	xfree(h->obj.name);
+	free_const(h->table.name);
+	free_const(h->chain.name);
+	free_const(h->set.name);
+	free_const(h->flowtable.name);
+	free_const(h->obj.name);
 }
 
 void handle_merge(struct handle *dst, const struct handle *src)
@@ -194,7 +194,7 @@ void set_free(struct set *set)
 
 	expr_free(set->init);
 	if (set->comment)
-		xfree(set->comment);
+		free_const(set->comment);
 	handle_free(&set->handle);
 	list_for_each_entry_safe(stmt, next, &set->stmt_list, list)
 		stmt_free(stmt);
@@ -479,7 +479,7 @@ void rule_free(struct rule *rule)
 		return;
 	stmt_list_free(&rule->stmts);
 	handle_free(&rule->handle);
-	xfree(rule->comment);
+	free_const(rule->comment);
 	xfree(rule);
 }
 
@@ -557,7 +557,7 @@ void scope_release(const struct scope *scope)
 	list_for_each_entry_safe(sym, next, &scope->symbols, list) {
 		assert(sym->refcnt == 1);
 		list_del(&sym->list);
-		xfree(sym->identifier);
+		free_const(sym->identifier);
 		expr_free(sym->expr);
 		xfree(sym);
 	}
@@ -597,7 +597,7 @@ struct symbol *symbol_get(const struct scope *scope, const char *identifier)
 static void symbol_put(struct symbol *sym)
 {
 	if (--sym->refcnt == 0) {
-		xfree(sym->identifier);
+		free_const(sym->identifier);
 		expr_free(sym->expr);
 		xfree(sym);
 	}
@@ -730,14 +730,14 @@ void chain_free(struct chain *chain)
 		rule_free(rule);
 	handle_free(&chain->handle);
 	scope_release(&chain->scope);
-	xfree(chain->type.str);
+	free_const(chain->type.str);
 	expr_free(chain->dev_expr);
 	for (i = 0; i < chain->dev_array_len; i++)
-		xfree(chain->dev_array[i]);
+		free_const(chain->dev_array[i]);
 	xfree(chain->dev_array);
 	expr_free(chain->priority.expr);
 	expr_free(chain->policy);
-	xfree(chain->comment);
+	free_const(chain->comment);
 	xfree(chain);
 }
 
@@ -1151,7 +1151,7 @@ void table_free(struct table *table)
 	if (--table->refcnt > 0)
 		return;
 	if (table->comment)
-		xfree(table->comment);
+		free_const(table->comment);
 	list_for_each_entry_safe(chain, next, &table->chains, list)
 		chain_free(chain);
 	list_for_each_entry_safe(chain, next, &table->chain_bindings, cache.list)
@@ -1348,7 +1348,7 @@ struct monitor *monitor_alloc(uint32_t format, uint32_t type, const char *event)
 
 void monitor_free(struct monitor *m)
 {
-	xfree(m->event);
+	free_const(m->event);
 	xfree(m);
 }
 
@@ -1404,7 +1404,7 @@ void cmd_free(struct cmd *cmd)
 		}
 	}
 	xfree(cmd->attr);
-	xfree(cmd->arg);
+	free_const(cmd->arg);
 	xfree(cmd);
 }
 
@@ -1642,14 +1642,14 @@ void obj_free(struct obj *obj)
 {
 	if (--obj->refcnt > 0)
 		return;
-	xfree(obj->comment);
+	free_const(obj->comment);
 	handle_free(&obj->handle);
 	if (obj->type == NFT_OBJECT_CT_TIMEOUT) {
 		struct timeout_state *ts, *next;
 
 		list_for_each_entry_safe(ts, next, &obj->ct_timeout.timeout_list, head) {
 			list_del(&ts->head);
-			xfree(ts->timeout_str);
+			free_const(ts->timeout_str);
 			xfree(ts);
 		}
 	}
@@ -2062,7 +2062,7 @@ void flowtable_free(struct flowtable *flowtable)
 
 	if (flowtable->dev_array != NULL) {
 		for (i = 0; i < flowtable->dev_array_len; i++)
-			xfree(flowtable->dev_array[i]);
+			free_const(flowtable->dev_array[i]);
 		xfree(flowtable->dev_array);
 	}
 	xfree(flowtable);

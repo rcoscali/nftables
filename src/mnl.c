@@ -776,9 +776,9 @@ static void nft_dev_array_free(const struct nft_dev *dev_array)
 	int i = 0;
 
 	while (dev_array[i].ifname != NULL)
-		xfree(dev_array[i++].ifname);
+		free_const(dev_array[i++].ifname);
 
-	xfree(dev_array);
+	free_const(dev_array);
 }
 
 static void mnl_nft_chain_devs_build(struct nlmsghdr *nlh, struct cmd *cmd)
@@ -2175,10 +2175,10 @@ static struct basehook *basehook_alloc(void)
 static void basehook_free(struct basehook *b)
 {
 	list_del(&b->list);
-	xfree(b->module_name);
-	xfree(b->hookfn);
-	xfree(b->chain);
-	xfree(b->table);
+	free_const(b->module_name);
+	free_const(b->hookfn);
+	free_const(b->chain);
+	free_const(b->table);
 	xfree(b);
 }
 

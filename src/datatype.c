@@ -908,8 +908,8 @@ void rt_symbol_table_free(const struct symbol_table *tbl)
 	const struct symbolic_constant *s;
 
 	for (s = tbl->symbols; s->identifier != NULL; s++)
-		xfree(s->identifier);
-	xfree(tbl);
+		free_const(s->identifier);
+	free_const(tbl);
 }
 
 void mark_table_init(struct nft_ctx *ctx)
@@ -1266,8 +1266,8 @@ void datatype_free(const struct datatype *ptr)
 	if (--dtype->refcnt > 0)
 		return;
 
-	xfree(dtype->name);
-	xfree(dtype->desc);
+	free_const(dtype->name);
+	free_const(dtype->desc);
 	xfree(dtype);
 }
 

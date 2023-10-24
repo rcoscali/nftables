@@ -154,8 +154,8 @@ void nft_ctx_clear_vars(struct nft_ctx *ctx)
 	unsigned int i;
 
 	for (i = 0; i < ctx->num_vars; i++) {
-		xfree(ctx->vars[i].key);
-		xfree(ctx->vars[i].value);
+		free_const(ctx->vars[i].key);
+		free_const(ctx->vars[i].value);
 	}
 	ctx->num_vars = 0;
 	xfree(ctx->vars);
@@ -743,12 +743,12 @@ err:
 
 		list_for_each_entry_safe(indesc, next, &nft->vars_ctx.indesc_list, list) {
 			if (indesc->name)
-				xfree(indesc->name);
+				free_const(indesc->name);
 
 			xfree(indesc);
 		}
 	}
-	xfree(nft->vars_ctx.buf);
+	free_const(nft->vars_ctx.buf);
 
 	if (!rc &&
 	    nft_output_json(&nft->output) &&
@@ -799,12 +799,12 @@ int nft_run_cmd_from_filename(struct nft_ctx *nft, const char *filename)
 
 	if (nft->optimize_flags) {
 		ret = nft_run_optimized_file(nft, filename);
-		xfree(nft->stdin_buf);
+		free_const(nft->stdin_buf);
 		return ret;
 	}
 
 	ret = __nft_run_cmd_from_filename(nft, filename);
-	xfree(nft->stdin_buf);
+	free_const(nft->stdin_buf);
 
 	return ret;
 }

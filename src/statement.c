@@ -183,7 +183,7 @@ static void meter_stmt_destroy(struct stmt *stmt)
 	expr_free(stmt->meter.key);
 	expr_free(stmt->meter.set);
 	stmt_free(stmt->meter.stmt);
-	xfree(stmt->meter.name);
+	free_const(stmt->meter.name);
 }
 
 static const struct stmt_ops meter_stmt_ops = {

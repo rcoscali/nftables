@@ -154,13 +154,13 @@ static struct expr *ifname_expr_alloc(const struct location *location,
 	struct expr *expr;
 
 	if (length == 0) {
-		xfree(name);
+		free_const(name);
 		erec_queue(error(location, "empty interface name"), queue);
 		return NULL;
 	}
 
 	if (length >= IFNAMSIZ) {
-		xfree(name);
+		free_const(name);
 		erec_queue(error(location, "interface name too long"), queue);
 		return NULL;
 	}
@@ -168,7 +168,7 @@ static struct expr *ifname_expr_alloc(const struct location *location,
 	expr = constant_expr_alloc(location, &ifname_type, BYTEORDER_HOST_ENDIAN,
 				   length * BITS_PER_BYTE, name);
 
-	xfree(name);
+	free_const(name);
 
 	return expr;
 }
@@ -358,7 +358,7 @@ int nft_lex(void *, void *, void *);
 %token <string> STRING		"string"
 %token <string> QUOTED_STRING	"quoted string"
 %token <string> ASTERISK_STRING	"string with a trailing asterisk"
-%destructor { xfree($$); }	STRING QUOTED_STRING ASTERISK_STRING
+%destructor { free_const($$); }	STRING QUOTED_STRING ASTERISK_STRING
 
 %token LL_HDR			"ll"
 %token NETWORK_HDR		"nh"
@@ -674,7 +674,7 @@ int nft_lex(void *, void *, void *);
 %type <limit_rate>		limit_rate_bytes
 
 %type <string>			identifier type_identifier string comment_spec
-%destructor { xfree($$); }	identifier type_identifier string comment_spec
+%destructor { free_const($$); }	identifier type_identifier string comment_spec
 
 %type <val>			time_spec time_spec_or_num_s quota_used
 
@@ -709,7 +709,7 @@ int nft_lex(void *, void *, void *);
 %type <val32>			int_num	chain_policy
 %type <prio_spec>		extended_prio_spec prio_spec
 %type <string>			extended_prio_name quota_unit	basehook_device_name
-%destructor { xfree($$); }	extended_prio_name quota_unit	basehook_device_name
+%destructor { free_const($$); }	extended_prio_name quota_unit	basehook_device_name
 
 %type <expr>			dev_spec
 %destructor { xfree($$); }	dev_spec
@@ -928,7 +928,7 @@ int nft_lex(void *, void *, void *);
 
 %type <val>			markup_format
 %type <string>			monitor_event
-%destructor { xfree($$); }	monitor_event
+%destructor { free_const($$); }	monitor_event
 %type <val>			monitor_object	monitor_format
 
 %type <val>			synproxy_ts	synproxy_sack
@@ -1053,10 +1053,10 @@ close_scope_xt		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_XT); }
 common_block		:	INCLUDE		QUOTED_STRING	stmt_separator
 			{
 				if (scanner_include_file(nft, scanner, $2, &@$) < 0) {
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
-				xfree($2);
+				free_const($2);
 			}
 			|	DEFINE		identifier	'='	initializer_expr	stmt_separator
 			{
@@ -1066,19 +1066,19 @@ common_block		:	INCLUDE		QUOTED_STRING	stmt_separator
 					erec_queue(error(&@2, "redefinition of symbol '%s'", $2),
 						   state->msgs);
 					expr_free($4);
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
 
 				symbol_bind(scope, $2, $4);
-				xfree($2);
+				free_const($2);
 			}
 			|	REDEFINE	identifier	'='	initializer_expr	stmt_separator
 			{
 				struct scope *scope = current_scope(state);
 
 				symbol_bind(scope, $2, $4);
-				xfree($2);
+				free_const($2);
 			}
 			|	UNDEFINE	identifier	stmt_separator
 			{
@@ -1087,10 +1087,10 @@ common_block		:	INCLUDE		QUOTED_STRING	stmt_separator
 				if (symbol_unbind(scope, $2) < 0) {
 					erec_queue(error(&@2, "undefined symbol '%s'", $2),
 						   state->msgs);
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
-				xfree($2);
+				free_const($2);
 			}
 			|	error		stmt_separator
 			{
@@ -1879,21 +1879,21 @@ table_options		:	FLAGS		STRING
 			{
 				if (strcmp($2, "dormant") == 0) {
 					$<table>0->flags |= TABLE_F_DORMANT;
-					xfree($2);
+					free_const($2);
 				} else if (strcmp($2, "owner") == 0) {
 					$<table>0->flags |= TABLE_F_OWNER;
-					xfree($2);
+					free_const($2);
 				} else {
 					erec_queue(error(&@2, "unknown table option %s", $2),
 						   state->msgs);
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
 			}
 			|	comment_spec
 			{
 				if (already_set($<table>0->comment, &@$, state)) {
-					xfree($1);
+					free_const($1);
 					YYERROR;
 				}
 				$<table>0->comment = $1;
@@ -2064,7 +2064,7 @@ chain_block		:	/* empty */	{ $$ = $<chain>-1; }
 			|	chain_block	comment_spec	stmt_separator
 			{
 				if (already_set($1->comment, &@2, state)) {
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
 				$1->comment = $2;
@@ -2190,7 +2190,7 @@ set_block		:	/* empty */	{ $$ = $<set>-1; }
 			|	set_block	comment_spec	stmt_separator
 			{
 				if (already_set($1->comment, &@2, state)) {
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
 				$1->comment = $2;
@@ -2307,7 +2307,7 @@ map_block		:	/* empty */	{ $$ = $<set>-1; }
 			|	map_block	comment_spec	stmt_separator
 			{
 				if (already_set($1->comment, &@2, state)) {
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
 				$1->comment = $2;
@@ -2346,10 +2346,10 @@ flowtable_block		:	/* empty */	{ $$ = $<flowtable>-1; }
 				if ($$->hook.name == NULL) {
 					erec_queue(error(&@3, "unknown chain hook"),
 						   state->msgs);
-					xfree($3);
+					free_const($3);
 					YYERROR;
 				}
-				xfree($3);
+				free_const($3);
 
 				$$->priority = $4;
 			}
@@ -2423,12 +2423,12 @@ data_type_atom_expr	:	type_identifier
 				if (dtype == NULL) {
 					erec_queue(error(&@1, "unknown datatype %s", $1),
 						   state->msgs);
-					xfree($1);
+					free_const($1);
 					YYERROR;
 				}
 				$$ = constant_expr_alloc(&@1, dtype, dtype->byteorder,
 							 dtype->size, NULL);
-				xfree($1);
+				free_const($1);
 			}
 			|	TIME
 			{
@@ -2465,7 +2465,7 @@ counter_block		:	/* empty */	{ $$ = $<obj>-1; }
 			|	counter_block	  comment_spec
 			{
 				if (already_set($<obj>1->comment, &@2, state)) {
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
 				$<obj>1->comment = $2;
@@ -2482,7 +2482,7 @@ quota_block		:	/* empty */	{ $$ = $<obj>-1; }
 			|	quota_block	comment_spec
 			{
 				if (already_set($<obj>1->comment, &@2, state)) {
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
 				$<obj>1->comment = $2;
@@ -2499,7 +2499,7 @@ ct_helper_block		:	/* empty */	{ $$ = $<obj>-1; }
 			|       ct_helper_block     comment_spec
 			{
 				if (already_set($<obj>1->comment, &@2, state)) {
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
 				$<obj>1->comment = $2;
@@ -2520,7 +2520,7 @@ ct_timeout_block	:	/*empty */
 			|       ct_timeout_block     comment_spec
 			{
 				if (already_set($<obj>1->comment, &@2, state)) {
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
 				$<obj>1->comment = $2;
@@ -2537,7 +2537,7 @@ ct_expect_block		:	/*empty */	{ $$ = $<obj>-1; }
 			|       ct_expect_block     comment_spec
 			{
 				if (already_set($<obj>1->comment, &@2, state)) {
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
 				$<obj>1->comment = $2;
@@ -2554,7 +2554,7 @@ limit_block		:	/* empty */	{ $$ = $<obj>-1; }
 			|       limit_block     comment_spec
 			{
 				if (already_set($<obj>1->comment, &@2, state)) {
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
 				$<obj>1->comment = $2;
@@ -2571,7 +2571,7 @@ secmark_block		:	/* empty */	{ $$ = $<obj>-1; }
 			|       secmark_block     comment_spec
 			{
 				if (already_set($<obj>1->comment, &@2, state)) {
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
 				$<obj>1->comment = $2;
@@ -2588,7 +2588,7 @@ synproxy_block		:	/* empty */	{ $$ = $<obj>-1; }
 			|       synproxy_block     comment_spec
 			{
 				if (already_set($<obj>1->comment, &@2, state)) {
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
 				$<obj>1->comment = $2;
@@ -2609,12 +2609,12 @@ hook_spec		:	TYPE		close_scope_type	STRING		HOOK		STRING		dev_spec	prio_spec
 				if (chain_type == NULL) {
 					erec_queue(error(&@3, "unknown chain type"),
 						   state->msgs);
-					xfree($3);
+					free_const($3);
 					YYERROR;
 				}
 				$<chain>0->type.loc = @3;
 				$<chain>0->type.str = xstrdup(chain_type);
-				xfree($3);
+				free_const($3);
 
 				$<chain>0->loc = @$;
 				$<chain>0->hook.loc = @5;
@@ -2622,10 +2622,10 @@ hook_spec		:	TYPE		close_scope_type	STRING		HOOK		STRING		dev_spec	prio_spec
 				if ($<chain>0->hook.name == NULL) {
 					erec_queue(error(&@5, "unknown chain hook"),
 						   state->msgs);
-					xfree($5);
+					free_const($5);
 					YYERROR;
 				}
-				xfree($5);
+				free_const($5);
 
 				$<chain>0->dev_expr	= $6;
 				$<chain>0->priority	= $7;
@@ -2672,7 +2672,7 @@ extended_prio_spec	:	int_num
 								BYTEORDER_HOST_ENDIAN,
 								strlen($1) * BITS_PER_BYTE,
 								$1);
-				xfree($1);
+				free_const($1);
 				$$ = spec;
 			}
 			|	extended_prio_name PLUS NUM
@@ -2685,7 +2685,7 @@ extended_prio_spec	:	int_num
 								BYTEORDER_HOST_ENDIAN,
 								strlen(str) * BITS_PER_BYTE,
 								str);
-				xfree($1);
+				free_const($1);
 				$$ = spec;
 			}
 			|	extended_prio_name DASH NUM
@@ -2698,7 +2698,7 @@ extended_prio_spec	:	int_num
 								BYTEORDER_HOST_ENDIAN,
 								strlen(str) * BITS_PER_BYTE,
 								str);
-				xfree($1);
+				free_const($1);
 				$$ = spec;
 			}
 			;
@@ -2783,7 +2783,7 @@ time_spec		:	STRING
 				uint64_t res;
 
 				erec = time_parse(&@1, $1, &res);
-				xfree($1);
+				free_const($1);
 				if (erec != NULL) {
 					erec_queue(erec, state->msgs);
 					YYERROR;
@@ -2984,7 +2984,7 @@ comment_spec		:	COMMENT		string
 					erec_queue(error(&@2, "comment too long, %d characters maximum allowed",
 							 NFTNL_UDATA_COMMENT_MAXLEN),
 						   state->msgs);
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
 				$$ = $2;
@@ -3085,8 +3085,8 @@ stmt			:	verdict_stmt
 xt_stmt			:	XT	STRING	string
 			{
 				$$ = NULL;
-				xfree($2);
-				xfree($3);
+				free_const($2);
+				free_const($3);
 				erec_queue(error(&@$, "unsupported xtables compat expression, use iptables-nft with this ruleset"),
 					   state->msgs);
 				YYERROR;
@@ -3244,7 +3244,7 @@ log_arg			:	PREFIX			string
 					expr = constant_expr_alloc(&@$, &string_type,
 								   BYTEORDER_HOST_ENDIAN,
 								   (strlen($2) + 1) * BITS_PER_BYTE, $2);
-					xfree($2);
+					free_const($2);
 					$<stmt>0->log.prefix = expr;
 					$<stmt>0->log.flags |= STMT_LOG_PREFIX;
 					break;
@@ -3318,7 +3318,7 @@ log_arg			:	PREFIX			string
 									   state->msgs);
 							}
 							expr_free(expr);
-							xfree($2);
+							free_const($2);
 							YYERROR;
 						}
 						item = variable_expr_alloc(&@$, scope, sym);
@@ -3348,7 +3348,7 @@ log_arg			:	PREFIX			string
 					}
 				}
 
-				xfree($2);
+				free_const($2);
 				$<stmt>0->log.prefix	 = expr;
 				$<stmt>0->log.flags 	|= STMT_LOG_PREFIX;
 			}
@@ -3401,10 +3401,10 @@ level_type		:	string
 				else {
 					erec_queue(error(&@1, "invalid log level"),
 						   state->msgs);
-					xfree($1);
+					free_const($1);
 					YYERROR;
 				}
-				xfree($1);
+				free_const($1);
 			}
 			;
 
@@ -3494,7 +3494,7 @@ quota_used		:	/* empty */	{ $$ = 0; }
 				uint64_t rate;
 
 				erec = data_unit_parse(&@$, $3, &rate);
-				xfree($3);
+				free_const($3);
 				if (erec != NULL) {
 					erec_queue(erec, state->msgs);
 					YYERROR;
@@ -3509,7 +3509,7 @@ quota_stmt		:	QUOTA	quota_mode NUM quota_unit quota_used	close_scope_quota
 				uint64_t rate;
 
 				erec = data_unit_parse(&@$, $4, &rate);
-				xfree($4);
+				free_const($4);
 				if (erec != NULL) {
 					erec_queue(erec, state->msgs);
 					YYERROR;
@@ -3553,7 +3553,7 @@ limit_rate_bytes	:	NUM     STRING
 				uint64_t rate, unit;
 
 				erec = rate_parse(&@$, $2, &rate, &unit);
-				xfree($2);
+				free_const($2);
 				if (erec != NULL) {
 					erec_queue(erec, state->msgs);
 					YYERROR;
@@ -3575,7 +3575,7 @@ limit_bytes		:	NUM	BYTES		{ $$ = $1; }
 				uint64_t rate;
 
 				erec = data_unit_parse(&@$, $2, &rate);
-				xfree($2);
+				free_const($2);
 				if (erec != NULL) {
 					erec_queue(erec, state->msgs);
 					YYERROR;
@@ -3604,7 +3604,7 @@ reject_with_expr	:	STRING
 			{
 				$$ = symbol_expr_alloc(&@$, SYMBOL_VALUE,
 						       current_scope(state), $1);
-				xfree($1);
+				free_const($1);
 			}
 			|	integer_expr	{ $$ = $1; }
 			;
@@ -4268,12 +4268,12 @@ variable_expr		:	'$'	identifier
 						erec_queue(error(&@2, "unknown identifier '%s'", $2),
 							   state->msgs);
 					}
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
 
 				$$ = variable_expr_alloc(&@$, scope, sym);
-				xfree($2);
+				free_const($2);
 			}
 			;
 
@@ -4283,7 +4283,7 @@ symbol_expr		:	variable_expr
 				$$ = symbol_expr_alloc(&@$, SYMBOL_VALUE,
 						       current_scope(state),
 						       $1);
-				xfree($1);
+				free_const($1);
 			}
 			;
 
@@ -4296,7 +4296,7 @@ set_ref_symbol_expr	:	AT	identifier	close_scope_at
 				$$ = symbol_expr_alloc(&@$, SYMBOL_SET,
 						       current_scope(state),
 						       $2);
-				xfree($2);
+				free_const($2);
 			}
 			;
 
@@ -4393,10 +4393,10 @@ osf_ttl			:	/* empty */
 				else {
 					erec_queue(error(&@2, "invalid ttl option"),
 						   state->msgs);
-					xfree($2);
+					free_const($2);
 					YYERROR;
 				}
-				xfree($2);
+				free_const($2);
 			}
 			;
 
@@ -4566,7 +4566,7 @@ set_elem_option		:	TIMEOUT			time_spec
 			|	comment_spec
 			{
 				if (already_set($<expr>0->comment, &@1, state)) {
-					xfree($1);
+					free_const($1);
 					YYERROR;
 				}
 				$<expr>0->comment = $1;
@@ -4648,7 +4648,7 @@ set_elem_stmt		:	COUNTER	close_scope_counter
 				uint64_t rate;
 
 				erec = data_unit_parse(&@$, $4, &rate);
-				xfree($4);
+				free_const($4);
 				if (erec != NULL) {
 					erec_queue(erec, state->msgs);
 					YYERROR;
@@ -4681,7 +4681,7 @@ set_elem_expr_option	:	TIMEOUT			time_spec
 			|	comment_spec
 			{
 				if (already_set($<expr>0->comment, &@1, state)) {
-					xfree($1);
+					free_const($1);
 					YYERROR;
 				}
 				$<expr>0->comment = $1;
@@ -4733,7 +4733,7 @@ quota_config		:	quota_mode NUM quota_unit quota_used
 				uint64_t rate;
 
 				erec = data_unit_parse(&@$, $3, &rate);
-				xfree($3);
+				free_const($3);
 				if (erec != NULL) {
 					erec_queue(erec, state->msgs);
 					YYERROR;
@@ -4762,10 +4762,10 @@ secmark_config		:	string
 				ret = snprintf(secmark->ctx, sizeof(secmark->ctx), "%s", $1);
 				if (ret <= 0 || ret >= (int)sizeof(secmark->ctx)) {
 					erec_queue(error(&@1, "invalid context '%s', max length is %u\n", $1, (int)sizeof(secmark->ctx)), state->msgs);
-					xfree($1);
+					free_const($1);
 					YYERROR;
 				}
-				xfree($1);
+				free_const($1);
 			}
 			;
 
@@ -4802,7 +4802,7 @@ ct_helper_config		:	TYPE	QUOTED_STRING	PROTOCOL	ct_l4protoname	stmt_separator	cl
 					erec_queue(error(&@2, "invalid name '%s', max length is %u\n", $2, (int)sizeof(ct->name)), state->msgs);
 					YYERROR;
 				}
-				xfree($2);
+				free_const($2);
 
 				ct->l4proto = $4;
 			}
@@ -5197,7 +5197,7 @@ chain_expr		:	variable_expr
 							 BYTEORDER_HOST_ENDIAN,
 							 strlen($1) * BITS_PER_BYTE,
 							 $1);
-				xfree($1);
+				free_const($1);
 			}
 			;
 
@@ -5215,7 +5215,7 @@ meta_expr		:	META	meta_key	close_scope_meta
 				unsigned int key;
 
 				erec = meta_key_parse(&@$, $2, &key);
-				xfree($2);
+				free_const($2);
 				if (erec != NULL) {
 					erec_queue(erec, state->msgs);
 					YYERROR;
@@ -5292,7 +5292,7 @@ meta_stmt		:	META	meta_key	SET	stmt_expr	close_scope_meta
 				unsigned int key;
 
 				erec = meta_key_parse(&@$, $2, &key);
-				xfree($2);
+				free_const($2);
 				if (erec != NULL) {
 					erec_queue(erec, state->msgs);
 					YYERROR;
@@ -5603,10 +5603,10 @@ payload_base_spec	:	LL_HDR		{ $$ = PROTO_BASE_LL_HDR; }
 					$$ = PROTO_BASE_INNER_HDR;
 				} else {
 					erec_queue(error(&@1, "unknown raw payload base"), state->msgs);
-					xfree($1);
+					free_const($1);
 					YYERROR;
 				}
-				xfree($1);
+				free_const($1);
 			}
 			;
 

@@ -570,7 +570,7 @@ static void flow_offload_stmt_print(const struct stmt *stmt,
 
 static void flow_offload_stmt_destroy(struct stmt *stmt)
 {
-	xfree(stmt->flow.table_name);
+	free_const(stmt->flow.table_name);
 }
 
 static const struct stmt_ops flow_offload_stmt_ops = {

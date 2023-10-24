@@ -1194,7 +1194,7 @@ static void merge_rules(const struct optimize_ctx *ctx,
 	}
 
 	if (ctx->rule[from]->comment) {
-		xfree(ctx->rule[from]->comment);
+		free_const(ctx->rule[from]->comment);
 		ctx->rule[from]->comment = NULL;
 	}
 
