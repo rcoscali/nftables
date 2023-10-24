@@ -83,7 +83,7 @@ static json_t *set_dtype_json(const struct expr *key)
 			json_array_append_new(root, jtok);
 		tok = strtok_r(NULL, " .", &tok_safe);
 	}
-	xfree(namedup);
+	free(namedup);
 	return root;
 }
 

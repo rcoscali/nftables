@@ -142,7 +142,6 @@ extern void __memory_allocation_error(const char *filename, uint32_t line) __nor
 #define memory_allocation_error()		\
 	__memory_allocation_error(__FILE__, __LINE__);
 
-extern void xfree(const void *ptr);
 extern void *xmalloc(size_t size);
 extern void *xmalloc_array(size_t nmemb, size_t size);
 extern void *xrealloc(void *ptr, size_t size);

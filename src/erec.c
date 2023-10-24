@@ -43,8 +43,8 @@ void erec_add_location(struct error_record *erec, const struct location *loc)
 
 void erec_destroy(struct error_record *erec)
 {
-	xfree(erec->msg);
-	xfree(erec);
+	free(erec->msg);
+	free(erec);
 }
 
 __attribute__((format(printf, 3, 0)))
@@ -203,7 +203,7 @@ void erec_print(struct output_ctx *octx, const struct error_record *erec,
 		}
 		pbuf[end] = '\0';
 		fprintf(f, "%s", pbuf);
-		xfree(pbuf);
+		free(pbuf);
 	}
 	fprintf(f, "\n");
 }

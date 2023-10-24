@@ -3254,7 +3254,7 @@ static int stmt_reject_gen_dependency(struct eval_ctx *ctx, struct stmt *stmt,
 	 */
 	list_add(&nstmt->list, &ctx->rule->stmts);
 out:
-	xfree(payload);
+	free(payload);
 	return ret;
 }
 
@@ -5153,7 +5153,7 @@ static int ct_timeout_evaluate(struct eval_ctx *ctx, struct obj *obj)
 		ct->timeout[ts->timeout_index] = ts->timeout_value;
 		list_del(&ts->head);
 		free_const(ts->timeout_str);
-		xfree(ts);
+		free(ts);
 	}
 
 	return 0;

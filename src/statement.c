@@ -51,7 +51,7 @@ void stmt_free(struct stmt *stmt)
 		return;
 	if (stmt->ops->destroy)
 		stmt->ops->destroy(stmt);
-	xfree(stmt);
+	free(stmt);
 }
 
 void stmt_list_free(struct list_head *list)

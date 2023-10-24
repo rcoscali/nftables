@@ -712,7 +712,7 @@ int nft_lex(void *, void *, void *);
 %destructor { free_const($$); }	extended_prio_name quota_unit	basehook_device_name
 
 %type <expr>			dev_spec
-%destructor { xfree($$); }	dev_spec
+%destructor { free($$); }	dev_spec
 
 %type <table>			table_block_alloc table_block
 %destructor { close_scope(state); table_free($$); }	table_block_alloc
@@ -739,7 +739,7 @@ int nft_lex(void *, void *, void *);
 %destructor { obj_free($$); }	obj_block_alloc
 
 %type <list>			stmt_list stateful_stmt_list set_elem_stmt_list
-%destructor { stmt_list_free($$); xfree($$); } stmt_list stateful_stmt_list set_elem_stmt_list
+%destructor { stmt_list_free($$); free($$); } stmt_list stateful_stmt_list set_elem_stmt_list
 %type <stmt>			stmt match_stmt verdict_stmt set_elem_stmt
 %destructor { stmt_free($$); }	stmt match_stmt verdict_stmt set_elem_stmt
 %type <stmt>			counter_stmt counter_stmt_alloc stateful_stmt last_stmt
@@ -965,7 +965,7 @@ int nft_lex(void *, void *, void *);
 %type <val>			ct_l4protoname ct_obj_type ct_cmd_type
 
 %type <list>			timeout_states timeout_state
-%destructor { xfree($$); }	timeout_states timeout_state
+%destructor { free($$); }	timeout_states timeout_state
 
 %type <val>			xfrm_state_key	xfrm_state_proto_key xfrm_dir	xfrm_spnum
 %type <expr>			xfrm_expr
@@ -3021,7 +3021,7 @@ rule_alloc		:	stmt_list
 				list_for_each_entry(i, $1, list)
 					$$->num_stmts++;
 				list_splice_tail($1, &$$->stmts);
-				xfree($1);
+				free($1);
 			}
 			;
 
@@ -4528,7 +4528,7 @@ set_elem_expr		:	set_elem_expr_alloc
 			{
 				$$ = $1;
 				list_splice_tail($3, &$$->stmt_list);
-				xfree($3);
+				free($3);
 			}
 			;
 
@@ -4540,7 +4540,7 @@ set_elem_expr_alloc	:	set_elem_key_expr	set_elem_stmt_list
 			{
 				$$ = set_elem_expr_alloc(&@1, $1);
 				list_splice_tail($2, &$$->stmt_list);
-				xfree($2);
+				free($2);
 			}
 			|	set_elem_key_expr
 			{
@@ -4852,7 +4852,7 @@ ct_timeout_config	:	PROTOCOL	ct_l4protoname	stmt_separator
 
 				ct = &$<obj>0->ct_timeout;
 				list_splice_tail($4, &ct->timeout_list);
-				xfree($4);
+				free($4);
 			}
 			|	L3PROTOCOL	family_spec_explicit	stmt_separator
 			{

@@ -72,7 +72,7 @@ static unsigned int string_distance(const char *a, const char *b)
 
 	ret = DISTANCE(len_a, len_b);
 
-	xfree(distance);
+	free(distance);
 
 	return ret;
 }

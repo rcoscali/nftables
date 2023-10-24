@@ -24,11 +24,6 @@ void __noreturn __memory_allocation_error(const char *filename, uint32_t line)
 	exit(NFT_EXIT_NOMEM);
 }
 
-void xfree(const void *ptr)
-{
-	free((void *)ptr);
-}
-
 void *xmalloc(size_t size)
 {
 	void *ptr;

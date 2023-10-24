@@ -99,13 +99,13 @@ static struct error_record *tchandle_type_parse(struct parse_ctx *ctx,
 		handle = strtoull(sym->identifier, NULL, 0);
 	}
 out:
-	xfree(str);
+	free(str);
 	*res = constant_expr_alloc(&sym->location, sym->dtype,
 				   BYTEORDER_HOST_ENDIAN,
 				   sizeof(handle) * BITS_PER_BYTE, &handle);
 	return NULL;
 err:
-	xfree(str);
+	free(str);
 	return error(&sym->location, "Could not parse %s", sym->dtype->desc);
 }
 

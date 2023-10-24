@@ -1284,7 +1284,7 @@ void scanner_destroy(struct nft_ctx *nft)
 	struct parser_state *state = yyget_extra(nft->scanner);
 
 	input_descriptor_list_destroy(state);
-	xfree(state->startcond_active);
+	free(state->startcond_active);
 
 	yylex_destroy(nft->scanner);
 }

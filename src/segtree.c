@@ -632,6 +632,6 @@ out:
 	if (catchall)
 		compound_expr_add(set, catchall);
 
-	xfree(ranges);
-	xfree(elements);
+	free(ranges);
+	free(elements);
 }

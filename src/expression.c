@@ -94,7 +94,7 @@ void expr_free(struct expr *expr)
 	 */
 	if (expr->etype != EXPR_INVALID)
 		expr_destroy(expr);
-	xfree(expr);
+	free(expr);
 }
 
 void expr_print(const struct expr *expr, struct output_ctx *octx)

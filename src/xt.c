@@ -78,7 +78,7 @@ void xt_stmt_xlate(const struct stmt *stmt, struct output_ctx *octx)
 
 			rc = mt->xlate(xl, &params);
 		}
-		xfree(m);
+		free(m);
 		break;
 	case NFT_XT_WATCHER:
 	case NFT_XT_TARGET:
@@ -108,14 +108,14 @@ void xt_stmt_xlate(const struct stmt *stmt, struct output_ctx *octx)
 
 			rc = tg->xlate(xl, &params);
 		}
-		xfree(t);
+		free(t);
 		break;
 	}
 
 	if (rc == 1)
 		nft_print(octx, "%s", xt_xlate_get(xl));
 	xt_xlate_free(xl);
-	xfree(entry);
+	free(entry);
 #endif
 	if (!rc)
 		nft_print(octx, "xt %s \"%s\"",
@@ -125,7 +125,7 @@ void xt_stmt_xlate(const struct stmt *stmt, struct output_ctx *octx)
 void xt_stmt_destroy(struct stmt *stmt)
 {
 	free_const(stmt->xt.name);
-	xfree(stmt->xt.info);
+	free(stmt->xt.info);
 }
 
 #ifdef HAVE_LIBXTABLES

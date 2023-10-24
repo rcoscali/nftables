@@ -1743,9 +1743,9 @@ void netlink_linearize_fini(struct netlink_linearize_ctx *lctx)
 
 	for (i = 0; i < NFT_EXPR_LOC_HSIZE; i++) {
 		list_for_each_entry_safe(eloc, next, &lctx->expr_loc_htable[i], hlist)
-			xfree(eloc);
+			free(eloc);
 	}
-	xfree(lctx->expr_loc_htable);
+	free(lctx->expr_loc_htable);
 }
 
 void netlink_linearize_rule(struct netlink_ctx *ctx,

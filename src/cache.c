@@ -126,9 +126,9 @@ void nft_cache_filter_fini(struct nft_cache_filter *filter)
 		struct nft_filter_obj *obj, *next;
 
 		list_for_each_entry_safe(obj, next, &filter->obj[i].head, list)
-			xfree(obj);
+			free(obj);
 	}
-	xfree(filter);
+	free(filter);
 }
 
 static void cache_filter_add(struct nft_cache_filter *filter,
@@ -1279,7 +1279,7 @@ void cache_init(struct cache *cache)
 
 void cache_free(struct cache *cache)
 {
-	xfree(cache->ht);
+	free(cache->ht);
 }
 
 void cache_add(struct cache_item *item, struct cache *cache, uint32_t hash)

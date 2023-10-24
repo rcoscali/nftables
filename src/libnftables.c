@@ -158,7 +158,7 @@ void nft_ctx_clear_vars(struct nft_ctx *ctx)
 		free_const(ctx->vars[i].value);
 	}
 	ctx->num_vars = 0;
-	xfree(ctx->vars);
+	free(ctx->vars);
 }
 
 EXPORT_SYMBOL(nft_ctx_add_include_path);
@@ -182,9 +182,9 @@ EXPORT_SYMBOL(nft_ctx_clear_include_paths);
 void nft_ctx_clear_include_paths(struct nft_ctx *ctx)
 {
 	while (ctx->num_include_paths)
-		xfree(ctx->include_paths[--ctx->num_include_paths]);
+		free(ctx->include_paths[--ctx->num_include_paths]);
 
-	xfree(ctx->include_paths);
+	free(ctx->include_paths);
 	ctx->include_paths = NULL;
 }
 
@@ -343,9 +343,9 @@ void nft_ctx_free(struct nft_ctx *ctx)
 	nft_ctx_clear_vars(ctx);
 	nft_ctx_clear_include_paths(ctx);
 	scope_free(ctx->top_scope);
-	xfree(ctx->state);
+	free(ctx->state);
 	nft_exit(ctx);
-	xfree(ctx);
+	free(ctx);
 }
 
 EXPORT_SYMBOL(nft_ctx_set_output);
@@ -745,7 +745,7 @@ err:
 			if (indesc->name)
 				free_const(indesc->name);
 
-			xfree(indesc);
+			free(indesc);
 		}
 	}
 	free_const(nft->vars_ctx.buf);

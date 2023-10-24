@@ -1268,7 +1268,7 @@ void datatype_free(const struct datatype *ptr)
 
 	free_const(dtype->name);
 	free_const(dtype->desc);
-	xfree(dtype);
+	free(dtype);
 }
 
 const struct datatype *concat_type_alloc(uint32_t type)
@@ -1515,7 +1515,7 @@ static void cgroupv2_type_print(const struct expr *expr,
 	else
 		nft_print(octx, "%" PRIu64, id);
 
-	xfree(cgroup_path);
+	free(cgroup_path);
 }
 
 static struct error_record *cgroupv2_type_parse(struct parse_ctx *ctx,
