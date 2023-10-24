@@ -77,4 +77,6 @@ extern void __mpz_switch_byteorder(mpz_t rop, unsigned int len);
 	__mpz_switch_byteorder(rop, len);			\
 }
 
+void nft_gmp_free(void *ptr);
+
 #endif /* NFTABLES_GMPUTIL_H */

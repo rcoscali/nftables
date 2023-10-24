@@ -184,7 +184,7 @@ int mpz_vfprintf(FILE *fp, const char *f, va_list args)
 
 			str = mpz_get_str(NULL, base, *value);
 			ok = str && fwrite(str, 1, len, fp) == len;
-			free(str);
+			nft_gmp_free(str);
 
 			if (!ok)
 				return -1;
@@ -196,3 +196,22 @@ int mpz_vfprintf(FILE *fp, const char *f, va_list args)
 	return n;
 }
 #endif
+
+void nft_gmp_free(void *ptr)
+{
+	void (*free_fcn)(void *, size_t);
+
+	/* When we get allocated memory from gmp, it was allocated via the
+	 * allocator() from mp_set_memory_functions(). We should pair the free
+	 * with the corresponding free function, which we get via
+	 * mp_get_memory_functions().
+	 *
+	 * It's not clear what the correct blk_size is. The default allocator
+	 * function of gmp just wraps free() and ignores the extra argument.
+	 * Assume 0 is fine.
+	 */
+
+	mp_get_memory_functions(NULL, NULL, &free_fcn);
+
+	(*free_fcn)(ptr, 0);
+}

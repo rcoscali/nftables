@@ -400,7 +400,7 @@ static int expr_evaluate_integer(struct eval_ctx *ctx, struct expr **exprp)
 		expr_error(ctx->msgs, expr,
 			   "Value %s exceeds valid range 0-%u",
 			   valstr, ctx->ectx.maxval);
-		free(valstr);
+		nft_gmp_free(valstr);
 		return -1;
 	}
 
@@ -416,8 +416,8 @@ static int expr_evaluate_integer(struct eval_ctx *ctx, struct expr **exprp)
 		expr_error(ctx->msgs, expr,
 			   "Value %s exceeds valid range 0-%s",
 			   valstr, rangestr);
-		free(valstr);
-		free(rangestr);
+		nft_gmp_free(valstr);
+		nft_gmp_free(rangestr);
 		mpz_clear(mask);
 		return -1;
 	}
