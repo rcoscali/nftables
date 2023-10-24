@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # ordering of element options and expressions has changed, make sure parser
 # accepts both ways
