@@ -1511,6 +1511,12 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 
 		if (list_member_evaluate(ctx, &i) < 0)
 			return -1;
+
+		if (i->etype == EXPR_SET)
+			return expr_error(ctx->msgs, i,
+					  "cannot use %s in concatenation",
+					  expr_name(i));
+
 		flags &= i->flags;
 
 		if (!key && i->dtype->type == TYPE_INTEGER) {
