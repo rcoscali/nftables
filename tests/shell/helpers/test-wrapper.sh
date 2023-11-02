@@ -48,7 +48,7 @@ if [ "$NFT_TEST_HAS_UNSHARED_MOUNT" = y ] ; then
 	# Note that this also hides everything that might reside in /var/run.
 	# That is desirable, as tests should not depend on content there (or if
 	# they do, we need to explicitly handle it as appropriate).
-	if mount -t tmpfs --make-private "/var/run" ; then
+	if mount -t tmpfs --make-private tmpfs "/var/run" ; then
 		CLEANUP_UMOUNT_VAR_RUN=y
 	fi
 	mkdir -p /var/run/netns
