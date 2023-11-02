@@ -61,3 +61,15 @@ inet x y
   [ immediate reg 1 0x0000d007 ]
   [ tproxy ip port reg 1 ]
 
+# meta l4proto 6 tproxy ip to 127.0.0.1:symhash mod 2 map { 0 : 23, 1 : 42 }
+__map%d x b size 2
+__map%d x 0
+	element 00000000  : 00001700 0 [end]	element 00000001  : 00002a00 0 [end]
+inet x y
+  [ meta load l4proto => reg 1 ]
+  [ cmp eq reg 1 0x00000006 ]
+  [ immediate reg 1 0x0100007f ]
+  [ hash reg 2 = symhash() % mod 2 ]
+  [ lookup reg 2 set __map%d dreg 2 ]
+  [ tproxy ip addr reg 1 port reg 2 ]
+

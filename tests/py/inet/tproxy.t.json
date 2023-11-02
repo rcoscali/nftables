@@ -183,3 +183,38 @@
         }
     }
 ]
+
+# meta l4proto 6 tproxy ip to 127.0.0.1:symhash mod 2 map { 0 : 23, 1 : 42 }
+[
+    {
+        "match": {
+            "left": {
+                "meta": {
+                    "key": "l4proto"
+                }
+            },
+            "op": "==",
+            "right": 6
+        }
+    },
+    {
+        "tproxy": {
+            "addr": "127.0.0.1",
+            "family": "ip",
+            "port": {
+                "map": {
+                    "data": {
+                        "set": [
+                            [ 0, 23 ],
+                            [ 1, 42 ]
+                        ]
+                    },
+                    "key": {
+                        "symhash": { "mod": 2 }
+                    }
+                }
+            }
+        }
+    }
+]
+

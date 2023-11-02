@@ -989,7 +989,7 @@ static void tproxy_stmt_print(const struct stmt *stmt, struct output_ctx *octx)
 			expr_print(stmt->tproxy.addr, octx);
 		}
 	}
-	if (stmt->tproxy.port && stmt->tproxy.port->etype == EXPR_VALUE) {
+	if (stmt->tproxy.port) {
 		if (!stmt->tproxy.addr)
 			nft_print(octx, " ");
 		nft_print(octx, ":");
