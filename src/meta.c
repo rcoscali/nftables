@@ -495,9 +495,16 @@ static void hour_type_print(const struct expr *expr, struct output_ctx *octx)
 
 	/* Obtain current tm, so that we can add tm_gmtoff */
 	ts = time(NULL);
-	if (ts != ((time_t) -1) && localtime_r(&ts, &cur_tm))
-		seconds = (seconds + cur_tm.tm_gmtoff) % SECONDS_PER_DAY;
+	if (ts != ((time_t) -1) && localtime_r(&ts, &cur_tm)) {
+		int32_t adj = seconds + cur_tm.tm_gmtoff;
 
+		if (adj < 0)
+			adj += SECONDS_PER_DAY;
+		else if (adj >= SECONDS_PER_DAY)
+			adj -= SECONDS_PER_DAY;
+
+		seconds = adj;
+	}
 	minutes = seconds / 60;
 	seconds %= 60;
 	hours = minutes / 60;
