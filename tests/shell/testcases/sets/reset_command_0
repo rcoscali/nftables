@@ -44,10 +44,10 @@ elem='element t s { 1.0.0.1 . udp . 53 }'
 	grep 'elements = ' | drop_seconds | uniq | wc -l) == 1 ]]
 echo OK
 
-echo -n "counters and expiry are reset: "
+echo -n "counters are reset, expiry left alone: "
 NEW=$($NFT "get $elem")
 grep -q 'counter packets 0 bytes 0' <<< "$NEW"
-[[ $(expires_minutes <<< "$NEW") -gt 20 ]]
+[[ $(expires_minutes <<< "$NEW") -lt 20 ]]
 echo OK
 
 echo -n "get map elem matches reset map elem: "
@@ -78,12 +78,6 @@ echo -n "list map matches reset map: "
 EXP=$($NFT list map t m)
 OUT=$($NFT reset map t m)
 $DIFF -u <(echo "$EXP") <(echo "$OUT")
-echo OK
-
-echo -n "reset command respects per-element timeout: "
-VAL=$($NFT get element t s '{ 2.0.0.2 . tcp . 22 }' | expires_minutes)
-[[ $VAL -lt 15 ]]	# custom timeout applies
-[[ $VAL -gt 10 ]]	# expires was reset
 echo OK
 
 echo -n "remaining elements are reset: "
