@@ -545,7 +545,8 @@ static void expr_evaluate_bits(struct eval_ctx *ctx, struct expr **exprp)
 	and->len	= masklen;
 
 	if (shift) {
-		if (ctx->stmt_len > 0 && div_round_up(masklen, BITS_PER_BYTE) > 1) {
+		if ((ctx->ectx.key || ctx->stmt_len > 0) &&
+		    div_round_up(masklen, BITS_PER_BYTE) > 1) {
 			int op = byteorder_conversion_op(expr, BYTEORDER_HOST_ENDIAN);
 			and = unary_expr_alloc(&expr->location, op, and);
 			and->len = masklen;
@@ -574,6 +575,7 @@ static void expr_evaluate_bits(struct eval_ctx *ctx, struct expr **exprp)
 
 static int __expr_evaluate_exthdr(struct eval_ctx *ctx, struct expr **exprp)
 {
+	const struct expr *key = ctx->ectx.key;
 	struct expr *expr = *exprp;
 
 	if (expr->exthdr.flags & NFT_EXTHDR_F_PRESENT)
@@ -581,6 +583,8 @@ static int __expr_evaluate_exthdr(struct eval_ctx *ctx, struct expr **exprp)
 
 	if (expr_evaluate_primary(ctx, exprp) < 0)
 		return -1;
+
+	ctx->ectx.key = key;
 
 	if (expr->exthdr.offset % BITS_PER_BYTE != 0 ||
 	    expr->len % BITS_PER_BYTE != 0)
@@ -878,6 +882,7 @@ static bool payload_needs_adjustment(const struct expr *expr)
 
 static int expr_evaluate_payload(struct eval_ctx *ctx, struct expr **exprp)
 {
+	const struct expr *key = ctx->ectx.key;
 	struct expr *expr = *exprp;
 
 	if (expr->payload.evaluated)
@@ -888,6 +893,8 @@ static int expr_evaluate_payload(struct eval_ctx *ctx, struct expr **exprp)
 
 	if (expr_evaluate_primary(ctx, exprp) < 0)
 		return -1;
+
+	ctx->ectx.key = key;
 
 	if (payload_needs_adjustment(expr))
 		expr_evaluate_bits(ctx, exprp);
@@ -1508,6 +1515,7 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 		}
 
 		__expr_set_context(&ctx->ectx, tmp, bo, dsize, 0);
+		ctx->ectx.key = i;
 
 		if (list_member_evaluate(ctx, &i) < 0)
 			return -1;

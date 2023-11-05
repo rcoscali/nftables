@@ -193,6 +193,48 @@
     }
 ]
 
+# ip6 dscp @map3
+[
+    {
+        "match": {
+            "left": {
+                "payload": {
+                    "field": "dscp",
+                    "protocol": "ip6"
+                }
+            },
+            "op": "==",
+            "right": "@map3"
+        }
+    }
+]
+
+# ip6 dscp . ip6 daddr @map4
+[
+    {
+        "match": {
+            "left": {
+                "concat": [
+                    {
+                        "payload": {
+                            "field": "dscp",
+                            "protocol": "ip6"
+                        }
+                    },
+                    {
+                        "payload": {
+                            "field": "daddr",
+                            "protocol": "ip6"
+                        }
+                    }
+                ]
+            },
+            "op": "==",
+            "right": "@map4"
+        }
+    }
+]
+
 # ip6 flowlabel 22
 [
     {
