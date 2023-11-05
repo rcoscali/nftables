@@ -135,6 +135,64 @@
     }
 ]
 
+# meta mark set ip6 dscp map @map1
+[
+    {
+        "mangle": {
+            "key": {
+                "meta": {
+                    "key": "mark"
+                }
+            },
+            "value": {
+                "map": {
+                    "data": "@map1",
+                    "key": {
+                        "payload": {
+                            "field": "dscp",
+                            "protocol": "ip6"
+                        }
+                    }
+                }
+            }
+        }
+    }
+]
+
+# meta mark set ip6 dscp . ip6 daddr map @map2
+[
+    {
+        "mangle": {
+            "key": {
+                "meta": {
+                    "key": "mark"
+                }
+            },
+            "value": {
+                "map": {
+                    "data": "@map2",
+                    "key": {
+                        "concat": [
+                            {
+                                "payload": {
+                                    "field": "dscp",
+                                    "protocol": "ip6"
+                                }
+                            },
+                            {
+                                "payload": {
+                                    "field": "daddr",
+                                    "protocol": "ip6"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+]
+
 # ip6 flowlabel 22
 [
     {

@@ -17,6 +17,11 @@ ip6 dscp != 0x20;ok;ip6 dscp != cs4
 ip6 dscp {cs0, cs1, cs2, cs3, cs4, cs5, cs6, cs7, af11, af12, af13, af21, af22, af23, af31, af32, af33, af41, af42, af43, ef};ok
 ip6 dscp vmap { 0x04 : accept, 0x3f : continue } counter;ok
 
+!map1 type dscp : mark;ok
+meta mark set ip6 dscp map @map1;ok
+!map2 type dscp . ipv6_addr : mark;ok
+meta mark set ip6 dscp . ip6 daddr map @map2;ok
+
 ip6 flowlabel 22;ok
 ip6 flowlabel != 233;ok
 - ip6 flowlabel 33-45;ok
