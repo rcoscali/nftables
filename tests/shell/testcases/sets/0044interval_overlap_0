@@ -117,7 +117,11 @@ add_elements() {
 	IFS='	
 '
 	for t in ${intervals_simple} switch ${intervals_concat}; do
+if [ "$NFT_TEST_HAVE_pipapo" = y ] ; then
 		[ "${t}" = "switch" ] && set="c"         && continue
+else
+		break
+fi
 		[ -z "${pass}" ]      && pass="${t}"     && continue
 		[ -z "${interval}" ]  && interval="${t}" && continue
 		unset IFS
@@ -148,7 +152,9 @@ add_elements() {
 
 $NFT add table t
 $NFT add set t s '{ type inet_service ; flags interval ; }'
-$NFT add set t c '{ type inet_service . inet_service ; flags interval ; }'
+if [ "$NFT_TEST_HAVE_pipapo" = y ] ; then
+	$NFT add set t c '{ type inet_service . inet_service ; flags interval ; }'
+fi
 add_elements
 
 $NFT flush ruleset
@@ -157,7 +163,9 @@ estimate_timeout
 $NFT flush ruleset
 $NFT add table t
 $NFT add set t s "{ type inet_service ; flags interval,timeout; timeout ${timeout}s; gc-interval ${timeout}s; }"
-$NFT add set t c "{ type inet_service . inet_service ; flags interval,timeout ; timeout ${timeout}s; gc-interval ${timeout}s; }"
+if [ "$NFT_TEST_HAVE_pipapo" = y ] ; then
+	$NFT add set t c "{ type inet_service . inet_service ; flags interval,timeout ; timeout ${timeout}s; gc-interval ${timeout}s; }"
+fi
 add_elements
 
 sleep $((timeout * 3 / 2))

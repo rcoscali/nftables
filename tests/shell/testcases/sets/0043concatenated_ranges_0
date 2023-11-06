@@ -1,5 +1,6 @@
 #!/bin/bash -e
 #
+# NFT_TEST_REQUIRES(NFT_TEST_HAVE_pipapo)
 # NFT_TEST_SKIP(NFT_TEST_SKIP_slow)
 #
 # 0043concatenated_ranges_0 - Add, get, list, timeout for concatenated ranges

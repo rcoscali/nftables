@@ -2,6 +2,8 @@
 #
 # 0043concatenated_ranges_1 - Insert and list subnets of different sizes
 
+# NFT_TEST_REQUIRES(NFT_TEST_HAVE_pipapo)
+
 check() {
 	$NFT add element "${1}" t s "{ ${2} . ${3} }"
 	[ "$( $NFT list set "${1}" t s | grep -c "${2} . ${3}" )" = 1 ]
