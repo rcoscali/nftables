@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# NFT_TEST_REQUIRES(NFT_TEST_HAVE_comment)
+
 # Test that comments are added to set elements in standard sets.
 # Explicitly test bitmap backend set implementation.
 
