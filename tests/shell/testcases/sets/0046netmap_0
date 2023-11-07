@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# NFT_TEST_REQUIRES(NFT_TEST_HAVE_netmap)
+
 EXPECTED="table ip x {
             chain y {
                     type nat hook postrouting priority srcnat; policy accept;
