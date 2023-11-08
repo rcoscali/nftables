@@ -617,7 +617,7 @@ static int qsort_device_cmp(const void *a, const void *b)
 struct chain *netlink_delinearize_chain(struct netlink_ctx *ctx,
 					const struct nftnl_chain *nlc)
 {
-	const struct nftnl_udata *ud[NFTNL_UDATA_OBJ_MAX + 1] = {};
+	const struct nftnl_udata *ud[NFTNL_UDATA_CHAIN_MAX + 1] = {};
 	int priority, policy, len = 0, i;
 	const char * const *dev_array;
 	struct chain *chain;
