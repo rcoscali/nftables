@@ -150,7 +150,7 @@ static struct expr *ifname_expr_alloc(const struct location *location,
 				      struct list_head *queue,
 				      const char *name)
 {
-	unsigned int length = strlen(name);
+	size_t length = strlen(name);
 	struct expr *expr;
 
 	if (length == 0) {

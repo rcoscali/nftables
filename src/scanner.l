@@ -1117,7 +1117,7 @@ static int include_glob(struct nft_ctx *nft, void *scanner, const char *pattern,
 	ret = glob(pattern, flags, NULL, &glob_data);
 	if (ret == 0) {
 		char *path;
-		int len;
+		size_t len;
 
 		/* reverse alphabetical order due to stack */
 		for (i = glob_data.gl_pathc; i > 0; i--) {
