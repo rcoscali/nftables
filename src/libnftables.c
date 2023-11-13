@@ -532,7 +532,8 @@ static int nft_evaluate(struct nft_ctx *nft, struct list_head *msgs,
 		collapsed = true;
 
 	list_for_each_entry(cmd, cmds, list) {
-		if (cmd->op != CMD_ADD)
+		if (cmd->op != CMD_ADD &&
+		    cmd->op != CMD_CREATE)
 			continue;
 
 		nft_cmd_expand(cmd);
