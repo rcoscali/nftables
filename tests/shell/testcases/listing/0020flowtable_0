@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# NFT_TEST_REQUIRES(NFT_TEST_HAVE_flowtable_no_devices)
+
 # list only the flowtable asked for with table
 
 set -e
