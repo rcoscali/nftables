@@ -38,6 +38,10 @@ if [ -z "${NFT_TEST_HAVE_chain_binding+x}" ] ; then
 	fi
 fi
 
+if [ "$NFT_TEST_HAVE_pipapo" != y ] ;then
+	echo "Skipping pipapo set backend, kernel does not support it"
+fi
+
 testns=testns-$(mktemp -u "XXXXXXXX")
 tmp=""
 
@@ -264,6 +268,19 @@ randdelns()
 	done
 }
 
+available_flags()
+{
+	local -n available_flags=$1
+	selected_key=$2
+	if [ "$selected_key" == "single" ] ;then
+		available_flags+=("interval")
+	elif [ "$selected_key" == "concat" ] ;then
+		if [ "$NFT_TEST_HAVE_pipapo" = y ] ;then
+			available_flags+=("interval")
+		fi
+	fi
+}
+
 random_element_string=""
 
 # create a random element.  Could cause any of the following:
@@ -295,7 +312,10 @@ random_elem()
 
 			fr=$((RANDOM%2))
 			f=0
-			for flags in "" "interval" ; do
+
+			FLAGS=("")
+			available_flags FLAGS $key
+			for flags in ${FLAGS[@]} ; do
 				cnt=$((cnt+1))
 				if [ $f -ne fkr ] ;then
 					f=$((f+1))
@@ -504,8 +524,10 @@ for table in $tables; do
 	# bitmap 2byte
 	echo "insert rule inet $table $chain tcp dport != { 22, 23, 80 } goto defaultchain" >> "$tmp"
 	echo "insert rule inet $table $chain tcp dport { 1-1024, 8000-8080 } jump defaultchain comment rbtree" >> "$tmp"
-	# pipapo (concat + set), with goto anonymous chain.
-	gen_anon_chain_jump "$table $chain ip saddr . tcp dport { 1.2.3.4 . 1-1024, 1.2.3.6 - 1.2.3.10 . 8000-8080, 1.2.3.4 . 8080, 1.2.3.6 - 1.2.3.10 . 22 }" >> "$tmp"
+	if [ "$NFT_TEST_HAVE_pipapo" = y ] ;then
+		# pipapo (concat + set), with goto anonymous chain.
+		gen_anon_chain_jump "$table $chain ip saddr . tcp dport { 1.2.3.4 . 1-1024, 1.2.3.6 - 1.2.3.10 . 8000-8080, 1.2.3.4 . 8080, 1.2.3.6 - 1.2.3.10 . 22 }" >> "$tmp"
+	fi
 
 	# add a few anonymous sets. rhashtable is convered by named sets below.
 	c=$((RANDOM%$count))
@@ -518,8 +540,10 @@ for table in $tables; do
 	# bitmap 2byte
 	echo "insert rule inet $table $chain tcp dport != { 22, 23, 80 } goto defaultchain" >> "$tmp"
 	echo "insert rule inet $table $chain tcp dport { 1-1024, 8000-8080 } jump defaultchain comment rbtree" >> "$tmp"
-	# pipapo (concat + set), with goto anonymous chain.
-	gen_anon_chain_jump "$table $chain ip saddr . tcp dport { 1.2.3.4 . 1-1024, 1.2.3.6 - 1.2.3.10 . 8000-8080, 1.2.3.4 . 8080, 1.2.3.6 - 1.2.3.10 . 22 }" >> "$tmp"
+	if [ "$NFT_TEST_HAVE_pipapo" = y ] ;then
+		# pipapo (concat + set), with goto anonymous chain.
+		gen_anon_chain_jump "$table $chain ip saddr . tcp dport { 1.2.3.4 . 1-1024, 1.2.3.6 - 1.2.3.10 . 8000-8080, 1.2.3.4 . 8080, 1.2.3.6 - 1.2.3.10 . 22 }" >> "$tmp"
+	fi
 
 	# add constant/immutable sets
 	size=$((RANDOM%5120000))
@@ -533,12 +557,21 @@ for table in $tables; do
 
 	# add named sets with various combinations (plain value, range, concatenated values, concatenated ranges, with timeouts, with data ...)
 	for key in "ip saddr" "ip saddr . tcp dport"; do
-		for flags in "" "flags interval;" ; do
+		FLAGS=("")
+		if [ "$key" == "ip saddr" ] ;then
+			FLAGS+=("flags interval;")
+		elif [ "$key" == "ip saddr . tcp dport" ] ;then
+			if [ "$NFT_TEST_HAVE_pipapo" = y ] ;then
+				FLAGS+=("flags interval;")
+			fi
+		fi
+		for ((i = 0; i < ${#FLAGS[@]}; i++)) ; do
 			timeout=$((RANDOM%10))
 			timeout=$((timeout+1))
 			timeout="timeout ${timeout}s"
 
 			cnt=$((cnt+1))
+			flags=${FLAGS[$i]}
 			echo "add set inet $table set_${cnt}  { typeof ${key} ; ${flags} }" >> "$tmp"
 			echo "add set inet $table sett${cnt} { typeof ${key} ; $timeout; ${flags} }" >> "$tmp"
 			echo "add map inet $table dmap_${cnt} { typeof ${key} : meta mark ; ${flags} }" >> "$tmp"
@@ -550,7 +583,11 @@ for table in $tables; do
 
 	cnt=0
 	for key in "single" "concat"; do
-		for flags in "" "interval" ; do
+		FLAGS=("")
+		available_flags FLAGS $key
+
+		for ((i = 0; i < ${#FLAGS[@]}; i++)) ; do
+			flags=${FLAGS[$i]}
 			want="${key}${flags}"
 			cnt=$((cnt+1))
 			maxip=$((RANDOM%256))
