@@ -184,9 +184,10 @@ usage() {
 	echo " VERBOSE=*|y   : Enable verbose output."
 	echo " NFT_TEST_VERBOSE_TEST=*|y: if true, enable verbose output for tests. For bash scripts, this means"
 	echo "                 to pass \"-x\" to the interpreter."
-	echo " DUMPGEN=*|y   : Regenerate dump files. Dump files are only recreated if the"
-	echo "                 test completes successfully and the \"dumps\" directory for the"
-	echo "                 test exits."
+	echo " DUMPGEN=*|y|all : Regenerate dump files \".{nft,json-nft,nodump}\". \"DUMPGEN=y\" only regenerates existing"
+	echo "                 files, unless the test has no files (then all three files are generated, and you need to"
+	echo "                 choose which to keep). With \"DUMPGEN=all\" all 3 files are regenerated, regardless"
+	echo "                 whether they already exist."
 	echo " VALGRIND=*|y  : Run \$NFT in valgrind."
 	echo " KMEMLEAK=*|y  : Check for kernel memleaks."
 	echo " NFT_TEST_HAS_REALROOT=*|y : To indicate whether the test has real root permissions."
@@ -279,7 +280,9 @@ _NFT_TEST_JOBS_DEFAULT="$(( _NFT_TEST_JOBS_DEFAULT + (_NFT_TEST_JOBS_DEFAULT + 1
 
 VERBOSE="$(bool_y "$VERBOSE")"
 NFT_TEST_VERBOSE_TEST="$(bool_y "$NFT_TEST_VERBOSE_TEST")"
-DUMPGEN="$(bool_y "$DUMPGEN")"
+if [ "$DUMPGEN" != "all" ] ; then
+	DUMPGEN="$(bool_y "$DUMPGEN")"
+fi
 VALGRIND="$(bool_y "$VALGRIND")"
 KMEMLEAK="$(bool_y "$KMEMLEAK")"
 NFT_TEST_KEEP_LOGS="$(bool_y "$NFT_TEST_KEEP_LOGS")"
