@@ -6,6 +6,15 @@ runtime=30
 
 # allow stand-alone execution as well, e.g. '$0 3600'
 if [ x"$1" != "x" ] ;then
+	if [ -z "${NFT_TEST_HAVE_chain_binding+x}" ]; then
+		NFT_TEST_HAVE_chain_binding=y
+	fi
+	if [ -z "${NFT_TEST_HAVE_pipapo+x}" ]; then
+		NFT_TEST_HAVE_pipapo=y
+	fi
+	echo "running standalone with:"
+	echo "NFT_TEST_HAVE_chain_binding="$NFT_TEST_HAVE_chain_binding
+	echo "NFT_TEST_HAVE_pipapo="$NFT_TEST_HAVE_pipapo
 	if [ $1 -ge 0 ]; then
 		runtime="$1"
 	else
