@@ -72,8 +72,13 @@ if [ "${#SHELL_TESTS[@]}" -eq 0 ] ; then
 fi
 for t in "${SHELL_TESTS[@]}" ; do
 	check_shell_dumps "$t"
-	if head -n 1 "$t" |grep -q  '^#!/bin/sh' ; then
-		msg_err "$t uses #!/bin/sh instead of /bin/bash"
+	if ! ( head -n 1 "$t" | grep -q '^#!/bin/bash\( -e\)\?$' ) ; then
+		# Currently all tests only use bash as shebang. That also
+		# works with `./tests/shell/run-tests.sh -x`.
+		#
+		# We could allow other shebangs, but for now there is no need.
+		# Unless you have a good reason, create a bash script.
+		msg_err "$t should use either \"#!/bin/bash\" or \"#!/bin/bash -e\" as shebang"
 	fi
 done
 
