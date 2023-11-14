@@ -25,6 +25,15 @@ cd "$(dirname "$0")/.."
 
 EXIT_CODE=0
 
+msg_err() {
+	printf "ERR:  %s\n" "$*"
+	EXIT_CODE=1
+}
+
+msg_warn() {
+	printf "WARN: %s\n" "$*"
+}
+
 ##############################################################################
 
 check_shell_dumps() {
@@ -37,8 +46,7 @@ check_shell_dumps() {
 	local nodump_name
 
 	if [ ! -d "$dir/dumps/" ] ; then
-		echo "\"$TEST\" has no \"$dir/dumps/\" directory"
-		EXIT_CODE=1
+		msg_err "\"$TEST\" has no \"$dir/dumps/\" directory"
 		return 0
 	fi
 
@@ -49,34 +57,31 @@ check_shell_dumps() {
 	[ -f "$nodump_name" ] && has_nodump=1
 
 	if [ "$has_nft" != 1 -a "$has_nodump" != 1 ] ; then
-		echo "\"$TEST\" has no \"$dir/dumps/$base.{nft,nodump}\" file"
-		EXIT_CODE=1
+		msg_err "\"$TEST\" has no \"$dir/dumps/$base.{nft,nodump}\" file"
 	elif [ "$has_nft" == 1 -a "$has_nodump" == 1 ] ; then
-		echo "\"$TEST\" has both \"$dir/dumps/$base.{nft,nodump}\" files"
-		EXIT_CODE=1
+		msg_err "\"$TEST\" has both \"$dir/dumps/$base.{nft,nodump}\" files"
 	elif [ "$has_nodump" == 1 -a -s "$nodump_name" ] ; then
-		echo "\"$TEST\" has a non-empty \"$dir/dumps/$base.nodump\" file"
-		EXIT_CODE=1
+		msg_err "\"$TEST\" has a non-empty \"$dir/dumps/$base.nodump\" file"
 	fi
 }
 
 SHELL_TESTS=( $(find "tests/shell/testcases/" -type f -executable | sort) )
 
 if [ "${#SHELL_TESTS[@]}" -eq 0 ] ; then
-	echo "No executable tests under \"tests/shell/testcases/\" found"
-	EXIT_CODE=1
+	msg_err "No executable tests under \"tests/shell/testcases/\" found"
 fi
 for t in "${SHELL_TESTS[@]}" ; do
 	check_shell_dumps "$t"
-	head -n 1 "$t" |grep -q  '^#!/bin/sh' && echo "$t uses sh instead of bash" && EXIT_CODE=1
+	if head -n 1 "$t" |grep -q  '^#!/bin/sh' ; then
+		msg_err "$t uses #!/bin/sh instead of /bin/bash"
+	fi
 done
 
 ##############################################################################
 
 SHELL_TESTS2=( $(./tests/shell/run-tests.sh --list-tests) )
 if [ "${SHELL_TESTS[*]}" != "${SHELL_TESTS2[*]}" ] ; then
-	echo "\`./tests/shell/run-tests.sh --list-tests\` does not list the expected tests"
-	EXIT_CODE=1
+	msg_err "\`./tests/shell/run-tests.sh --list-tests\` does not list the expected tests"
 fi
 
 ##############################################################################
@@ -85,8 +90,7 @@ F=( $(find tests/shell/testcases/ -type f | grep '^tests/shell/testcases/[^/]\+/
 IGNORED_FILES=( tests/shell/testcases/bogons/nft-f/* )
 for f in "${F[@]}" ; do
 	if ! array_contains "$f" "${SHELL_TESTS[@]}" "${IGNORED_FILES[@]}" ; then
-		echo "Unexpected file \"$f\""
-		EXIT_CODE=1
+		msg_err "Unexpected file \"$f\""
 	fi
 done
 
@@ -97,8 +101,7 @@ FILES=( $(find "tests/shell/testcases/" -type f | sed -n 's#\(tests/shell/testca
 for f in "${FILES[@]}" ; do
 	f2="$(echo "$f" | sed -n 's#\(tests/shell/testcases\(/.*\)\?/\)dumps/\(.*\)\.\(nft\|nodump\)$#\1\3#p')"
 	if ! array_contains "$f2" "${SHELL_TESTS[@]}" ; then
-		echo "\"$f\" has no test \"$f2\""
-		EXIT_CODE=1
+		msg_err "\"$f\" has no test \"$f2\""
 	fi
 done
 
