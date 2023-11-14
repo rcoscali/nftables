@@ -496,7 +496,7 @@ static json_t *table_flags_json(const struct table *table)
 		json_decref(root);
 		return NULL;
 	case 1:
-		json_unpack(root, "[o]", &tmp);
+		json_unpack(root, "[O]", &tmp);
 		json_decref(root);
 		root = tmp;
 		break;
