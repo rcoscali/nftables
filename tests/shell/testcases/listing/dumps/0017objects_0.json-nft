@@ -1,0 +1,1 @@
+{"nftables": [{"metainfo": {"version": "VERSION", "release_name": "RELEASE_NAME", "json_schema_version": 1}}, {"table": {"family": "inet", "name": "filter", "handle": 1}}, {"map": {"family": "inet", "name": "countermap", "table": "filter", "type": "ipv4_addr", "handle": 1, "map": "counter"}}]}

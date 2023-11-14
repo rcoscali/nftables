@@ -1,0 +1,1 @@
+{"nftables": [{"metainfo": {"version": "VERSION", "release_name": "RELEASE_NAME", "json_schema_version": 1}}, {"table": {"family": "inet", "name": "t", "handle": 1}}, {"set": {"family": "inet", "name": "s", "table": "t", "type": "ipv6_addr", "handle": 1, "elem": [{"elem": {"val": "::1", "comment": "test"}}]}}]}
