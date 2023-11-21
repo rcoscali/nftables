@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# NFT_TEST_REQUIRES(NFT_TEST_HAVE_synproxy)
+
 # * creating valid named objects
 # * referencing them from a valid rule
 
