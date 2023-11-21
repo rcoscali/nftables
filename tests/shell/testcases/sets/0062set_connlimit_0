@@ -24,3 +24,6 @@ RULESET="table ip x {
 }"
 
 $NFT -f - <<< $RULESET
+
+$NFT flush set ip x est-connlimit
+$NFT flush set ip x new-connlimit
