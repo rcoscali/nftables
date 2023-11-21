@@ -138,8 +138,7 @@ if [ "$NFT_TEST_HAVE_json" != n ] ; then
 		show_file "$NFT_TEST_TESTTMPDIR/chkdump" "Command \`$NFT -j list ruleset\` failed" >> "$NFT_TEST_TESTTMPDIR/rc-failed-chkdump"
 		rc_chkdump=1
 	fi
-	# Normalize the version number from the JSON output. Otherwise, we'd
-	# have to regenerate the .json-nft files upon release.
+	# JSON output needs normalization/sanitization, otherwise it's not stable.
 	"$NFT_TEST_BASEDIR/helpers/json-sanitize-ruleset.sh" "$NFT_TEST_TESTTMPDIR/ruleset-after.json"
 fi
 
