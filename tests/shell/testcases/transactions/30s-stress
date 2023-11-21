@@ -324,7 +324,7 @@ random_elem()
 
 			FLAGS=("")
 			available_flags FLAGS $key
-			for flags in ${FLAGS[@]} ; do
+			for flags in "${FLAGS[@]}" ; do
 				cnt=$((cnt+1))
 				if [ $f -ne fkr ] ;then
 					f=$((f+1))
