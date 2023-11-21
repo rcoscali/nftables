@@ -1,19 +1,14 @@
 #!/bin/bash
 
-# NFT_TEST_REQUIRES(NFT_TEST_HAVE_stateful_object_update)
+# d62d0ba97b58 ("netfilter: nf_tables: Introduce stateful object update operation")
+# v5.4-rc1~131^2~59^2~2
 
 set -e
 $NFT add table test-ip
-$NFT add counter test-ip traffic-counter
-$NFT add counter test-ip traffic-counter
 $NFT add quota test-ip traffic-quota 25 mbytes
 $NFT add quota test-ip traffic-quota 50 mbytes
 
 EXPECTED="table ip test-ip {
-	counter traffic-counter {
-		packets 0 bytes 0
-	}
-
 	quota traffic-quota {
 		50 mbytes
 	}
@@ -21,6 +16,6 @@ EXPECTED="table ip test-ip {
 
 GET="$($NFT list ruleset)"
 if [ "$EXPECTED" != "$GET" ] ; then
-	$DIFF -u <(echo "$EXPECTED") <(echo "$GET")
+	diff -u <(echo "$EXPECTED") <(echo "$GET")
 	exit 1
 fi
