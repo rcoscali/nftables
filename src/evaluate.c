@@ -1127,7 +1127,7 @@ static int expr_evaluate_unary(struct eval_ctx *ctx, struct expr **expr)
 		BUG("invalid unary operation %u\n", unary->op);
 	}
 
-	unary->dtype	 = arg->dtype;
+	unary->dtype	 = dtype_clone(arg->dtype);
 	unary->byteorder = byteorder;
 	unary->len	 = arg->len;
 	return 0;
