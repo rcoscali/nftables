@@ -4867,7 +4867,7 @@ static int flowtable_evaluate(struct eval_ctx *ctx, struct flowtable *ft)
 		return table_not_found(ctx);
 
 	if (!ft_cache_find(table, ft->handle.flowtable.name)) {
-		if (!ft->hook.name)
+		if (!ft->hook.name && !ft->dev_expr)
 			return chain_error(ctx, ft, "missing hook and priority in flowtable declaration");
 
 		ft_cache_add(flowtable_get(ft), table);
