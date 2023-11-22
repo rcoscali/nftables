@@ -202,6 +202,10 @@ if [ "$rc_test" -ne 77 -a "$dump_written" != y ] ; then
 	fi
 	if [ "$NFT_TEST_HAVE_json" != n -a -f "$JDUMPFILE" ] ; then
 		if ! $DIFF -u "$JDUMPFILE" "$NFT_TEST_TESTTMPDIR/ruleset-after.json" &> "$NFT_TEST_TESTTMPDIR/ruleset-diff.json" ; then
+			"$NFT_TEST_BASEDIR/helpers/json-diff-pretty.sh" \
+				"$JDUMPFILE" \
+				"$NFT_TEST_TESTTMPDIR/ruleset-after.json" \
+				2>&1 > "$NFT_TEST_TESTTMPDIR/ruleset-diff.json.pretty"
 			show_file "$NFT_TEST_TESTTMPDIR/ruleset-diff.json" "Failed \`$DIFF -u \"$JDUMPFILE\" \"$NFT_TEST_TESTTMPDIR/ruleset-after.json\"\`" >> "$NFT_TEST_TESTTMPDIR/rc-failed-dump"
 			rc_dump=1
 		else
