@@ -3000,14 +3000,49 @@ static struct expr *parse_policy(const char *policy)
 				   sizeof(int) * BITS_PER_BYTE, &policy_num);
 }
 
+static struct expr *json_parse_devs(struct json_ctx *ctx, json_t *root)
+{
+	struct expr *tmp, *expr = compound_expr_alloc(int_loc, EXPR_LIST);
+	const char *dev;
+	json_t *value;
+	size_t index;
+
+	if (!json_unpack(root, "s", &dev)) {
+		tmp = constant_expr_alloc(int_loc, &string_type,
+					  BYTEORDER_HOST_ENDIAN,
+					  strlen(dev) * BITS_PER_BYTE, dev);
+		compound_expr_add(expr, tmp);
+		return expr;
+	}
+	if (!json_is_array(root)) {
+		expr_free(expr);
+		return NULL;
+	}
+
+	json_array_foreach(root, index, value) {
+		if (json_unpack(value, "s", &dev)) {
+			json_error(ctx, "Invalid device at index %zu.",
+				   index);
+			expr_free(expr);
+			return NULL;
+		}
+		tmp = constant_expr_alloc(int_loc, &string_type,
+					  BYTEORDER_HOST_ENDIAN,
+					  strlen(dev) * BITS_PER_BYTE, dev);
+		compound_expr_add(expr, tmp);
+	}
+	return expr;
+}
+
 static struct cmd *json_parse_cmd_add_chain(struct json_ctx *ctx, json_t *root,
 					    enum cmd_ops op, enum cmd_obj obj)
 {
 	struct handle h = {
 		.table.location = *int_loc,
 	};
-	const char *family = "", *policy = "", *type, *hookstr, *name, *comment = NULL;
+	const char *family = "", *policy = "", *type, *hookstr, *comment = NULL;
 	struct chain *chain = NULL;
+	json_t *devs = NULL;
 	int prio;
 
 	if (json_unpack_err(ctx, root, "{s:s, s:s}",
@@ -3062,16 +3097,15 @@ static struct cmd *json_parse_cmd_add_chain(struct json_ctx *ctx, json_t *root,
 		return NULL;
 	}
 
-	if (!json_unpack(root, "{s:s}", "dev", &name)) {
-		struct expr *dev_expr, *expr;
+	json_unpack(root, "{s:o}", "dev", &devs);
 
-		dev_expr = compound_expr_alloc(int_loc, EXPR_LIST);
-		expr = constant_expr_alloc(int_loc, &integer_type,
-					   BYTEORDER_HOST_ENDIAN,
-					   strlen(name) * BITS_PER_BYTE,
-					   name);
-		compound_expr_add(dev_expr, expr);
-		chain->dev_expr = dev_expr;
+	if (devs) {
+		chain->dev_expr = json_parse_devs(ctx, devs);
+		if (!chain->dev_expr) {
+			json_error(ctx, "Invalid chain dev.");
+			chain_free(chain);
+			return NULL;
+		}
 	}
 
 	if (!json_unpack(root, "{s:s}", "policy", &policy)) {
@@ -3366,41 +3400,6 @@ static struct cmd *json_parse_cmd_add_element(struct json_ctx *ctx,
 	return cmd_alloc(op, cmd_obj, &h, int_loc, expr);
 }
 
-static struct expr *json_parse_flowtable_devs(struct json_ctx *ctx,
-					      json_t *root)
-{
-	struct expr *tmp, *expr = compound_expr_alloc(int_loc, EXPR_LIST);
-	const char *dev;
-	json_t *value;
-	size_t index;
-
-	if (!json_unpack(root, "s", &dev)) {
-		tmp = constant_expr_alloc(int_loc, &string_type,
-					  BYTEORDER_HOST_ENDIAN,
-					  strlen(dev) * BITS_PER_BYTE, dev);
-		compound_expr_add(expr, tmp);
-		return expr;
-	}
-	if (!json_is_array(root)) {
-		expr_free(expr);
-		return NULL;
-	}
-
-	json_array_foreach(root, index, value) {
-		if (json_unpack(value, "s", &dev)) {
-			json_error(ctx, "Invalid flowtable dev at index %zu.",
-				   index);
-			expr_free(expr);
-			return NULL;
-		}
-		tmp = constant_expr_alloc(int_loc, &string_type,
-					  BYTEORDER_HOST_ENDIAN,
-					  strlen(dev) * BITS_PER_BYTE, dev);
-		compound_expr_add(expr, tmp);
-	}
-	return expr;
-}
-
 static struct cmd *json_parse_cmd_add_flowtable(struct json_ctx *ctx,
 						json_t *root, enum cmd_ops op,
 						enum cmd_obj cmd_obj)
@@ -3461,7 +3460,7 @@ static struct cmd *json_parse_cmd_add_flowtable(struct json_ctx *ctx,
 				    sizeof(int) * BITS_PER_BYTE, &prio);
 
 	if (devs) {
-		flowtable->dev_expr = json_parse_flowtable_devs(ctx, devs);
+		flowtable->dev_expr = json_parse_devs(ctx, devs);
 		if (!flowtable->dev_expr) {
 			json_error(ctx, "Invalid flowtable dev.");
 			flowtable_free(flowtable);
