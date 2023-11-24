@@ -222,36 +222,40 @@ if [ "$rc" = 1 -o -s "$NFT_TEST_TESTTMPDIR/chkdump" ] ; then
 	show_file "$NFT_TEST_TESTTMPDIR/chkdump" "Command \`$NFT flush ruleset\` failed" >> "$NFT_TEST_TESTTMPDIR/rc-failed-chkdump"
 	rc_chkdump=1
 fi
-# For the dumpfiles, call `nft --check` to possibly cover new code paths.
-if [ -f "$DUMPFILE" ] ; then
-	if [ "$rc_test" -eq 77 ] ; then
-		# The test was skipped. Possibly we don't have the required
-		# features to process this file. Ignore any output and exit
-		# code, but still call the program (for valgrind or sanitizer
-		# issue we hope to find).
-		$NFT --check -f "$DUMPFILE" &>/dev/null || :
-	else
-		fail=n
-		$NFT --check -f "$DUMPFILE" &> "$NFT_TEST_TESTTMPDIR/chkdump" || fail=y
-		test -s "$NFT_TEST_TESTTMPDIR/chkdump" && fail=y
-		if [ "$fail" = y ] ; then
-			show_file "$NFT_TEST_TESTTMPDIR/chkdump" "Command \`$NFT --check -f \"$DUMPFILE\"\` failed" >> "$NFT_TEST_TESTTMPDIR/rc-failed-chkdump"
-			rc_chkdump=1
-		fi
-		rm -f "$NFT_TEST_TESTTMPDIR/chkdump"
-	fi
+# Check that `nft [-j] list ruleset | nft [-j] --check -f -` works.
+fail=n
+$NFT --check -f "$NFT_TEST_TESTTMPDIR/ruleset-after" &> "$NFT_TEST_TESTTMPDIR/chkdump" || fail=y
+test -s "$NFT_TEST_TESTTMPDIR/chkdump" && fail=y
+if [ "$fail" = y ] ; then
+	show_file "$NFT_TEST_TESTTMPDIR/chkdump" "Command \`$NFT --check -f \"$NFT_TEST_TESTTMPDIR/ruleset-after\"\` failed" >> "$NFT_TEST_TESTTMPDIR/rc-failed-chkdump"
+	rc_chkdump=1
 fi
-if [ "$NFT_TEST_HAVE_json" != n -a -f "$JDUMPFILE" ] ; then
-	if [ "$rc_test" -eq 77 ] ; then
-		$NFT -j --check -f "$JDUMPFILE" &>/dev/null || :
+if [ -f "$DUMPFILE" ] && ! cmp "$DUMPFILE" "$NFT_TEST_TESTTMPDIR/ruleset-after" &>/dev/null ; then
+	# Also check the $DUMPFILE to hit possibly new code paths. This
+	# is useful to see crashes and with ASAN/valgrind.
+	$NFT --check -f "$DUMPFILE" &>/dev/null || :
+fi
+if [ "$NFT_TEST_HAVE_json" != n ] ; then
+	if [ ! -f "$JDUMPFILE" ] ; then
+		# Optimally, `nft -j list ruleset | nft -j --check -f -` never
+		# fails.  However, there are known issues where this doesn't
+		# work, and we cannot assert hard against that. It's those
+		# tests that don't have a .json-nft file.
+		#
+		# This should be fixed, every test should have a .json-nft
+		# file, and this workaround removed.
+		$NFT -j --check -f "$NFT_TEST_TESTTMPDIR/ruleset-after.json" &>/dev/null || :
 	else
 		fail=n
-		$NFT -j --check -f "$JDUMPFILE" &> "$NFT_TEST_TESTTMPDIR/chkdump" || fail=y
+		$NFT -j --check -f "$NFT_TEST_TESTTMPDIR/ruleset-after.json" &> "$NFT_TEST_TESTTMPDIR/chkdump" || fail=y
 		test -s "$NFT_TEST_TESTTMPDIR/chkdump" && fail=y
 		if [ "$fail" = y ] ; then
-			show_file "$NFT_TEST_TESTTMPDIR/chkdump" "Command \`$NFT -j --check -f \"$JDUMPFILE\"\` failed" >> "$NFT_TEST_TESTTMPDIR/rc-failed-chkdump"
+			show_file "$NFT_TEST_TESTTMPDIR/chkdump" "Command \`$NFT -j --check -f \"$NFT_TEST_TESTTMPDIR/ruleset-after.json\"\` failed" >> "$NFT_TEST_TESTTMPDIR/rc-failed-chkdump"
 			rc_chkdump=1
 		fi
+	fi
+	if [ -f "$JDUMPFILE" ] && ! cmp "$JDUMPFILE" "$NFT_TEST_TESTTMPDIR/ruleset-after.json" &>/dev/null ; then
+		$NFT -j --check -f "$JDUMPFILE" &>/dev/null || :
 	fi
 fi
 rm -f "$NFT_TEST_TESTTMPDIR/chkdump"
