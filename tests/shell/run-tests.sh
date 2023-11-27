@@ -30,6 +30,23 @@ array_contains() {
 	return 1
 }
 
+array_remove_first() {
+	local _varname="$1"
+	local _needle="$2"
+	local _result=()
+	local _a
+
+	eval "local _input=( \"\${$_varname[@]}\" )"
+	for _a in "${_input[@]}" ; do
+		if [ -n "${_needle+x}" -a "$_needle" = "$_a" ] ; then
+			unset _needle
+		else
+			_result+=("$_a")
+		fi
+	done
+	eval "$_varname="'( "${_result[@]}" )'
+}
+
 colorize_keywords() {
 	local out_variable="$1"
 	local color="$2"
@@ -598,13 +615,14 @@ if [ ! -x "$DIFF" ] ; then
 	DIFF=true
 fi
 
+JOBS_PIDLIST_ARR=()
 declare -A JOBS_PIDLIST
 
 _NFT_TEST_VALGRIND_VGDB_PREFIX=
 
 cleanup_on_exit() {
 	pids_search=''
-	for pid in "${!JOBS_PIDLIST[@]}" ; do
+	for pid in "${JOBS_PIDLIST_ARR[@]}" ; do
 		kill -- "-$pid" &>/dev/null
 		pids_search="$pids_search\\|\\<$pid\\>"
 	done
@@ -858,17 +876,33 @@ job_start() {
 	return "$rc_got"
 }
 
+# `wait -p` is only supported since bash 5.1
+WAIT_SUPPORTS_P=1
+[ "${BASH_VERSINFO[0]}" -le 4 -o \( "${BASH_VERSINFO[0]}" -eq 5 -a "${BASH_VERSINFO[1]}" -eq 0 \) ] && WAIT_SUPPORTS_P=0
+
 job_wait()
 {
 	local num_jobs="$1"
+	local JOBCOMPLETED
+	local rc_got
 
-	while [ "$JOBS_N_RUNNING" -gt 0 -a "$JOBS_N_RUNNING" -ge "$num_jobs" ] ; do
-		wait -n -p JOBCOMPLETED
-		local rc_got="$?"
+	while [ "${#JOBS_PIDLIST_ARR[@]}" -gt 0 -a "${#JOBS_PIDLIST_ARR[@]}" -ge "$num_jobs" ] ; do
+		if [ "$WAIT_SUPPORTS_P" = 1 ] ; then
+			wait -n -p JOBCOMPLETED
+			rc_got="$?"
+			array_remove_first JOBS_PIDLIST_ARR "$JOBCOMPLETED"
+		else
+			# Without `wait -p` support, we need to explicitly wait
+			# for a PID. That reduces parallelism.
+			JOBCOMPLETED="${JOBS_PIDLIST_ARR[0]}"
+			JOBS_PIDLIST_ARR=( "${JOBS_PIDLIST_ARR[@]:1}" )
+			wait -n "$JOBCOMPLETED"
+			rc_got="$?"
+		fi
+
 		local testfile2="${JOBS_PIDLIST[$JOBCOMPLETED]}"
 		unset JOBS_PIDLIST[$JOBCOMPLETED]
 		print_test_result "${JOBS_TEMPDIR["$testfile2"]}" "$testfile2" "$rc_got"
-		((JOBS_N_RUNNING--))
 		check_kmemleak
 	done
 }
@@ -878,7 +912,6 @@ if [ "$NFT_TEST_SHUFFLE_TESTS" = y ] ; then
 fi
 
 TESTIDX=0
-JOBS_N_RUNNING=0
 for testfile in "${TESTS[@]}" ; do
 	job_wait "$NFT_TEST_JOBS"
 
@@ -897,7 +930,7 @@ for testfile in "${TESTS[@]}" ; do
 	pid=$!
 	eval "$set_old_state"
 	JOBS_PIDLIST[$pid]="$testfile"
-	((JOBS_N_RUNNING++))
+	JOBS_PIDLIST_ARR+=( "$pid" )
 done
 
 job_wait 0
