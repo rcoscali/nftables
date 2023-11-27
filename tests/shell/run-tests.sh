@@ -314,6 +314,7 @@ DO_LIST_TESTS=
 if [ -z "$NFT_TEST_RANDOM_SEED" ] ; then
 	# Choose a random value.
 	n="$SRANDOM"
+	[ -z "$n" ] && n="$RANDOM"
 else
 	# Parse as number.
 	n="$(strtonum "$NFT_TEST_RANDOM_SEED")"
