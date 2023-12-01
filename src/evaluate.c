@@ -1312,9 +1312,14 @@ static int constant_binop_simplify(struct eval_ctx *ctx, struct expr **expr)
 static int expr_evaluate_shift(struct eval_ctx *ctx, struct expr **expr)
 {
 	struct expr *op = *expr, *left = op->left, *right = op->right;
-	unsigned int shift = mpz_get_uint32(right->value);
-	unsigned int max_shift_len;
+	unsigned int shift, max_shift_len;
 
+	/* mpz_get_uint32 has assert() for huge values */
+	if (mpz_cmp_ui(right->value, UINT_MAX) > 0)
+		return expr_binary_error(ctx->msgs, right, left,
+					 "shifts exceeding %u bits are not supported", UINT_MAX);
+
+	shift = mpz_get_uint32(right->value);
 	if (ctx->stmt_len > left->len)
 		max_shift_len = ctx->stmt_len;
 	else
