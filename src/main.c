@@ -333,23 +333,24 @@ static bool nft_options_check(int argc, char * const argv[])
 		} else if (skip) {
 			skip = false;
 			continue;
-		} else if (argv[i][0] == '-') {
-			if (nonoption) {
-				nft_options_error(argc, argv, pos);
-				return false;
-			} else if (argv[i][1] == 'd' ||
-				   argv[i][1] == 'I' ||
-				   argv[i][1] == 'f' ||
-				   argv[i][1] == 'D' ||
-				   !strcmp(argv[i], "--debug") ||
-				   !strcmp(argv[i], "--includepath") ||
-				   !strcmp(argv[i], "--define") ||
-				   !strcmp(argv[i], "--file")) {
-				skip = true;
-				continue;
-			}
 		} else if (argv[i][0] != '-') {
 			nonoption = true;
+			continue;
+		}
+		if (nonoption) {
+			nft_options_error(argc, argv, pos);
+			return false;
+		}
+		if (argv[i][1] == 'd' ||
+		    argv[i][1] == 'I' ||
+		    argv[i][1] == 'f' ||
+		    argv[i][1] == 'D' ||
+		    !strcmp(argv[i], "--debug") ||
+		    !strcmp(argv[i], "--includepath") ||
+		    !strcmp(argv[i], "--define") ||
+		    !strcmp(argv[i], "--file")) {
+			skip = true;
+			continue;
 		}
 	}
 
