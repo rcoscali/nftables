@@ -1969,6 +1969,10 @@ static int expr_evaluate_map(struct eval_ctx *ctx, struct expr **expr)
 						  ctx->ectx.len, NULL);
 		}
 
+		if (!ectx.dtype)
+			return expr_error(ctx->msgs, map,
+					  "Implicit map expression without known datatype");
+
 		if (ectx.dtype->type == TYPE_VERDICT) {
 			data = verdict_expr_alloc(&netlink_location, 0, NULL);
 		} else {
