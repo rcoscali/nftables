@@ -1434,7 +1434,7 @@ static int expr_evaluate_list(struct eval_ctx *ctx, struct expr **expr)
 			return expr_error(ctx->msgs, i,
 					  "List member must be a constant "
 					  "value");
-		if (i->dtype->basetype->type != TYPE_BITMASK)
+		if (datatype_basetype(i->dtype)->type != TYPE_BITMASK)
 			return expr_error(ctx->msgs, i,
 					  "Basetype of type %s is not bitmask",
 					  i->dtype->desc);
