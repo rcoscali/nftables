@@ -4344,6 +4344,10 @@ static int stmt_evaluate_map(struct eval_ctx *ctx, struct stmt *stmt)
 		return expr_error(ctx->msgs, stmt->map.set,
 				  "Expression does not refer to a set");
 
+	if (!set_is_map(stmt->map.set->set->flags))
+		return expr_error(ctx->msgs, stmt->map.set,
+				  "%s is not a map", stmt->map.set->set->handle.set.name);
+
 	if (stmt_evaluate_key(ctx, stmt,
 			      stmt->map.set->set->key->dtype,
 			      stmt->map.set->set->key->len,
