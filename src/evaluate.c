@@ -2024,8 +2024,8 @@ static int expr_evaluate_map(struct eval_ctx *ctx, struct expr **expr)
 		/* symbol has been already evaluated to set reference */
 		break;
 	default:
-		BUG("invalid mapping expression %s\n",
-		    expr_name(map->mappings));
+		return expr_binary_error(ctx->msgs, map->mappings, map->map,
+					 "invalid mapping expression %s", expr_name(map->mappings));
 	}
 
 	if (!datatype_compatible(map->mappings->set->key->dtype, map->map->dtype))
