@@ -506,7 +506,7 @@ static uint8_t expr_offset_shift(const struct expr *expr, unsigned int offset,
 	return shift;
 }
 
-static void expr_evaluate_bits(struct eval_ctx *ctx, struct expr **exprp)
+static int expr_evaluate_bits(struct eval_ctx *ctx, struct expr **exprp)
 {
 	struct expr *expr = *exprp, *and, *mask, *rshift, *off;
 	unsigned masklen, len = expr->len, extra_len = 0;
@@ -528,7 +528,10 @@ static void expr_evaluate_bits(struct eval_ctx *ctx, struct expr **exprp)
 	}
 
 	masklen = len + shift;
-	assert(masklen <= NFT_REG_SIZE * BITS_PER_BYTE);
+
+	if (masklen > NFT_REG_SIZE * BITS_PER_BYTE)
+		return expr_error(ctx->msgs, expr, "mask length %u exceeds allowed maximum of %u\n",
+				  masklen, NFT_REG_SIZE * BITS_PER_BYTE);
 
 	mpz_init2(bitmask, masklen);
 	mpz_bitmask(bitmask, len);
@@ -571,6 +574,8 @@ static void expr_evaluate_bits(struct eval_ctx *ctx, struct expr **exprp)
 
 	if (extra_len)
 		expr->len += extra_len;
+
+	return 0;
 }
 
 static int __expr_evaluate_exthdr(struct eval_ctx *ctx, struct expr **exprp)
@@ -587,8 +592,12 @@ static int __expr_evaluate_exthdr(struct eval_ctx *ctx, struct expr **exprp)
 	ctx->ectx.key = key;
 
 	if (expr->exthdr.offset % BITS_PER_BYTE != 0 ||
-	    expr->len % BITS_PER_BYTE != 0)
-		expr_evaluate_bits(ctx, exprp);
+	    expr->len % BITS_PER_BYTE != 0) {
+		int err = expr_evaluate_bits(ctx, exprp);
+
+		if (err)
+			return err;
+	}
 
 	switch (expr->exthdr.op) {
 	case NFT_EXTHDR_OP_TCPOPT: {
@@ -896,8 +905,12 @@ static int expr_evaluate_payload(struct eval_ctx *ctx, struct expr **exprp)
 
 	ctx->ectx.key = key;
 
-	if (payload_needs_adjustment(expr))
-		expr_evaluate_bits(ctx, exprp);
+	if (payload_needs_adjustment(expr)) {
+		int err = expr_evaluate_bits(ctx, exprp);
+
+		if (err)
+			return err;
+	}
 
 	expr->payload.evaluated = true;
 
