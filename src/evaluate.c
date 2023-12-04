@@ -3169,6 +3169,19 @@ static int stmt_evaluate_meta(struct eval_ctx *ctx, struct stmt *stmt)
 				&stmt->meta.expr);
 	ctx->stmt_len = 0;
 
+	if (ret < 0)
+		return ret;
+
+	switch (stmt->meta.expr->etype) {
+	case EXPR_RANGE:
+		ret = expr_error(ctx->msgs, stmt->meta.expr,
+				 "Meta expression cannot be a range");
+		break;
+	default:
+		break;
+
+	}
+
 	return ret;
 }
 

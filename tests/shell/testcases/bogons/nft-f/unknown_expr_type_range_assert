@@ -1,0 +1,5 @@
+table ip x {
+        chain k {
+                meta mark set 0x001-3434
+        }
+}
