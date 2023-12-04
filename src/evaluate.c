@@ -1284,8 +1284,11 @@ static int expr_evaluate_binop(struct eval_ctx *ctx, struct expr **expr)
 					 "for %s expressions",
 					 sym, expr_name(right));
 
-	/* The grammar guarantees this */
-	assert(datatype_equal(expr_basetype(left), expr_basetype(right)));
+	if (!datatype_equal(expr_basetype(left), expr_basetype(right)))
+		return expr_binary_error(ctx->msgs, left, op,
+					 "Binary operation (%s) with different base types "
+					 "(%s vs %s) is not supported",
+					 sym, expr_basetype(left)->name, expr_basetype(right)->name);
 
 	switch (op->op) {
 	case OP_LSHIFT:
