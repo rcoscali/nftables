@@ -602,6 +602,9 @@ for feat in "${_HAVE_OPTS[@]}" ; do
 		val="$(bool_n "${!var}")"
 	fi
 	eval "export $var=$val"
+	if [ "$NFT_TEST_HAS_UNSHARED" != y ] ; then
+		$NFT flush ruleset
+	fi
 done
 
 if [ "$NFT_TEST_JOBS" -eq 0 ] ; then
