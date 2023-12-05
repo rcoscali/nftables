@@ -390,13 +390,19 @@ static bool netlink_event_range_cache(struct set *cached_set,
 
 	/* don't cache half-open range elements */
 	elem = list_entry(dummyset->init->expressions.prev, struct expr, list);
-	if (!set_elem_is_open_interval(elem)) {
+	if (!set_elem_is_open_interval(elem) &&
+	    dummyset->desc.field_count <= 1) {
 		cached_set->rg_cache = expr_clone(elem);
 		return true;
 	}
 
 out_decompose:
-	interval_map_decompose(dummyset->init);
+	if (dummyset->flags & NFT_SET_INTERVAL &&
+	    dummyset->desc.field_count > 1)
+		concat_range_aggregate(dummyset->init);
+	else
+		interval_map_decompose(dummyset->init);
+
 	return false;
 }
 
@@ -437,6 +443,7 @@ static int netlink_events_setelem_cb(const struct nlmsghdr *nlh, int type,
 		dummyset->data = expr_clone(set->data);
 	dummyset->flags = set->flags;
 	dummyset->init = set_expr_alloc(monh->loc, set);
+	dummyset->desc.field_count = set->desc.field_count;
 
 	nlsei = nftnl_set_elems_iter_create(nls);
 	if (nlsei == NULL)
