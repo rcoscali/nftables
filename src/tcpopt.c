@@ -118,6 +118,13 @@ static const struct exthdr_desc tcpopt_mptcp = {
 		[TCPOPT_MPTCP_SUBTYPE]  = PHT("subtype", 16, 4),
 	},
 };
+
+static const struct exthdr_desc tcpopt_fallback = {
+	.templates	= {
+		[TCPOPT_COMMON_KIND]	= PHT("kind",   0, 8),
+		[TCPOPT_COMMON_LENGTH]	= PHT("length", 8, 8),
+	},
+};
 #undef PHT
 
 const struct exthdr_desc *tcpopt_protocols[] = {
@@ -132,6 +139,17 @@ const struct exthdr_desc *tcpopt_protocols[] = {
 	[TCPOPT_KIND_MPTCP]		= &tcpopt_mptcp,
 	[TCPOPT_KIND_FASTOPEN]		= &tcpopt_fastopen,
 };
+
+static void tcpopt_assign_tmpl(struct expr *expr,
+			       const struct proto_hdr_template *tmpl,
+			       const struct exthdr_desc *desc)
+{
+	expr->exthdr.op     = NFT_EXTHDR_OP_TCPOPT;
+
+	expr->exthdr.desc   = desc;
+	expr->exthdr.tmpl   = tmpl;
+	expr->exthdr.offset = tmpl->offset;
+}
 
 /**
  * tcpopt_expr_alloc - allocate tcp option extension expression
@@ -182,18 +200,26 @@ struct expr *tcpopt_expr_alloc(const struct location *loc,
 		desc = tcpopt_protocols[kind];
 
 	if (!desc) {
-		if (field != TCPOPT_COMMON_KIND || kind > 255)
+		if (kind > 255)
 			return NULL;
+
+		desc = &tcpopt_fallback;
+
+		switch (field) {
+		case TCPOPT_COMMON_KIND:
+		case TCPOPT_COMMON_LENGTH:
+			tmpl = &desc->templates[field];
+			break;
+		default:
+			tmpl = &tcpopt_unknown_template;
+			break;
+		}
 
 		expr = expr_alloc(loc, EXPR_EXTHDR, &integer_type,
 				  BYTEORDER_BIG_ENDIAN, 8);
 
-		desc = tcpopt_protocols[TCPOPT_NOP];
-		tmpl = &desc->templates[field];
-		expr->exthdr.desc   = desc;
-		expr->exthdr.tmpl   = tmpl;
-		expr->exthdr.op = NFT_EXTHDR_OP_TCPOPT;
 		expr->exthdr.raw_type = kind;
+		tcpopt_assign_tmpl(expr, tmpl, desc);
 		return expr;
 	}
 
@@ -203,11 +229,9 @@ struct expr *tcpopt_expr_alloc(const struct location *loc,
 
 	expr = expr_alloc(loc, EXPR_EXTHDR, tmpl->dtype,
 			  BYTEORDER_BIG_ENDIAN, tmpl->len);
-	expr->exthdr.desc   = desc;
-	expr->exthdr.tmpl   = tmpl;
-	expr->exthdr.op     = NFT_EXTHDR_OP_TCPOPT;
+
 	expr->exthdr.raw_type = desc->type;
-	expr->exthdr.offset = tmpl->offset;
+	tcpopt_assign_tmpl(expr, tmpl, desc);
 
 	return expr;
 }

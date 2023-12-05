@@ -5828,6 +5828,10 @@ tcp_hdr_expr		:	TCP	tcp_hdr_field
 			|	TCP	OPTION	tcp_hdr_option_kind_and_field
 			{
 				$$ = tcpopt_expr_alloc(&@$, $3.kind, $3.field);
+				if ($$ == NULL) {
+					erec_queue(error(&@1, "Could not find a tcp option template"), state->msgs);
+					YYERROR;
+				}
 			}
 			|	TCP	OPTION	AT	close_scope_at	tcp_hdr_option_type	COMMA	NUM	COMMA	NUM
 			{
