@@ -1171,7 +1171,7 @@ static int expr_evaluate_prefix(struct eval_ctx *ctx, struct expr **expr)
 	base = prefix->prefix;
 	assert(expr_is_constant(base));
 
-	prefix->dtype	  = base->dtype;
+	prefix->dtype	  = datatype_get(base->dtype);
 	prefix->byteorder = base->byteorder;
 	prefix->len	  = base->len;
 	prefix->flags	 |= EXPR_F_CONSTANT;
