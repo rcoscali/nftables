@@ -4693,6 +4693,12 @@ static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 	struct stmt *stmt;
 	const char *type;
 
+	type = set_is_map(set->flags) ? "map" : "set";
+
+	if (set->key == NULL)
+		return set_error(ctx, set, "%s definition does not specify key",
+				 type);
+
 	if (!set_is_anonymous(set->flags)) {
 		table = table_cache_find(&ctx->nft->cache.table_cache,
 					 set->handle.table.name,
@@ -4715,8 +4721,6 @@ static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 
 	if (!(set->flags & NFT_SET_INTERVAL) && set->automerge)
 		return set_error(ctx, set, "auto-merge only works with interval sets");
-
-	type = set_is_map(set->flags) ? "map" : "set";
 
 	if (set->key == NULL)
 		return set_error(ctx, set, "%s definition does not specify key",
