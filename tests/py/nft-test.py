@@ -368,9 +368,9 @@ def set_add(s, test_result, filename, lineno):
             flags = "flags %s; " % flags
 
         if s.data == "":
-                cmd = "add set %s %s { type %s;%s %s}" % (table, s.name, s.type, s.timeout, flags)
+                cmd = "add set %s %s { %s;%s %s}" % (table, s.name, s.type, s.timeout, flags)
         else:
-                cmd = "add map %s %s { type %s : %s;%s %s}" % (table, s.name, s.type, s.data, s.timeout, flags)
+                cmd = "add map %s %s { %s : %s;%s %s}" % (table, s.name, s.type, s.data, s.timeout, flags)
 
         ret = execute_cmd(cmd, filename, lineno)
 
@@ -410,7 +410,7 @@ def map_add(s, test_result, filename, lineno):
         if flags != "":
             flags = "flags %s; " % flags
 
-        cmd = "add map %s %s { type %s : %s;%s %s}" % (table, s.name, s.type, s.data, s.timeout, flags)
+        cmd = "add map %s %s { %s : %s;%s %s}" % (table, s.name, s.type, s.data, s.timeout, flags)
 
         ret = execute_cmd(cmd, filename, lineno)
 
@@ -1144,11 +1144,16 @@ def set_process(set_line, filename, lineno):
 
     tokens = set_line[0].split(" ")
     set_name = tokens[0]
-    set_type = tokens[2]
+    parse_typeof = tokens[1] == "typeof"
+    set_type = tokens[1] + " " + tokens[2]
     set_data = ""
     set_flags = ""
 
     i = 3
+    if parse_typeof and tokens[i] == "id":
+        set_type += " " + tokens[i]
+        i += 1;
+
     while len(tokens) > i and tokens[i] == ".":
         set_type += " . " + tokens[i+1]
         i += 2
@@ -1156,6 +1161,10 @@ def set_process(set_line, filename, lineno):
     while len(tokens) > i and tokens[i] == ":":
         set_data = tokens[i+1]
         i += 2
+
+    if parse_typeof and tokens[i] == "mark":
+        set_data += " " + tokens[i]
+        i += 1;
 
     if len(tokens) == i+2 and tokens[i] == "timeout":
         timeout = "timeout " + tokens[i+1] + ";"

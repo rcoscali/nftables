@@ -454,6 +454,18 @@ static int expr_evaluate_primary(struct eval_ctx *ctx, struct expr **expr)
 	return 0;
 }
 
+int stmt_dependency_evaluate(struct eval_ctx *ctx, struct stmt *stmt)
+{
+	uint32_t stmt_len = ctx->stmt_len;
+
+	if (stmt_evaluate(ctx, stmt) < 0)
+		return stmt_error(ctx, stmt, "dependency statement is invalid");
+
+	ctx->stmt_len = stmt_len;
+
+	return 0;
+}
+
 static int
 conflict_resolution_gen_dependency(struct eval_ctx *ctx, int protocol,
 				   const struct expr *expr,
@@ -479,7 +491,7 @@ conflict_resolution_gen_dependency(struct eval_ctx *ctx, int protocol,
 
 	dep = relational_expr_alloc(&expr->location, OP_EQ, left, right);
 	stmt = expr_stmt_alloc(&dep->location, dep);
-	if (stmt_evaluate(ctx, stmt) < 0)
+	if (stmt_dependency_evaluate(ctx, stmt) < 0)
 		return expr_error(ctx->msgs, expr,
 					  "dependency statement is invalid");
 
@@ -705,9 +717,8 @@ static int meta_iiftype_gen_dependency(struct eval_ctx *ctx,
 				  "for this family");
 
 	nstmt = meta_stmt_meta_iiftype(&payload->location, type);
-	if (stmt_evaluate(ctx, nstmt) < 0)
-		return expr_error(ctx->msgs, payload,
-				  "dependency statement is invalid");
+	if (stmt_dependency_evaluate(ctx, nstmt) < 0)
+		return -1;
 
 	if (ctx->inner_desc)
 		nstmt->expr->left->meta.inner_desc = ctx->inner_desc;
@@ -818,6 +829,7 @@ static int __expr_evaluate_payload(struct eval_ctx *ctx, struct expr *expr)
 						  desc->name,
 						  payload->payload.desc->name);
 
+			assert(pctx->stacked_ll_count);
 			payload->payload.offset += pctx->stacked_ll[0]->length;
 			rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
 			return 1;
@@ -3171,8 +3183,6 @@ static int stmt_evaluate_meta(struct eval_ctx *ctx, struct stmt *stmt)
 				stmt->meta.tmpl->len,
 				stmt->meta.tmpl->byteorder,
 				&stmt->meta.expr);
-	ctx->stmt_len = 0;
-
 	if (ret < 0)
 		return ret;
 
@@ -3200,8 +3210,6 @@ static int stmt_evaluate_ct(struct eval_ctx *ctx, struct stmt *stmt)
 				stmt->ct.tmpl->len,
 				stmt->ct.tmpl->byteorder,
 				&stmt->ct.expr);
-	ctx->stmt_len = 0;
-
 	if (ret < 0)
 		return -1;
 
@@ -4496,6 +4504,8 @@ int stmt_evaluate(struct eval_ctx *ctx, struct stmt *stmt)
 		nft_print(&ctx->nft->output, "\n\n");
 		erec_destroy(erec);
 	}
+
+	ctx->stmt_len = 0;
 
 	switch (stmt->ops->type) {
 	case STMT_CONNLIMIT:
