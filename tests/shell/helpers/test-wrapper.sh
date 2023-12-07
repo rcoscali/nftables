@@ -25,6 +25,10 @@ show_file() {
 	printf "<<<<\n"
 }
 
+json_pretty() {
+	"$NFT_TEST_BASEDIR/helpers/json-pretty.sh" "$@" 2>&1 || :
+}
+
 TEST="$1"
 TESTBASE="$(basename "$TEST")"
 TESTDIR="$(dirname "$TEST")"
@@ -140,6 +144,7 @@ if [ "$NFT_TEST_HAVE_json" != n ] ; then
 	fi
 	# JSON output needs normalization/sanitization, otherwise it's not stable.
 	"$NFT_TEST_BASEDIR/helpers/json-sanitize-ruleset.sh" "$NFT_TEST_TESTTMPDIR/ruleset-after.json"
+	json_pretty "$NFT_TEST_TESTTMPDIR/ruleset-after.json" > "$NFT_TEST_TESTTMPDIR/ruleset-after.json-pretty"
 fi
 
 read tainted_after < /proc/sys/kernel/tainted
@@ -186,7 +191,12 @@ if [ "$rc_test" -eq 0 -a '(' "$DUMPGEN" = all -o "$DUMPGEN" = y ')' ] ; then
 		cat "$NFT_TEST_TESTTMPDIR/ruleset-after" > "$DUMPFILE"
 	fi
 	if [ "$NFT_TEST_HAVE_json" != n -a "$gen_jdumpfile" = y ] ; then
-		cat "$NFT_TEST_TESTTMPDIR/ruleset-after.json" > "$JDUMPFILE"
+		if cmp "$NFT_TEST_TESTTMPDIR/ruleset-after.json" "$JDUMPFILE" &>/dev/null ; then
+			# The .json-nft file is still the non-pretty variant. Keep it.
+			:
+		else
+			cat "$NFT_TEST_TESTTMPDIR/ruleset-after.json-pretty" > "$JDUMPFILE"
+		fi
 	fi
 fi
 
@@ -201,12 +211,16 @@ if [ "$rc_test" -ne 77 -a "$dump_written" != y ] ; then
 		fi
 	fi
 	if [ "$NFT_TEST_HAVE_json" != n -a -f "$JDUMPFILE" ] ; then
-		if ! $DIFF -u "$JDUMPFILE" "$NFT_TEST_TESTTMPDIR/ruleset-after.json" &> "$NFT_TEST_TESTTMPDIR/ruleset-diff.json" ; then
-			"$NFT_TEST_BASEDIR/helpers/json-diff-pretty.sh" \
-				"$JDUMPFILE" \
-				"$NFT_TEST_TESTTMPDIR/ruleset-after.json" \
-				2>&1 > "$NFT_TEST_TESTTMPDIR/ruleset-diff.json.pretty"
-			show_file "$NFT_TEST_TESTTMPDIR/ruleset-diff.json" "Failed \`$DIFF -u \"$JDUMPFILE\" \"$NFT_TEST_TESTTMPDIR/ruleset-after.json\"\`" >> "$NFT_TEST_TESTTMPDIR/rc-failed-dump"
+		JDUMPFILE2="$NFT_TEST_TESTTMPDIR/json-nft-pretty"
+		json_pretty "$JDUMPFILE" > "$JDUMPFILE2"
+		if cmp "$JDUMPFILE" "$JDUMPFILE2" &>/dev/null ; then
+			# The .json-nft file is already prettified. We can use
+			# it directly.
+			rm -rf "$JDUMPFILE2"
+			JDUMPFILE2="$JDUMPFILE"
+		fi
+		if ! $DIFF -u "$JDUMPFILE2" "$NFT_TEST_TESTTMPDIR/ruleset-after.json-pretty" &> "$NFT_TEST_TESTTMPDIR/ruleset-diff.json" ; then
+			show_file "$NFT_TEST_TESTTMPDIR/ruleset-diff.json" "Failed \`$DIFF -u \"$JDUMPFILE2\" \"$NFT_TEST_TESTTMPDIR/ruleset-after.json-pretty\"\`" >> "$NFT_TEST_TESTTMPDIR/rc-failed-dump"
 			rc_dump=1
 		else
 			rm -f "$NFT_TEST_TESTTMPDIR/ruleset-diff.json"
@@ -245,6 +259,7 @@ if [ "$NFT_TEST_HAVE_json" != n ] ; then
 		# This should be fixed, every test should have a .json-nft
 		# file, and this workaround removed.
 		$NFT -j --check -f "$NFT_TEST_TESTTMPDIR/ruleset-after.json" &>/dev/null || :
+		$NFT -j --check -f "$NFT_TEST_TESTTMPDIR/ruleset-after.json-pretty" &>/dev/null || :
 	else
 		fail=n
 		$NFT -j --check -f "$NFT_TEST_TESTTMPDIR/ruleset-after.json" &> "$NFT_TEST_TESTTMPDIR/chkdump" || fail=y
@@ -253,8 +268,18 @@ if [ "$NFT_TEST_HAVE_json" != n ] ; then
 			show_file "$NFT_TEST_TESTTMPDIR/chkdump" "Command \`$NFT -j --check -f \"$NFT_TEST_TESTTMPDIR/ruleset-after.json\"\` failed" >> "$NFT_TEST_TESTTMPDIR/rc-failed-chkdump"
 			rc_chkdump=1
 		fi
+		fail=n
+		$NFT -j --check -f "$NFT_TEST_TESTTMPDIR/ruleset-after.json-pretty" &> "$NFT_TEST_TESTTMPDIR/chkdump" || fail=y
+		test -s "$NFT_TEST_TESTTMPDIR/chkdump" && fail=y
+		if [ "$fail" = y ] ; then
+			show_file "$NFT_TEST_TESTTMPDIR/chkdump" "Command \`$NFT -j --check -f \"$NFT_TEST_TESTTMPDIR/ruleset-after.json-pretty\"\` failed" >> "$NFT_TEST_TESTTMPDIR/rc-failed-chkdump"
+			rc_chkdump=1
+		fi
 	fi
-	if [ -f "$JDUMPFILE" ] && ! cmp "$JDUMPFILE" "$NFT_TEST_TESTTMPDIR/ruleset-after.json" &>/dev/null ; then
+	if [ -f "$JDUMPFILE" ] \
+	     && ! cmp "$JDUMPFILE" "$NFT_TEST_TESTTMPDIR/ruleset-after.json" &>/dev/null \
+	     && ! cmp "$JDUMPFILE" "$NFT_TEST_TESTTMPDIR/ruleset-after.json-pretty" &>/dev/null ; \
+	then
 		$NFT -j --check -f "$JDUMPFILE" &>/dev/null || :
 	fi
 fi
