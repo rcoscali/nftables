@@ -5331,6 +5331,7 @@ meta_stmt		:	META	meta_key	SET	stmt_expr	close_scope_meta
 				free_const($2);
 				if (erec != NULL) {
 					erec_queue(erec, state->msgs);
+					expr_free($4);
 					YYERROR;
 				}
 
