@@ -2738,6 +2738,35 @@ static int expr_evaluate_flagcmp(struct eval_ctx *ctx, struct expr **exprp)
 	return expr_evaluate(ctx, exprp);
 }
 
+static int verdict_validate_chainlen(struct eval_ctx *ctx,
+				     struct expr *chain)
+{
+	if (chain->len > NFT_CHAIN_MAXNAMELEN * BITS_PER_BYTE)
+		return expr_error(ctx->msgs, chain,
+				  "chain name too long (%u, max %u)",
+				  chain->len / BITS_PER_BYTE,
+				  NFT_CHAIN_MAXNAMELEN);
+
+	return 0;
+}
+
+static int expr_evaluate_verdict(struct eval_ctx *ctx, struct expr **exprp)
+{
+	struct expr *expr = *exprp;
+
+	switch (expr->verdict) {
+	case NFT_GOTO:
+	case NFT_JUMP:
+		if (expr->chain->etype == EXPR_VALUE &&
+		    verdict_validate_chainlen(ctx, expr->chain))
+			return -1;
+
+		break;
+	}
+
+	return expr_evaluate_primary(ctx, exprp);
+}
+
 static int expr_evaluate(struct eval_ctx *ctx, struct expr **expr)
 {
 	if (ctx->nft->debug_mask & NFT_DEBUG_EVALUATION) {
@@ -2763,7 +2792,7 @@ static int expr_evaluate(struct eval_ctx *ctx, struct expr **expr)
 	case EXPR_EXTHDR:
 		return expr_evaluate_exthdr(ctx, expr);
 	case EXPR_VERDICT:
-		return expr_evaluate_primary(ctx, expr);
+		return expr_evaluate_verdict(ctx, expr);
 	case EXPR_META:
 		return expr_evaluate_meta(ctx, expr);
 	case EXPR_SOCKET:
@@ -2964,6 +2993,9 @@ static int stmt_evaluate_verdict(struct eval_ctx *ctx, struct stmt *stmt)
 				return expr_error(ctx->msgs, stmt->expr->chain,
 						  "not a value expression");
 			}
+
+			if (verdict_validate_chainlen(ctx, stmt->expr->chain))
+				return -1;
 		}
 		break;
 	case EXPR_MAP:
