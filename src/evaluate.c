@@ -4679,14 +4679,15 @@ static int set_expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 						 "expressions",
 						 i->dtype->name);
 
-		if (i->dtype->size)
-			assert(i->len == i->dtype->size);
-
 		flags &= i->flags;
 
 		ntype = concat_subtype_add(ntype, i->dtype->type);
 
 		dsize_bytes = div_round_up(i->len, BITS_PER_BYTE);
+
+		if (i->dtype->size)
+			assert(dsize_bytes == div_round_up(i->dtype->size, BITS_PER_BYTE));
+
 		(*expr)->field_len[(*expr)->field_count++] = dsize_bytes;
 		size += netlink_padded_len(i->len);
 	}

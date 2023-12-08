@@ -55,6 +55,11 @@ table inet t {
 		elements = { 3567 . 1.2.3.4 }
 	}
 
+	set s12 {
+		typeof iifname . ip saddr . meta ipsec
+		elements = { "eth0" . 10.1.1.2 . exists }
+	}
+
 	chain c1 {
 		osf name @s1 accept
 	}
@@ -93,5 +98,9 @@ table inet t {
 
 	chain c11 {
 		vlan id . ip saddr @s11 accept
+	}
+
+	chain c12 {
+		iifname . ip saddr . meta ipsec @s12 accept
 	}
 }

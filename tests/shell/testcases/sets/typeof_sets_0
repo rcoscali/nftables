@@ -113,6 +113,10 @@ INPUT="table inet t {$INPUT_OSF_SET
 		typeof vlan id . ip saddr
 		elements = { 3567 . 1.2.3.4 }
 	}
+	set s12 {
+		typeof meta iifname . ip saddr . meta ipsec
+		elements = { \"eth0\" . 10.1.1.2 . 1 }
+	}
 $INPUT_OSF_CHAIN
 	chain c2 {
 		ether type vlan vlan id @s2 accept
@@ -137,6 +141,10 @@ $INPUT_VERSION_CHAIN
 
 	chain c11 {
 		ether type vlan vlan id . ip saddr @s11 accept
+	}
+
+	chain c12 {
+		meta iifname . ip saddr . meta ipsec @s12 accept
 	}
 }"
 
@@ -181,6 +189,11 @@ $INPUT_VERSION_SET
 		typeof vlan id . ip saddr
 		elements = { 3567 . 1.2.3.4 }
 	}
+
+	set s12 {
+		typeof iifname . ip saddr . meta ipsec
+		elements = { \"eth0\" . 10.1.1.2 . exists }
+	}
 $INPUT_OSF_CHAIN
 	chain c2 {
 		vlan id @s2 accept
@@ -204,6 +217,10 @@ $INPUT_SCTP_CHAIN$INPUT_VERSION_CHAIN
 
 	chain c11 {
 		vlan id . ip saddr @s11 accept
+	}
+
+	chain c12 {
+		iifname . ip saddr . meta ipsec @s12 accept
 	}
 }"
 
