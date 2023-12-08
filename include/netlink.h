@@ -100,7 +100,7 @@ extern struct nftnl_rule *netlink_rule_alloc(const struct nlmsghdr *nlh);
 
 struct nft_data_linearize {
 	uint32_t	len;
-	uint32_t	value[4];
+	uint32_t	value[NFT_REG32_COUNT];
 	char		chain[NFT_CHAIN_MAXNAMELEN];
 	uint32_t	chain_id;
 	int		verdict;

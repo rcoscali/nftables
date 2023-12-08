@@ -307,6 +307,16 @@ static int __netlink_gen_concat_key(uint32_t flags, const struct expr *i,
 	return netlink_export_pad(data, i->value, i);
 }
 
+static void nft_data_memcpy(struct nft_data_linearize *nld,
+			    const void *src, unsigned int len)
+{
+	if (len > sizeof(nld->value))
+		BUG("nld buffer overflow: want to copy %u, max %u\n", len, (unsigned int)sizeof(nld->value));
+
+	memcpy(nld->value, src, len);
+	nld->len = len;
+}
+
 static void netlink_gen_concat_key(const struct expr *expr,
 				    struct nft_data_linearize *nld)
 {
@@ -319,8 +329,7 @@ static void netlink_gen_concat_key(const struct expr *expr,
 	list_for_each_entry(i, &expr->expressions, list)
 		offset += __netlink_gen_concat_key(expr->flags, i, data + offset);
 
-	memcpy(nld->value, data, len);
-	nld->len = len;
+	nft_data_memcpy(nld, data, len);
 }
 
 static int __netlink_gen_concat_data(int end, const struct expr *i,
@@ -366,8 +375,7 @@ static void __netlink_gen_concat_expand(const struct expr *expr,
 	list_for_each_entry(i, &expr->expressions, list)
 		offset += __netlink_gen_concat_data(true, i, data + offset);
 
-	memcpy(nld->value, data, len);
-	nld->len = len;
+	nft_data_memcpy(nld, data, len);
 }
 
 static void __netlink_gen_concat(const struct expr *expr,
@@ -382,8 +390,7 @@ static void __netlink_gen_concat(const struct expr *expr,
 	list_for_each_entry(i, &expr->expressions, list)
 		offset += __netlink_gen_concat_data(expr->flags, i, data + offset);
 
-	memcpy(nld->value, data, len);
-	nld->len = len;
+	nft_data_memcpy(nld, data, len);
 }
 
 static void netlink_gen_concat_data(const struct expr *expr,
@@ -452,8 +459,7 @@ static void netlink_gen_range(const struct expr *expr,
 	memset(data, 0, len);
 	offset = netlink_export_pad(data, expr->left->value, expr->left);
 	netlink_export_pad(data + offset, expr->right->value, expr->right);
-	memcpy(nld->value, data, len);
-	nld->len = len;
+	nft_data_memcpy(nld, data, len);
 }
 
 static void netlink_gen_prefix(const struct expr *expr,
@@ -470,8 +476,7 @@ static void netlink_gen_prefix(const struct expr *expr,
 	netlink_export_pad(data + offset, v, expr->prefix);
 	mpz_clear(v);
 
-	memcpy(nld->value, data, len);
-	nld->len = len;
+	nft_data_memcpy(nld, data, len);
 }
 
 static void netlink_gen_key(const struct expr *expr,
