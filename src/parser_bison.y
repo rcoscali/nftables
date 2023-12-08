@@ -744,6 +744,9 @@ int nft_lex(void *, void *, void *);
 %destructor { stmt_free($$); }	stmt match_stmt verdict_stmt set_elem_stmt
 %type <stmt>			counter_stmt counter_stmt_alloc stateful_stmt last_stmt
 %destructor { stmt_free($$); }	counter_stmt counter_stmt_alloc stateful_stmt last_stmt
+%type <stmt>			objref_stmt objref_stmt_counter objref_stmt_limit objref_stmt_quota objref_stmt_ct objref_stmt_synproxy
+%destructor { stmt_free($$); }	objref_stmt objref_stmt_counter objref_stmt_limit objref_stmt_quota objref_stmt_ct objref_stmt_synproxy
+
 %type <stmt>			payload_stmt
 %destructor { stmt_free($$); }	payload_stmt
 %type <stmt>			ct_stmt
@@ -3051,6 +3054,60 @@ stateful_stmt_list	:	stateful_stmt
 			}
 			;
 
+objref_stmt_counter	:	COUNTER		NAME	stmt_expr	close_scope_counter
+			{
+				$$ = objref_stmt_alloc(&@$);
+				$$->objref.type = NFT_OBJECT_COUNTER;
+				$$->objref.expr = $3;
+			}
+			;
+
+objref_stmt_limit	: 	LIMIT	NAME	stmt_expr	close_scope_limit
+			{
+				$$ = objref_stmt_alloc(&@$);
+				$$->objref.type = NFT_OBJECT_LIMIT;
+				$$->objref.expr = $3;
+			}
+			;
+
+objref_stmt_quota	:	QUOTA	NAME	stmt_expr	close_scope_quota
+			{
+				$$ = objref_stmt_alloc(&@$);
+				$$->objref.type = NFT_OBJECT_QUOTA;
+				$$->objref.expr = $3;
+			}
+			;
+
+objref_stmt_synproxy	: 	SYNPROXY	NAME	stmt_expr close_scope_synproxy
+			{
+				$$ = objref_stmt_alloc(&@$);
+				$$->objref.type = NFT_OBJECT_SYNPROXY;
+				$$->objref.expr = $3;
+			}
+			;
+
+objref_stmt_ct		:	CT	TIMEOUT		SET	stmt_expr	close_scope_ct
+			{
+				$$ = objref_stmt_alloc(&@$);
+				$$->objref.type = NFT_OBJECT_CT_TIMEOUT;
+				$$->objref.expr = $4;
+
+			}
+			|	CT	EXPECTATION	SET	stmt_expr	close_scope_ct
+			{
+				$$ = objref_stmt_alloc(&@$);
+				$$->objref.type = NFT_OBJECT_CT_EXPECT;
+				$$->objref.expr = $4;
+			}
+			;
+
+objref_stmt		:	objref_stmt_counter
+			|	objref_stmt_limit
+			|	objref_stmt_quota
+			|	objref_stmt_synproxy
+			|	objref_stmt_ct
+			;
+
 stateful_stmt		:	counter_stmt	close_scope_counter
 			|	limit_stmt
 			|	quota_stmt
@@ -3080,6 +3137,7 @@ stmt			:	verdict_stmt
 			|	chain_stmt
 			|	optstrip_stmt
 			|	xt_stmt		close_scope_xt
+			|	objref_stmt
 			;
 
 xt_stmt			:	XT	STRING	string
@@ -3169,12 +3227,6 @@ counter_stmt_alloc	:	COUNTER
 			{
 				$$ = counter_stmt_alloc(&@$);
 			}
-			|	COUNTER		NAME	stmt_expr
-			{
-				$$ = objref_stmt_alloc(&@$);
-				$$->objref.type = NFT_OBJECT_COUNTER;
-				$$->objref.expr = $3;
-			}
 			;
 
 counter_args		:	counter_arg
@@ -3186,10 +3238,12 @@ counter_args		:	counter_arg
 
 counter_arg		:	PACKETS			NUM
 			{
+				assert($<stmt>0->ops->type == STMT_COUNTER);
 				$<stmt>0->counter.packets = $2;
 			}
 			|	BYTES			NUM
 			{
+				assert($<stmt>0->ops->type == STMT_COUNTER);
 				$<stmt>0->counter.bytes	 = $2;
 			}
 			;
@@ -3470,12 +3524,6 @@ limit_stmt		:	LIMIT	RATE	limit_mode	limit_rate_pkts	limit_burst_pkts	close_scope
 				$$->limit.type	= NFT_LIMIT_PKT_BYTES;
 				$$->limit.flags = $3;
 			}
-			|	LIMIT	NAME	stmt_expr	close_scope_limit
-			{
-				$$ = objref_stmt_alloc(&@$);
-				$$->objref.type = NFT_OBJECT_LIMIT;
-				$$->objref.expr = $3;
-			}
 			;
 
 quota_mode		:	OVER		{ $$ = NFT_QUOTA_F_INV; }
@@ -3518,12 +3566,6 @@ quota_stmt		:	QUOTA	quota_mode NUM quota_unit quota_used	close_scope_quota
 				$$->quota.bytes	= $3 * rate;
 				$$->quota.used = $5;
 				$$->quota.flags	= $2;
-			}
-			|	QUOTA	NAME	stmt_expr	close_scope_quota
-			{
-				$$ = objref_stmt_alloc(&@$);
-				$$->objref.type = NFT_OBJECT_QUOTA;
-				$$->objref.expr = $3;
 			}
 			;
 
@@ -3714,12 +3756,6 @@ synproxy_stmt		:	synproxy_stmt_alloc
 synproxy_stmt_alloc	:	SYNPROXY
 			{
 				$$ = synproxy_stmt_alloc(&@$);
-			}
-			|	SYNPROXY	NAME	stmt_expr
-			{
-				$$ = objref_stmt_alloc(&@$);
-				$$->objref.type = NFT_OBJECT_SYNPROXY;
-				$$->objref.expr = $3;
 			}
 			;
 
@@ -5532,19 +5568,6 @@ ct_stmt			:	CT	ct_key		SET	stmt_expr	close_scope_ct
 					$$ = ct_stmt_alloc(&@$, $2, -1, $4);
 					break;
 				}
-			}
-			|	CT	TIMEOUT		SET	stmt_expr	close_scope_ct
-			{
-				$$ = objref_stmt_alloc(&@$);
-				$$->objref.type = NFT_OBJECT_CT_TIMEOUT;
-				$$->objref.expr = $4;
-
-			}
-			|	CT	EXPECTATION	SET	stmt_expr	close_scope_ct
-			{
-				$$ = objref_stmt_alloc(&@$);
-				$$->objref.type = NFT_OBJECT_CT_EXPECT;
-				$$->objref.expr = $4;
 			}
 			|	CT	ct_dir	ct_key_dir_optional SET	stmt_expr	close_scope_ct
 			{
