@@ -1971,7 +1971,7 @@ table_block		:	/* empty */	{ $$ = $<table>-1; }
 				list_add_tail(&$4->list, &$1->objs);
 				$$ = $1;
 			}
-			|	table_block	CT	HELPER	obj_identifier  obj_block_alloc '{'     ct_helper_block     '}' close_scope_ct stmt_separator
+			|	table_block	CT	HELPER	obj_identifier  obj_block_alloc '{'     ct_helper_block     '}' stmt_separator close_scope_ct
 			{
 				$5->location = @4;
 				$5->type = NFT_OBJECT_CT_HELPER;
@@ -1980,7 +1980,7 @@ table_block		:	/* empty */	{ $$ = $<table>-1; }
 				list_add_tail(&$5->list, &$1->objs);
 				$$ = $1;
 			}
-			|	table_block	CT	TIMEOUT obj_identifier obj_block_alloc '{'	ct_timeout_block	'}' close_scope_ct stmt_separator
+			|	table_block	CT	TIMEOUT obj_identifier obj_block_alloc '{'	ct_timeout_block	'}' stmt_separator close_scope_ct
 			{
 				$5->location = @4;
 				$5->type = NFT_OBJECT_CT_TIMEOUT;
@@ -1989,7 +1989,7 @@ table_block		:	/* empty */	{ $$ = $<table>-1; }
 				list_add_tail(&$5->list, &$1->objs);
 				$$ = $1;
 			}
-			|	table_block	CT	EXPECTATION obj_identifier obj_block_alloc '{'	ct_expect_block	'}' close_scope_ct stmt_separator
+			|	table_block	CT	EXPECTATION obj_identifier obj_block_alloc '{'	ct_expect_block	'}' stmt_separator close_scope_ct
 			{
 				$5->location = @4;
 				$5->type = NFT_OBJECT_CT_EXPECT;
@@ -4827,16 +4827,23 @@ ct_l4protoname		:	TCP	close_scope_tcp	{ $$ = IPPROTO_TCP; }
 			|	UDP	close_scope_udp	{ $$ = IPPROTO_UDP; }
 			;
 
-ct_helper_config		:	TYPE	QUOTED_STRING	PROTOCOL	ct_l4protoname	stmt_separator	close_scope_type
+ct_helper_config	:	TYPE	QUOTED_STRING	PROTOCOL	ct_l4protoname	stmt_separator	close_scope_type
 			{
 				struct ct_helper *ct;
 				int ret;
 
 				ct = &$<obj>0->ct_helper;
 
+				if (ct->l4proto) {
+					erec_queue(error(&@2, "You can only specify this once. This statement is already set for %s.", ct->name), state->msgs);
+					free_const($2);
+					YYERROR;
+				}
+
 				ret = snprintf(ct->name, sizeof(ct->name), "%s", $2);
 				if (ret <= 0 || ret >= (int)sizeof(ct->name)) {
 					erec_queue(error(&@2, "invalid name '%s', max length is %u\n", $2, (int)sizeof(ct->name)), state->msgs);
+					free_const($2);
 					YYERROR;
 				}
 				free_const($2);
