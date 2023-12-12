@@ -5627,6 +5627,13 @@ payload_expr		:	payload_raw_expr
 
 payload_raw_expr	:	AT	payload_base_spec	COMMA	NUM	COMMA	NUM	close_scope_at
 			{
+				if ($6 > NFT_MAX_EXPR_LEN_BITS) {
+					erec_queue(error(&@1, "raw payload length %u exceeds upper limit of %u",
+							 $6, NFT_MAX_EXPR_LEN_BITS),
+							 state->msgs);
+					YYERROR;
+				}
+
 				$$ = payload_expr_alloc(&@$, NULL, 0);
 				payload_init_raw($$, $2, $4, $6);
 				$$->byteorder		= BYTEORDER_BIG_ENDIAN;
