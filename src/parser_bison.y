@@ -173,6 +173,24 @@ static struct expr *ifname_expr_alloc(const struct location *location,
 	return expr;
 }
 
+static void timeout_state_free(struct timeout_state *s)
+{
+	free_const(s->timeout_str);
+	free(s);
+}
+
+static void timeout_states_free(struct list_head *list)
+{
+	struct timeout_state *ts, *next;
+
+	list_for_each_entry_safe(ts, next, list, head) {
+		list_del(&ts->head);
+		timeout_state_free(ts);
+	}
+
+	free(list);
+}
+
 #define YYLLOC_DEFAULT(Current, Rhs, N)	location_update(&Current, Rhs, N)
 
 #define symbol_value(loc, str) \
@@ -230,6 +248,7 @@ int nft_lex(void *, void *, void *);
 		uint16_t kind; /* must allow > 255 for SACK1, 2.. hack */
 		uint8_t field;
 	} tcp_kind_field;
+	struct timeout_state	*timeout_state;
 }
 
 %token TOKEN_EOF 0		"end of file"
@@ -969,8 +988,11 @@ int nft_lex(void *, void *, void *);
 
 %type <val>			ct_l4protoname ct_obj_type ct_cmd_type
 
-%type <list>			timeout_states timeout_state
-%destructor { free($$); }	timeout_states timeout_state
+%type <timeout_state>		timeout_state
+%destructor { timeout_state_free($$); }		timeout_state
+
+%type <list>			timeout_states
+%destructor { timeout_states_free($$); }	timeout_states
 
 %type <val>			xfrm_state_key	xfrm_state_proto_key xfrm_dir	xfrm_spnum
 %type <expr>			xfrm_expr
@@ -4902,11 +4924,11 @@ timeout_states		:	timeout_state
 			{
 				$$ = xmalloc(sizeof(*$$));
 				init_list_head($$);
-				list_add_tail($1, $$);
+				list_add_tail(&$1->head, $$);
 			}
 			|	timeout_states	COMMA	timeout_state
 			{
-				list_add_tail($3, $1);
+				list_add_tail(&$3->head, $1);
 				$$ = $1;
 			}
 			;
@@ -4920,7 +4942,7 @@ timeout_state		:	STRING	COLON	time_spec_or_num_s
 				ts->timeout_value = $3;
 				ts->location = @1;
 				init_list_head(&ts->head);
-				$$ = &ts->head;
+				$$ = ts;
 			}
 			;
 
