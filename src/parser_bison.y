@@ -2513,6 +2513,7 @@ ct_timeout_block	:	/*empty */
 			{
 				$$ = $<obj>-1;
 				init_list_head(&$$->ct_timeout.timeout_list);
+				$$->type = NFT_OBJECT_CT_TIMEOUT;
 			}
 			|	ct_timeout_block     common_block
 			|	ct_timeout_block     stmt_separator
