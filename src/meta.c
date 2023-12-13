@@ -62,50 +62,39 @@ static struct error_record *tchandle_type_parse(struct parse_ctx *ctx,
 						struct expr **res)
 {
 	uint32_t handle;
-	char *str = NULL;
 
 	if (strcmp(sym->identifier, "root") == 0)
 		handle = TC_H_ROOT;
 	else if (strcmp(sym->identifier, "none") == 0)
 		handle = TC_H_UNSPEC;
 	else if (strchr(sym->identifier, ':')) {
+		char *colon, *end;
 		uint32_t tmp;
-		char *colon;
-
-		str = xstrdup(sym->identifier);
-
-		colon = strchr(str, ':');
-		if (!colon)
-			goto err;
-
-		*colon = '\0';
 
 		errno = 0;
-		tmp = strtoull(str, NULL, 16);
-		if (errno != 0)
+		tmp = strtoul(sym->identifier, &colon, 16);
+		if (errno != 0 || sym->identifier == colon)
 			goto err;
 
-		handle = (tmp << 16);
-		if (str[strlen(str) - 1] == ':')
-			goto out;
+		if (*colon != ':')
+			goto err;
 
+		handle = tmp << 16;
 		errno = 0;
-		tmp = strtoull(colon + 1, NULL, 16);
-		if (errno != 0)
+		tmp = strtoul(colon + 1, &end, 16);
+		if (errno != 0 || *end)
 			goto err;
 
 		handle |= tmp;
 	} else {
 		handle = strtoull(sym->identifier, NULL, 0);
 	}
-out:
-	free(str);
+
 	*res = constant_expr_alloc(&sym->location, sym->dtype,
 				   BYTEORDER_HOST_ENDIAN,
 				   sizeof(handle) * BITS_PER_BYTE, &handle);
 	return NULL;
 err:
-	free(str);
 	return error(&sym->location, "Could not parse %s", sym->dtype->desc);
 }
 
