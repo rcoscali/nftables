@@ -465,10 +465,13 @@ static void netlink_gen_range(const struct expr *expr,
 static void netlink_gen_prefix(const struct expr *expr,
 			       struct nft_data_linearize *nld)
 {
-	unsigned int len = div_round_up(expr->len, BITS_PER_BYTE) * 2;
-	unsigned char data[len];
+	unsigned int len = (netlink_padded_len(expr->len) / BITS_PER_BYTE) * 2;
+	unsigned char data[NFT_MAX_EXPR_LEN_BYTES];
 	int offset;
 	mpz_t v;
+
+	if (len > sizeof(data))
+		BUG("Value export of %u bytes would overflow", len);
 
 	offset = netlink_export_pad(data, expr->prefix->value, expr);
 	mpz_init_bitmask(v, expr->len - expr->prefix_len);
