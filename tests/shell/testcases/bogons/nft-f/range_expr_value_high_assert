@@ -1,0 +1,12 @@
+table inet t {
+	set s3 {
+		type inet_proto
+		flags interval
+		elements = { 100-11.0.0.0, }
+	}
+	set s3 {
+		type ipv4_addr
+		flags interval
+		elements = { 100-11.0.0.0, }
+	}
+}
