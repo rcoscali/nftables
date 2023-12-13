@@ -708,6 +708,8 @@ int nft_lex(void *, void *, void *);
 %type <val>			family_spec family_spec_explicit
 %type <val32>			int_num	chain_policy
 %type <prio_spec>		extended_prio_spec prio_spec
+%destructor { expr_free($$.expr); } extended_prio_spec prio_spec
+
 %type <string>			extended_prio_name quota_unit	basehook_device_name
 %destructor { free_const($$); }	extended_prio_name quota_unit	basehook_device_name
 
@@ -2615,6 +2617,9 @@ hook_spec		:	TYPE		close_scope_type	STRING		HOOK		STRING		dev_spec	prio_spec
 					erec_queue(error(&@3, "unknown chain type"),
 						   state->msgs);
 					free_const($3);
+					free_const($5);
+					expr_free($6);
+					expr_free($7.expr);
 					YYERROR;
 				}
 				$<chain>0->type.loc = @3;
@@ -2628,6 +2633,8 @@ hook_spec		:	TYPE		close_scope_type	STRING		HOOK		STRING		dev_spec	prio_spec
 					erec_queue(error(&@5, "unknown chain hook"),
 						   state->msgs);
 					free_const($5);
+					expr_free($6);
+					expr_free($7.expr);
 					YYERROR;
 				}
 				free_const($5);
