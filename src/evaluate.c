@@ -2041,6 +2041,9 @@ static int expr_evaluate_map(struct eval_ctx *ctx, struct expr **expr)
 		break;
 	case EXPR_SET_REF:
 		/* symbol has been already evaluated to set reference */
+		if (!set_is_map(mappings->set->flags))
+			return expr_error(ctx->msgs, map->mappings,
+					  "Expression is not a map");
 		break;
 	default:
 		return expr_binary_error(ctx->msgs, map->mappings, map->map,
@@ -3968,6 +3971,12 @@ static bool nat_concat_map(struct eval_ctx *ctx, struct stmt *stmt)
 		/* expr_evaluate_map() see EXPR_SET_REF after this evaluation. */
 		if (expr_evaluate(ctx, &stmt->nat.addr->mappings))
 			return false;
+
+		if (!set_is_datamap(stmt->nat.addr->mappings->set->flags)) {
+			expr_error(ctx->msgs, stmt->nat.addr->mappings,
+					  "Expression is not a map");
+			return false;
+		}
 
 		if (stmt->nat.addr->mappings->set->data->etype == EXPR_CONCAT ||
 		    stmt->nat.addr->mappings->set->data->dtype->subtypes) {
