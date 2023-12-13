@@ -1395,6 +1395,7 @@ delete_cmd		:	TABLE		table_or_id_spec
 			{
 				$5->location = @5;
 				handle_merge(&$3->handle, &$2);
+				close_scope(state);
 				$$ = cmd_alloc(CMD_DELETE, CMD_OBJ_CHAIN, &$2, &@$, $5);
 			}
 			|	RULE		ruleid_spec
