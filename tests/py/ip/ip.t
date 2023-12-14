@@ -133,3 +133,5 @@ ip saddr . ip daddr vmap { 192.168.5.1-192.168.5.128 . 192.168.6.1-192.168.6.128
 
 ip saddr 1.2.3.4 ip daddr 3.4.5.6;ok
 ip saddr 1.2.3.4 counter ip daddr 3.4.5.6;ok
+
+ip dscp 1/6;ok;ip dscp & 0x3f == lephb

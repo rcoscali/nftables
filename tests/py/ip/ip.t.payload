@@ -556,3 +556,11 @@ ip test-ip4 input
   [ counter pkts 0 bytes 0 ]
   [ payload load 4b @ network header + 16 => reg 1 ]
   [ cmp eq reg 1 0x06050403 ]
+
+# ip dscp 1/6
+ip test-ip4 input
+  [ payload load 1b @ network header + 1 => reg 1 ]
+  [ bitwise reg 1 = ( reg 1 & 0x000000fc ) ^ 0x00000000 ]
+  [ bitwise reg 1 = ( reg 1 >> 0x00000002 ) ]
+  [ bitwise reg 1 = ( reg 1 & 0x0000003f ) ^ 0x00000000 ]
+  [ cmp eq reg 1 0x00000001 ]

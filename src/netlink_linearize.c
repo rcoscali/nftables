@@ -460,7 +460,8 @@ static struct expr *netlink_gen_prefix(struct netlink_linearize_ctx *ctx,
 	mpz_init(mask);
 	mpz_prefixmask(mask, expr->right->len, expr->right->prefix_len);
 	netlink_gen_raw_data(mask, expr->right->byteorder,
-			     expr->right->len / BITS_PER_BYTE, &nld);
+			     div_round_up(expr->right->len, BITS_PER_BYTE),
+			     &nld);
 	mpz_clear(mask);
 
 	zero.len = nld.len;
