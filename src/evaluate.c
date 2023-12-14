@@ -4768,9 +4768,6 @@ static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 		existing_set = set_cache_find(table, set->handle.set.name);
 		if (!existing_set)
 			set_cache_add(set_get(set), table);
-		else if (!datatype_equal(existing_set->key->dtype, set->key->dtype))
-			return set_error(ctx, set, "%s definition has conflicting key (%s vs %s)\n",
-					 type, set->key->dtype->name, existing_set->key->dtype->name);
 
 		if (existing_set && existing_set->flags & NFT_SET_EVAL) {
 			uint32_t existing_flags = existing_set->flags & ~NFT_SET_EVAL;
