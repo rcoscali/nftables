@@ -3024,14 +3024,27 @@ static bool stmt_evaluate_payload_need_csum(const struct expr *payload)
 static int stmt_evaluate_exthdr(struct eval_ctx *ctx, struct stmt *stmt)
 {
 	struct expr *exthdr;
+	int ret;
 
 	if (__expr_evaluate_exthdr(ctx, &stmt->exthdr.expr) < 0)
 		return -1;
 
 	exthdr = stmt->exthdr.expr;
-	return stmt_evaluate_arg(ctx, stmt, exthdr->dtype, exthdr->len,
-				 BYTEORDER_BIG_ENDIAN,
-				 &stmt->exthdr.val);
+	ret = stmt_evaluate_arg(ctx, stmt, exthdr->dtype, exthdr->len,
+				BYTEORDER_BIG_ENDIAN,
+				&stmt->exthdr.val);
+	if (ret < 0)
+		return ret;
+
+	switch (stmt->exthdr.val->etype) {
+	case EXPR_RANGE:
+		return expr_error(ctx->msgs, stmt->exthdr.val,
+				   "cannot be a range");
+	default:
+		break;
+	}
+
+	return 0;
 }
 
 static int stmt_evaluate_payload(struct eval_ctx *ctx, struct stmt *stmt)
