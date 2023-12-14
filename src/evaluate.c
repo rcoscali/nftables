@@ -3590,6 +3590,13 @@ static int stmt_evaluate_reject_icmp(struct eval_ctx *ctx, struct stmt *stmt)
 		erec_queue(erec, ctx->msgs);
 		return -1;
 	}
+
+	if (mpz_cmp_ui(code->value, UINT8_MAX) > 0) {
+		expr_free(code);
+		return expr_error(ctx->msgs, stmt->reject.expr,
+				  "reject code must be integer in range 0-255");
+	}
+
 	stmt->reject.icmp_code = mpz_get_uint8(code->value);
 	expr_free(code);
 
