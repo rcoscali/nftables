@@ -224,7 +224,7 @@ struct expr *tcpopt_expr_alloc(const struct location *loc,
 	}
 
 	tmpl = &desc->templates[field];
-	if (!tmpl)
+	if (!tmpl || !tmpl->dtype)
 		return NULL;
 
 	expr = expr_alloc(loc, EXPR_EXTHDR, tmpl->dtype,
