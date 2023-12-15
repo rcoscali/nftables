@@ -855,19 +855,47 @@ const struct datatype inet_service_type = {
 
 #define RT_SYM_TAB_INITIAL_SIZE		16
 
+static FILE *open_iproute2_db(const char *filename, char **path)
+{
+	FILE *ret;
+
+	if (filename[0] == '/')
+		return fopen(filename, "r");
+
+	if (asprintf(path, "/etc/iproute2/%s", filename) == -1)
+		goto fail;
+
+	ret = fopen(*path, "r");
+	if (ret)
+		return ret;
+
+	free(*path);
+	if (asprintf(path, "/usr/share/iproute2/%s", filename) == -1)
+		goto fail;
+
+	ret = fopen(*path, "r");
+	if (ret)
+		return ret;
+
+	free(*path);
+fail:
+	*path = NULL;
+	return NULL;
+}
+
 struct symbol_table *rt_symbol_table_init(const char *filename)
 {
+	char buf[512], namebuf[512], *p, *path = NULL;
 	struct symbolic_constant s;
 	struct symbol_table *tbl;
 	unsigned int size, nelems, val;
-	char buf[512], namebuf[512], *p;
 	FILE *f;
 
 	size = RT_SYM_TAB_INITIAL_SIZE;
 	tbl = xmalloc(sizeof(*tbl) + size * sizeof(s));
 	nelems = 0;
 
-	f = fopen(filename, "r");
+	f = open_iproute2_db(filename, &path);
 	if (f == NULL)
 		goto out;
 
@@ -882,7 +910,7 @@ struct symbol_table *rt_symbol_table_init(const char *filename)
 		    sscanf(p, "%u %511s\n", &val, namebuf) != 2 &&
 		    sscanf(p, "%u %511s #", &val, namebuf) != 2) {
 			fprintf(stderr, "iproute database '%s' corrupted\n",
-				filename);
+				path ?: filename);
 			break;
 		}
 
@@ -899,6 +927,8 @@ struct symbol_table *rt_symbol_table_init(const char *filename)
 
 	fclose(f);
 out:
+	if (path)
+		free(path);
 	tbl->symbols[nelems] = SYMBOL_LIST_END;
 	return tbl;
 }
@@ -914,7 +944,7 @@ void rt_symbol_table_free(const struct symbol_table *tbl)
 
 void mark_table_init(struct nft_ctx *ctx)
 {
-	ctx->output.tbl.mark = rt_symbol_table_init("/etc/iproute2/rt_marks");
+	ctx->output.tbl.mark = rt_symbol_table_init("rt_marks");
 }
 
 void mark_table_exit(struct nft_ctx *ctx)

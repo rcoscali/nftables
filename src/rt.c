@@ -25,7 +25,7 @@
 
 void realm_table_rt_init(struct nft_ctx *ctx)
 {
-	ctx->output.tbl.realm = rt_symbol_table_init("/etc/iproute2/rt_realms");
+	ctx->output.tbl.realm = rt_symbol_table_init("rt_realms");
 }
 
 void realm_table_rt_exit(struct nft_ctx *ctx)

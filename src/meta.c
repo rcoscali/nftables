@@ -325,7 +325,7 @@ const struct datatype pkttype_type = {
 
 void devgroup_table_init(struct nft_ctx *ctx)
 {
-	ctx->output.tbl.devgroup = rt_symbol_table_init("/etc/iproute2/group");
+	ctx->output.tbl.devgroup = rt_symbol_table_init("group");
 }
 
 void devgroup_table_exit(struct nft_ctx *ctx)
