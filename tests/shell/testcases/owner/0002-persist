@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# NFT_TEST_REQUIRES(NFT_TEST_HAVE_table_flag_owner)
+# NFT_TEST_REQUIRES(NFT_TEST_HAVE_table_flag_persist)
+
+die() {
+	echo "$@"
+	exit 1
+}
+
+$NFT -f - <<EOF
+table ip t {
+	flags owner, persist
+}
+EOF
+[[ $? -eq 0 ]] || {
+	die "table add failed"
+}
+
+$NFT list ruleset | grep -q 'table ip t' || {
+	die "table does not persist"
+}
+$NFT list ruleset | grep -q 'flags persist$' || {
+	die "unexpected flags in orphaned table"
+}
+
+$NFT -f - <<EOF
+table ip t {
+	flags owner, persist
+}
+EOF
+[[ $? -eq 0 ]] || {
+	die "retake ownership failed"
+}
+
+exit 0

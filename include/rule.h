@@ -130,10 +130,12 @@ struct symbol *symbol_get(const struct scope *scope, const char *identifier);
 enum table_flags {
 	TABLE_F_DORMANT		= (1 << 0),
 	TABLE_F_OWNER		= (1 << 1),
+	TABLE_F_PERSIST		= (1 << 2),
 };
-#define TABLE_FLAGS_MAX		2
+#define TABLE_FLAGS_MAX		3
 
 const char *table_flag_name(uint32_t flag);
+unsigned int parse_table_flag(const char *name);
 
 /**
  * struct table - nftables table

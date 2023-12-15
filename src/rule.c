@@ -1215,6 +1215,7 @@ struct table *table_lookup_fuzzy(const struct handle *h,
 static const char *table_flags_name[TABLE_FLAGS_MAX] = {
 	"dormant",
 	"owner",
+	"persist",
 };
 
 const char *table_flag_name(uint32_t flag)
@@ -1223,6 +1224,17 @@ const char *table_flag_name(uint32_t flag)
 		return "unknown";
 
 	return table_flags_name[flag];
+}
+
+unsigned int parse_table_flag(const char *name)
+{
+	int i;
+
+	for (i = 0; i < TABLE_FLAGS_MAX; i++) {
+		if (!strcmp(name, table_flags_name[i]))
+			return 1 << i;
+	}
+	return 0;
 }
 
 static void table_print_flags(const struct table *table, const char **delim,

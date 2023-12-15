@@ -2966,6 +2966,45 @@ static struct stmt *json_parse_stmt(struct json_ctx *ctx, json_t *root)
 	return NULL;
 }
 
+static int json_parse_table_flags(struct json_ctx *ctx, json_t *root,
+				  enum table_flags *flags)
+{
+	json_t *tmp, *tmp2;
+	size_t index;
+	int flag;
+
+	if (json_unpack(root, "{s:o}", "flags", &tmp))
+		return 0;
+
+	if (json_is_string(tmp)) {
+		flag = parse_table_flag(json_string_value(tmp));
+		if (flag) {
+			*flags = flag;
+			return 0;
+		}
+		json_error(ctx, "Invalid table flag '%s'.",
+			   json_string_value(tmp));
+		return 1;
+	}
+	if (!json_is_array(tmp)) {
+		json_error(ctx, "Unexpected table flags value.");
+		return 1;
+	}
+	json_array_foreach(tmp, index, tmp2) {
+		if (json_is_string(tmp2)) {
+			flag = parse_table_flag(json_string_value(tmp2));
+
+			if (flag) {
+				*flags |= flag;
+				continue;
+			}
+		}
+		json_error(ctx, "Invalid table flag at index %zu.", index);
+		return 1;
+	}
+	return 0;
+}
+
 static struct cmd *json_parse_cmd_add_table(struct json_ctx *ctx, json_t *root,
 					    enum cmd_ops op, enum cmd_obj obj)
 {
@@ -2974,6 +3013,7 @@ static struct cmd *json_parse_cmd_add_table(struct json_ctx *ctx, json_t *root,
 		.table.location = *int_loc,
 	};
 	struct table *table = NULL;
+	enum table_flags flags = 0;
 
 	if (json_unpack_err(ctx, root, "{s:s}",
 			    "family", &family))
@@ -2984,6 +3024,9 @@ static struct cmd *json_parse_cmd_add_table(struct json_ctx *ctx, json_t *root,
 			return NULL;
 
 		json_unpack(root, "{s:s}", "comment", &comment);
+		if (json_parse_table_flags(ctx, root, &flags))
+			return NULL;
+
 	} else if (op == CMD_DELETE &&
 		   json_unpack(root, "{s:s}", "name", &h.table.name) &&
 		   json_unpack(root, "{s:I}", "handle", &h.handle.id)) {
@@ -2997,10 +3040,12 @@ static struct cmd *json_parse_cmd_add_table(struct json_ctx *ctx, json_t *root,
 	if (h.table.name)
 		h.table.name = xstrdup(h.table.name);
 
-	if (comment) {
+	if (comment || flags) {
 		table = table_alloc();
 		handle_merge(&table->handle, &h);
-		table->comment = xstrdup(comment);
+		if (comment)
+			table->comment = xstrdup(comment);
+		table->flags = flags;
 	}
 
 	if (op == CMD_ADD)

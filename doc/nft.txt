@@ -343,7 +343,16 @@ return an error.
 |Flag | Description
 |dormant |
 table is not evaluated any more (base chains are unregistered).
+|owner |
+table is owned by the creating process.
+|persist |
+table shall outlive the owning process.
 |=================
+
+Creating a table with flag *owner* excludes other processes from manipulating
+it or its contents. By default, it will be removed when the process exits.
+Setting flag *persist* will prevent this and the resulting orphaned table will
+accept a new owner, e.g. a restarting daemon maintaining the table.
 
 .*Add, change, delete a table*
 ---------------------------------------

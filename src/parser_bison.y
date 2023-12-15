@@ -742,6 +742,8 @@ int nft_lex(void *, void *, void *);
 %type <rule>			rule rule_alloc
 %destructor { rule_free($$); }	rule
 
+%type <val>			table_flags table_flag
+
 %type <val>			set_flag_list	set_flag
 
 %type <val>			set_policy_spec
@@ -1905,20 +1907,9 @@ table_block_alloc	:	/* empty */
 			}
 			;
 
-table_options		:	FLAGS		STRING
+table_options		:	FLAGS		table_flags
 			{
-				if (strcmp($2, "dormant") == 0) {
-					$<table>0->flags |= TABLE_F_DORMANT;
-					free_const($2);
-				} else if (strcmp($2, "owner") == 0) {
-					$<table>0->flags |= TABLE_F_OWNER;
-					free_const($2);
-				} else {
-					erec_queue(error(&@2, "unknown table option %s", $2),
-						   state->msgs);
-					free_const($2);
-					YYERROR;
-				}
+				$<table>0->flags |= $2;
 			}
 			|	comment_spec
 			{
@@ -1927,6 +1918,24 @@ table_options		:	FLAGS		STRING
 					YYERROR;
 				}
 				$<table>0->comment = $1;
+			}
+			;
+
+table_flags		:	table_flag
+			|	table_flags	COMMA	table_flag
+			{
+				$$ = $1 | $3;
+			}
+			;
+table_flag		:	STRING
+			{
+				$$ = parse_table_flag($1);
+				free_const($1);
+				if ($$ == 0) {
+					erec_queue(error(&@1, "unknown table option %s", $1),
+						   state->msgs);
+					YYERROR;
+				}
 			}
 			;
 
