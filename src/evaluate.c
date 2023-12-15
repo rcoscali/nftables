@@ -4897,7 +4897,7 @@ static bool evaluate_priority(struct eval_ctx *ctx, struct prio_spec *prio,
 			NFT_NAME_MAXLEN);
 	loc = prio->expr->location;
 
-	if (sscanf(prio_str, "%s %c %d", prio_fst, &op, &prio_snd) < 3) {
+	if (sscanf(prio_str, "%255s %c %d", prio_fst, &op, &prio_snd) < 3) {
 		priority = std_prio_lookup(prio_str, family, hook);
 		if (priority == NF_IP_PRI_LAST)
 			return false;
