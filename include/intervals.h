@@ -1,7 +1,6 @@
 #ifndef NFTABLES_INTERVALS_H
 #define NFTABLES_INTERVALS_H
 
-void set_to_range(struct expr *init);
 int set_automerge(struct list_head *msgs, struct cmd *cmd, struct set *set,
 		  struct expr *init, unsigned int debug_mask);
 int set_delete(struct list_head *msgs, struct cmd *cmd, struct set *set,

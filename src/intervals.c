@@ -13,6 +13,8 @@
 #include <intervals.h>
 #include <rule.h>
 
+static void set_to_range(struct expr *init);
+
 static void setelem_expr_to_range(struct expr *expr)
 {
 	unsigned char data[sizeof(struct in6_addr) * BITS_PER_BYTE];
@@ -215,7 +217,7 @@ static struct expr *interval_expr_key(struct expr *i)
 	return elem;
 }
 
-void set_to_range(struct expr *init)
+static void set_to_range(struct expr *init)
 {
 	struct expr *i, *elem;
 
