@@ -28,6 +28,9 @@ static void setelem_expr_to_range(struct expr *expr)
 	case EXPR_RANGE:
 		break;
 	case EXPR_PREFIX:
+		if (expr->key->prefix->etype != EXPR_VALUE)
+			BUG("Prefix for unexpected type %d", expr->key->prefix->etype);
+
 		mpz_init(rop);
 		mpz_bitmask(rop, expr->key->len - expr->key->prefix_len);
 		if (expr_basetype(expr)->type == TYPE_STRING)
