@@ -254,6 +254,11 @@ static int netlink_export_pad(unsigned char *data, const mpz_t v,
 	return netlink_padded_len(i->len) / BITS_PER_BYTE;
 }
 
+static void byteorder_switch_expr_value(mpz_t v, const struct expr *e)
+{
+	mpz_switch_byteorder(v, div_round_up(e->len, BITS_PER_BYTE));
+}
+
 static int __netlink_gen_concat_key(uint32_t flags, const struct expr *i,
 				    unsigned char *data)
 {
@@ -268,7 +273,7 @@ static int __netlink_gen_concat_key(uint32_t flags, const struct expr *i,
 
 		if (expr_basetype(expr)->type == TYPE_INTEGER &&
 		    expr->byteorder == BYTEORDER_HOST_ENDIAN)
-			mpz_switch_byteorder(expr->value, expr->len / BITS_PER_BYTE);
+			byteorder_switch_expr_value(expr->value, expr);
 
 		i = expr;
 		break;
@@ -280,7 +285,7 @@ static int __netlink_gen_concat_key(uint32_t flags, const struct expr *i,
 			mpz_init_bitmask(v, i->len - i->prefix_len);
 
 			if (i->byteorder == BYTEORDER_HOST_ENDIAN)
-				mpz_switch_byteorder(v, i->len / BITS_PER_BYTE);
+				byteorder_switch_expr_value(v, i);
 
 			mpz_add(v, i->prefix->value, v);
 			count = netlink_export_pad(data, v, i);
@@ -298,7 +303,7 @@ static int __netlink_gen_concat_key(uint32_t flags, const struct expr *i,
 		expr = (struct expr *)i;
 		if (expr_basetype(expr)->type == TYPE_INTEGER &&
 		    expr->byteorder == BYTEORDER_HOST_ENDIAN)
-			mpz_switch_byteorder(expr->value, expr->len / BITS_PER_BYTE);
+			byteorder_switch_expr_value(expr->value, expr);
 		break;
 	default:
 		BUG("invalid expression type '%s' in set", expr_ops(i)->name);
