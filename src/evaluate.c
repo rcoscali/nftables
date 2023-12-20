@@ -2140,6 +2140,11 @@ static int expr_evaluate_mapping(struct eval_ctx *ctx, struct expr **expr)
 		return expr_error(ctx->msgs, mapping->right,
 				  "Value must be a singleton");
 
+	if (set_is_objmap(set->flags) && mapping->right->etype != EXPR_VALUE)
+		return expr_error(ctx->msgs, mapping->right,
+				  "Object mapping data should be a value, not %s",
+				  expr_name(mapping->right));
+
 	mapping->flags |= EXPR_F_CONSTANT;
 	return 0;
 }
