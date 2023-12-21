@@ -1418,6 +1418,13 @@ static int expr_evaluate_binop(struct eval_ctx *ctx, struct expr **expr)
 	struct expr *op = *expr, *left, *right;
 	const char *sym = expr_op_symbols[op->op];
 	unsigned int max_shift_len = ctx->ectx.len;
+	int ret = -1;
+
+	if (ctx->recursion >= USHRT_MAX)
+		return expr_binary_error(ctx->msgs, op, NULL,
+					 "Binary operation limit %u reached ",
+					 ctx->recursion);
+	ctx->recursion++;
 
 	if (expr_evaluate(ctx, &op->left) < 0)
 		return -1;
@@ -1472,14 +1479,42 @@ static int expr_evaluate_binop(struct eval_ctx *ctx, struct expr **expr)
 	switch (op->op) {
 	case OP_LSHIFT:
 	case OP_RSHIFT:
-		return expr_evaluate_shift(ctx, expr);
+		ret = expr_evaluate_shift(ctx, expr);
+		break;
 	case OP_AND:
 	case OP_XOR:
 	case OP_OR:
-		return expr_evaluate_bitwise(ctx, expr);
+		ret = expr_evaluate_bitwise(ctx, expr);
+		break;
 	default:
 		BUG("invalid binary operation %u\n", op->op);
 	}
+
+
+	if (ctx->recursion == 0)
+		BUG("recursion counter underflow");
+
+	/* can't check earlier: evaluate functions might do constant-merging + expr_free.
+	 *
+	 * So once we've evaluate everything check for remaining length of the
+	 * binop chain.
+	 */
+	if (--ctx->recursion == 0) {
+		unsigned int to_linearize = 0;
+
+		op = *expr;
+	        while (op && op->etype == EXPR_BINOP && op->left != NULL) {
+			to_linearize++;
+			op = op->left;
+
+			if (to_linearize >= NFT_MAX_EXPR_RECURSION)
+				return expr_binary_error(ctx->msgs, op, NULL,
+							 "Binary operation limit %u reached ",
+							 NFT_MAX_EXPR_RECURSION);
+		}
+	}
+
+	return ret;
 }
 
 static int list_member_evaluate(struct eval_ctx *ctx, struct expr **expr)

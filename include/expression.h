@@ -13,6 +13,7 @@
 
 #define NFT_MAX_EXPR_LEN_BYTES (NFT_REG32_COUNT * sizeof(uint32_t))
 #define NFT_MAX_EXPR_LEN_BITS  (NFT_MAX_EXPR_LEN_BYTES * BITS_PER_BYTE)
+#define NFT_MAX_EXPR_RECURSION 16
 
 /**
  * enum expr_types

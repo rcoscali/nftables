@@ -695,10 +695,10 @@ static void netlink_gen_bitwise(struct netlink_linearize_ctx *ctx,
 				const struct expr *expr,
 				enum nft_registers dreg)
 {
+	struct expr *binops[NFT_MAX_EXPR_RECURSION];
 	struct nftnl_expr *nle;
 	struct nft_data_linearize nld;
 	struct expr *left, *i;
-	struct expr *binops[16];
 	mpz_t mask, xor, val, tmp;
 	unsigned int len;
 	int n = 0;
@@ -710,8 +710,11 @@ static void netlink_gen_bitwise(struct netlink_linearize_ctx *ctx,
 
 	binops[n++] = left = (struct expr *) expr;
 	while (left->etype == EXPR_BINOP && left->left != NULL &&
-	       (left->op == OP_AND || left->op == OP_OR || left->op == OP_XOR))
+	       (left->op == OP_AND || left->op == OP_OR || left->op == OP_XOR)) {
+		if (n == array_size(binops))
+			BUG("NFT_MAX_EXPR_RECURSION limit reached");
 		binops[n++] = left = left->left;
+	}
 
 	netlink_gen_expr(ctx, binops[--n], dreg);
 
