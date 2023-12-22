@@ -715,7 +715,8 @@ const struct datatype ip6addr_type = {
 static void inet_protocol_type_print(const struct expr *expr,
 				      struct output_ctx *octx)
 {
-	if (!nft_output_numeric_proto(octx)) {
+	if (!nft_output_numeric_proto(octx) &&
+	    mpz_cmp_ui(expr->value, UINT8_MAX) <= 0) {
 		char name[NFT_PROTONAME_MAXSIZE];
 
 		if (nft_getprotobynumber(mpz_get_uint8(expr->value), name, sizeof(name))) {
@@ -796,7 +797,8 @@ static void inet_service_print(const struct expr *expr, struct output_ctx *octx)
 
 void inet_service_type_print(const struct expr *expr, struct output_ctx *octx)
 {
-	if (nft_output_service(octx)) {
+	if (nft_output_service(octx) &&
+	    mpz_cmp_ui(expr->value, UINT16_MAX) <= 0) {
 		inet_service_print(expr, octx);
 		return;
 	}
