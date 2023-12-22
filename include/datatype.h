@@ -252,6 +252,9 @@ extern void symbol_table_print(const struct symbol_table *tbl,
 
 extern struct symbol_table *rt_symbol_table_init(const char *filename);
 extern void rt_symbol_table_free(const struct symbol_table *tbl);
+extern void rt_symbol_table_describe(struct output_ctx *octx, const char *name,
+				     const struct symbol_table *tbl,
+				     const struct datatype *type);
 
 extern const struct datatype invalid_type;
 extern const struct datatype verdict_type;

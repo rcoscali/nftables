@@ -45,10 +45,17 @@ static struct error_record *realm_type_parse(struct parse_ctx *ctx,
 	return symbolic_constant_parse(ctx, sym, ctx->tbl->realm, res);
 }
 
+static void realm_type_describe(struct output_ctx *octx)
+{
+	rt_symbol_table_describe(octx, "rt_realms",
+				 octx->tbl.realm, &realm_type);
+}
+
 const struct datatype realm_type = {
 	.type		= TYPE_REALM,
 	.name		= "realm",
 	.desc		= "routing realm",
+	.describe	= realm_type_describe,
 	.byteorder	= BYTEORDER_HOST_ENDIAN,
 	.size		= 4 * BITS_PER_BYTE,
 	.basetype	= &integer_type,

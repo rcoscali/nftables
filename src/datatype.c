@@ -946,6 +946,33 @@ void rt_symbol_table_free(const struct symbol_table *tbl)
 	free_const(tbl);
 }
 
+void rt_symbol_table_describe(struct output_ctx *octx, const char *name,
+			      const struct symbol_table *tbl,
+			      const struct datatype *type)
+{
+	char *path = NULL;
+	FILE *f;
+
+	if (!tbl || !tbl->symbols[0].identifier)
+		return;
+
+	f = open_iproute2_db(name, &path);
+	if (f)
+		fclose(f);
+	if (!path && asprintf(&path, "%s%s",
+			      name[0] == '/' ? "" : "unknown location of ",
+			      name) < 0)
+		return;
+
+	nft_print(octx, "\npre-defined symbolic constants from %s ", path);
+	if (tbl->base == BASE_DECIMAL)
+		nft_print(octx, "(in decimal):\n");
+	else
+		nft_print(octx, "(in hexadecimal):\n");
+	symbol_table_print(tbl, type, type->byteorder, octx);
+	free(path);
+}
+
 void mark_table_init(struct nft_ctx *ctx)
 {
 	ctx->output.tbl.mark = rt_symbol_table_init("rt_marks");
@@ -968,10 +995,17 @@ static struct error_record *mark_type_parse(struct parse_ctx *ctx,
 	return symbolic_constant_parse(ctx, sym, ctx->tbl->mark, res);
 }
 
+static void mark_type_describe(struct output_ctx *octx)
+{
+	rt_symbol_table_describe(octx, "rt_marks",
+				 octx->tbl.mark, &mark_type);
+}
+
 const struct datatype mark_type = {
 	.type		= TYPE_MARK,
 	.name		= "mark",
 	.desc		= "packet mark",
+	.describe	= mark_type_describe,
 	.size		= 4 * BITS_PER_BYTE,
 	.byteorder	= BYTEORDER_HOST_ENDIAN,
 	.basetype	= &integer_type,
