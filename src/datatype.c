@@ -893,6 +893,7 @@ struct symbol_table *rt_symbol_table_init(const char *filename)
 
 	size = RT_SYM_TAB_INITIAL_SIZE;
 	tbl = xmalloc(sizeof(*tbl) + size * sizeof(s));
+	tbl->base = BASE_DECIMAL;
 	nelems = 0;
 
 	f = open_iproute2_db(filename, &path);
@@ -905,10 +906,13 @@ struct symbol_table *rt_symbol_table_init(const char *filename)
 			p++;
 		if (*p == '#' || *p == '\n' || *p == '\0')
 			continue;
-		if (sscanf(p, "0x%x %511s\n", &val, namebuf) != 2 &&
-		    sscanf(p, "0x%x %511s #", &val, namebuf) != 2 &&
-		    sscanf(p, "%u %511s\n", &val, namebuf) != 2 &&
-		    sscanf(p, "%u %511s #", &val, namebuf) != 2) {
+		if (sscanf(p, "0x%x %511s\n", &val, namebuf) == 2 ||
+		    sscanf(p, "0x%x %511s #", &val, namebuf) == 2) {
+			tbl->base = BASE_HEXADECIMAL;
+		} else if (sscanf(p, "%u %511s\n", &val, namebuf) == 2 ||
+			   sscanf(p, "%u %511s #", &val, namebuf) == 2) {
+			tbl->base = BASE_DECIMAL;
+		} else {
 			fprintf(stderr, "iproute database '%s' corrupted\n",
 				path ?: filename);
 			break;
