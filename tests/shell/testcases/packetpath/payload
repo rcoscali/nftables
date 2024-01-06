@@ -102,19 +102,19 @@ table inet payload_inet {
 
 	ip netns exec "$ns1" $NFT list ruleset
 
-	ip netns exec "$ns1" nft list counter netdev payload_netdev ingress | grep -v "packets 0" > /dev/null || exit 1
-	ip netns exec "$ns1" nft list counter netdev payload_netdev mangle_ingress | grep -v "packets 0" > /dev/null || exit 1
-	ip netns exec "$ns1" nft list counter netdev payload_netdev mangle_ingress_match | grep -v "packets 0" > /dev/null || exit 1
-	ip netns exec "$ns1" nft list counter netdev payload_netdev egress | grep -v "packets 0" > /dev/null || exit 1
-	ip netns exec "$ns1" nft list counter netdev payload_netdev mangle_egress | grep -v "packets 0" > /dev/null || exit 1
-	ip netns exec "$ns1" nft list counter netdev payload_netdev mangle_egress_match | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter netdev payload_netdev ingress | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter netdev payload_netdev mangle_ingress | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter netdev payload_netdev mangle_ingress_match | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter netdev payload_netdev egress | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter netdev payload_netdev mangle_egress | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter netdev payload_netdev mangle_egress_match | grep -v "packets 0" > /dev/null || exit 1
 
-	ip netns exec "$ns1" nft list counter inet payload_inet input | grep -v "packets 0" > /dev/null || exit 1
-	ip netns exec "$ns1" nft list counter inet payload_inet mangle_input | grep -v "packets 0" > /dev/null || exit 1
-	ip netns exec "$ns1" nft list counter inet payload_inet mangle_input_match | grep -v "packets 0" > /dev/null || exit 1
-	ip netns exec "$ns1" nft list counter inet payload_inet output | grep -v "packets 0" > /dev/null || exit 1
-	ip netns exec "$ns1" nft list counter inet payload_inet mangle_output | grep -v "packets 0" > /dev/null || exit 1
-	ip netns exec "$ns1" nft list counter inet payload_inet mangle_output_match | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter inet payload_inet input | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter inet payload_inet mangle_input | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter inet payload_inet mangle_input_match | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter inet payload_inet output | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter inet payload_inet mangle_output | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter inet payload_inet mangle_output_match | grep -v "packets 0" > /dev/null || exit 1
 
 	#
 	# ... next stage
@@ -166,12 +166,12 @@ RULESET="table bridge payload_bridge {
 
 	ip netns exec "$ns1" $NFT list ruleset
 
-	ip netns exec "$ns1" nft list counter bridge payload_bridge input | grep -v "packets 0" > /dev/null || exit 1
-	ip netns exec "$ns1" nft list counter bridge payload_bridge mangle_input | grep -v "packets 0" > /dev/null || exit 1
-	ip netns exec "$ns1" nft list counter bridge payload_bridge mangle_input_match | grep -v "packets 0" > /dev/null || exit 1
-	ip netns exec "$ns1" nft list counter bridge payload_bridge output | grep -v "packets 0" > /dev/null || exit 1
-	ip netns exec "$ns1" nft list counter bridge payload_bridge mangle_output | grep -v "packets 0" > /dev/null || exit 1
-	ip netns exec "$ns1" nft list counter bridge payload_bridge mangle_output_match | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter bridge payload_bridge input | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter bridge payload_bridge mangle_input | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter bridge payload_bridge mangle_input_match | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter bridge payload_bridge output | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter bridge payload_bridge mangle_output | grep -v "packets 0" > /dev/null || exit 1
+	ip netns exec "$ns1" $NFT list counter bridge payload_bridge mangle_output_match | grep -v "packets 0" > /dev/null || exit 1
 }
 
 run_test "4" "10.141.10.2" "10.141.10.3" "24"

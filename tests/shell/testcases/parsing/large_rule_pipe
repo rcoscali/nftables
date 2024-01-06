@@ -566,6 +566,6 @@ table inet firewalld {
 	}
 }"
 
-( echo "flush ruleset;"; echo "${RULESET}" ) | nft -f -
+( echo "flush ruleset;"; echo "${RULESET}" ) | $NFT -f -
 
 exit 0
