@@ -2580,15 +2580,17 @@ static int expr_evaluate_relational(struct eval_ctx *ctx, struct expr **expr)
 		return expr_binary_error(ctx->msgs, right, left,
 					 "Cannot be used with right hand side constant value");
 
-	switch (rel->op) {
-	case OP_EQ:
-	case OP_IMPLICIT:
-	case OP_NEQ:
-		if (right->etype == EXPR_SET && right->size == 1)
-			optimize_singleton_set(rel, &right);
-		break;
-	default:
-		break;
+	if (left->etype != EXPR_CONCAT) {
+		switch (rel->op) {
+		case OP_EQ:
+		case OP_IMPLICIT:
+		case OP_NEQ:
+			if (right->etype == EXPR_SET && right->size == 1)
+				optimize_singleton_set(rel, &right);
+			break;
+		default:
+			break;
+		}
 	}
 
 	switch (rel->op) {
