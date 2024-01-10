@@ -1653,8 +1653,8 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 		if (key && expressions) {
 			if (list_is_last(&key->list, expressions))
 				runaway = true;
-
-			key = list_next_entry(key, list);
+			else
+				key = list_next_entry(key, list);
 		}
 
 		ctx->inner_desc = NULL;
