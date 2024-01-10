@@ -133,6 +133,13 @@ static struct expr *implicit_set_declaration(struct eval_ctx *ctx,
 	set->init	= expr;
 	set->automerge	= set->flags & NFT_SET_INTERVAL;
 
+	if (set_evaluate(ctx, set) < 0) {
+		if (set->flags & NFT_SET_MAP)
+			set->init = NULL;
+		set_free(set);
+		return NULL;
+	}
+
 	if (ctx->table != NULL)
 		list_add_tail(&set->list, &ctx->table->sets);
 	else {
@@ -144,8 +151,6 @@ static struct expr *implicit_set_declaration(struct eval_ctx *ctx,
 		cmd->location = set->location;
 		list_add_tail(&cmd->list, &ctx->cmd->list);
 	}
-
-	set_evaluate(ctx, set);
 
 	return set_ref_expr_alloc(&expr->location, set);
 }
@@ -2070,6 +2075,8 @@ static int expr_evaluate_map(struct eval_ctx *ctx, struct expr **expr)
 		mappings = implicit_set_declaration(ctx, "__map%d",
 						    key, data,
 						    mappings);
+		if (!mappings)
+			return -1;
 
 		if (ectx.len && mappings->set->data->len != ectx.len)
 			BUG("%d vs %d\n", mappings->set->data->len, ectx.len);
@@ -2641,6 +2648,9 @@ static int expr_evaluate_relational(struct eval_ctx *ctx, struct expr **expr)
 				implicit_set_declaration(ctx, "__set%d",
 							 expr_get(left), NULL,
 							 right);
+			if (!right)
+				return -1;
+
 			/* fall through */
 		case EXPR_SET_REF:
 			if (rel->left->etype == EXPR_CT &&
@@ -3283,6 +3293,8 @@ static int stmt_evaluate_meter(struct eval_ctx *ctx, struct stmt *stmt)
 
 	setref = implicit_set_declaration(ctx, stmt->meter.name,
 					  expr_get(key), NULL, set);
+	if (!setref)
+		return -1;
 
 	setref->set->desc.size = stmt->meter.size;
 	stmt->meter.set = setref;
@@ -4549,6 +4561,8 @@ static int stmt_evaluate_objref_map(struct eval_ctx *ctx, struct stmt *stmt)
 
 		mappings = implicit_set_declaration(ctx, "__objmap%d",
 						    key, NULL, mappings);
+		if (!mappings)
+			return -1;
 		mappings->set->objtype  = stmt->objref.type;
 
 		map->mappings = mappings;
@@ -4880,6 +4894,21 @@ static int set_evaluate(struct eval_ctx *ctx, struct set *set)
 		       sizeof(set->desc.field_len));
 		set->desc.field_count = set->key->field_count;
 		set->flags |= NFT_SET_CONCAT;
+	}
+
+	if (set_is_anonymous(set->flags) && set->key->etype == EXPR_CONCAT) {
+		struct expr *i;
+
+		list_for_each_entry(i, &set->init->expressions, list) {
+			if ((i->etype == EXPR_SET_ELEM &&
+			     i->key->etype != EXPR_CONCAT &&
+			     i->key->etype != EXPR_SET_ELEM_CATCHALL) ||
+			    (i->etype == EXPR_MAPPING &&
+			     i->left->etype == EXPR_SET_ELEM &&
+			     i->left->key->etype != EXPR_CONCAT &&
+			     i->left->key->etype != EXPR_SET_ELEM_CATCHALL))
+				return expr_error(ctx->msgs, i, "expression is not a concatenation");
+		}
 	}
 
 	if (set_is_datamap(set->flags)) {
