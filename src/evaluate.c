@@ -1593,6 +1593,11 @@ static int expr_evaluate_concat(struct eval_ctx *ctx, struct expr **expr)
 					  "cannot use %s in concatenation",
 					  expr_name(i));
 
+		if (!i->dtype)
+			return expr_error(ctx->msgs, i,
+					  "cannot use %s in concatenation, lacks datatype",
+					  expr_name(i));
+
 		flags &= i->flags;
 
 		if (!key && i->dtype->type == TYPE_INTEGER) {
