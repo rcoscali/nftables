@@ -118,11 +118,10 @@ static void payload_expr_pctx_update(struct proto_ctx *ctx,
 
 	assert(desc->base <= PROTO_BASE_MAX);
 	if (desc->base == base->base) {
-		assert(base->length > 0);
-
 		if (!left->payload.is_raw) {
 			if (desc->base == PROTO_BASE_LL_HDR &&
 			    ctx->stacked_ll_count < PROTO_CTX_NUM_PROTOS) {
+				assert(base->length > 0);
 				ctx->stacked_ll[ctx->stacked_ll_count] = base;
 				ctx->stacked_ll_count++;
 			}
