@@ -4132,22 +4132,22 @@ static int stmt_evaluate_tproxy(struct eval_ctx *ctx, struct stmt *stmt)
 		return err;
 
 	if (stmt->tproxy.addr != NULL) {
-		if (stmt->tproxy.addr->etype == EXPR_RANGE)
-			return stmt_error(ctx, stmt, "Address ranges are not supported for tproxy.");
-
 		err = stmt_evaluate_addr(ctx, stmt, &stmt->tproxy.family,
 					 &stmt->tproxy.addr);
-
 		if (err < 0)
 			return err;
+
+		if (stmt->tproxy.addr->etype == EXPR_RANGE)
+			return stmt_error(ctx, stmt, "Address ranges are not supported for tproxy.");
 	}
 
 	if (stmt->tproxy.port != NULL) {
-		if (stmt->tproxy.port->etype == EXPR_RANGE)
-			return stmt_error(ctx, stmt, "Port ranges are not supported for tproxy.");
 		err = nat_evaluate_transport(ctx, stmt, &stmt->tproxy.port);
 		if (err < 0)
 			return err;
+
+		if (stmt->tproxy.port->etype == EXPR_RANGE)
+			return stmt_error(ctx, stmt, "Port ranges are not supported for tproxy.");
 	}
 
 	return 0;
