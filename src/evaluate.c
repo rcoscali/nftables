@@ -1695,16 +1695,22 @@ static int expr_evaluate_list(struct eval_ctx *ctx, struct expr **expr)
 
 	mpz_init_set_ui(val, 0);
 	list_for_each_entry_safe(i, next, &list->expressions, list) {
-		if (list_member_evaluate(ctx, &i) < 0)
+		if (list_member_evaluate(ctx, &i) < 0) {
+			mpz_clear(val);
 			return -1;
-		if (i->etype != EXPR_VALUE)
+		}
+		if (i->etype != EXPR_VALUE) {
+			mpz_clear(val);
 			return expr_error(ctx->msgs, i,
 					  "List member must be a constant "
 					  "value");
-		if (datatype_basetype(i->dtype)->type != TYPE_BITMASK)
+		}
+		if (datatype_basetype(i->dtype)->type != TYPE_BITMASK) {
+			mpz_clear(val);
 			return expr_error(ctx->msgs, i,
 					  "Basetype of type %s is not bitmask",
 					  i->dtype->desc);
+		}
 		mpz_ior(val, val, i->value);
 	}
 
