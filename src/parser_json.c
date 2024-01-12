@@ -592,6 +592,13 @@ static struct expr *json_parse_payload_expr(struct json_ctx *ctx,
 			json_error(ctx, "Invalid payload base '%s'.", base);
 			return NULL;
 		}
+
+		if (len <= 0 || len > (int)NFT_MAX_EXPR_LEN_BITS) {
+			json_error(ctx, "Payload length must be between 0 and %lu, got %d",
+				   NFT_MAX_EXPR_LEN_BITS, len);
+			return NULL;
+		}
+
 		expr = payload_expr_alloc(int_loc, NULL, 0);
 		payload_init_raw(expr, val, offset, len);
 		expr->byteorder		= BYTEORDER_BIG_ENDIAN;
@@ -662,6 +669,12 @@ static struct expr *json_parse_tcp_option_expr(struct json_ctx *ctx,
 
 		if (kind < 0 || kind > 255)
 			return NULL;
+
+		if (len <= 0 || len > (int)NFT_MAX_EXPR_LEN_BITS) {
+			json_error(ctx, "option length must be between 0 and %lu, got %d",
+				   NFT_MAX_EXPR_LEN_BITS, len);
+			return NULL;
+		}
 
 		expr = tcpopt_expr_alloc(int_loc, kind,
 					 TCPOPT_COMMON_KIND);

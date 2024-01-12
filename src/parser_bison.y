@@ -883,6 +883,8 @@ int nft_lex(void *, void *, void *);
 %type <expr>			payload_expr payload_raw_expr
 %destructor { expr_free($$); }	payload_expr payload_raw_expr
 %type <val>			payload_base_spec
+%type <val>			payload_raw_len
+
 %type <expr>			eth_hdr_expr	vlan_hdr_expr
 %destructor { expr_free($$); }	eth_hdr_expr	vlan_hdr_expr
 %type <val>			eth_hdr_field	vlan_hdr_field
@@ -5681,15 +5683,26 @@ payload_expr		:	payload_raw_expr
 			|	gretap_hdr_expr
 			;
 
-payload_raw_expr	:	AT	payload_base_spec	COMMA	NUM	COMMA	NUM	close_scope_at
+payload_raw_len		:	NUM
 			{
-				if ($6 > NFT_MAX_EXPR_LEN_BITS) {
+				if ($1 > NFT_MAX_EXPR_LEN_BITS) {
 					erec_queue(error(&@1, "raw payload length %u exceeds upper limit of %u",
-							 $6, NFT_MAX_EXPR_LEN_BITS),
-							 state->msgs);
+							 $1, NFT_MAX_EXPR_LEN_BITS),
+						 state->msgs);
 					YYERROR;
 				}
 
+				if ($1 == 0) {
+					erec_queue(error(&@1, "raw payload length cannot be 0"), state->msgs);
+					YYERROR;
+				}
+
+				$$ = $1;
+			}
+			;
+
+payload_raw_expr	:	AT	payload_base_spec	COMMA	NUM	COMMA	payload_raw_len	close_scope_at
+			{
 				$$ = payload_expr_alloc(&@$, NULL, 0);
 				payload_init_raw($$, $2, $4, $6);
 				$$->byteorder		= BYTEORDER_BIG_ENDIAN;
@@ -5936,7 +5949,7 @@ tcp_hdr_expr		:	TCP	tcp_hdr_field
 					YYERROR;
 				}
 			}
-			|	TCP	OPTION	AT	close_scope_at	tcp_hdr_option_type	COMMA	NUM	COMMA	NUM
+			|	TCP	OPTION	AT	close_scope_at	tcp_hdr_option_type	COMMA	NUM	COMMA	payload_raw_len
 			{
 				$$ = tcpopt_expr_alloc(&@$, $5, 0);
 				tcpopt_init_raw($$, $5, $7, $9, 0);
