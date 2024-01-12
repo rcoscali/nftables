@@ -132,7 +132,7 @@ static void set_sort_splice(struct expr *init, struct set *set)
 	set_to_range(init);
 	list_expr_sort(&init->expressions);
 
-	if (!existing_set)
+	if (!existing_set || existing_set->errors)
 		return;
 
 	if (existing_set->init) {

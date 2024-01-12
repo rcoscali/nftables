@@ -4845,8 +4845,10 @@ static int elems_evaluate(struct eval_ctx *ctx, struct set *set)
 
 		__expr_set_context(&ctx->ectx, set->key->dtype,
 				   set->key->byteorder, set->key->len, 0);
-		if (expr_evaluate(ctx, &set->init) < 0)
+		if (expr_evaluate(ctx, &set->init) < 0) {
+			set->errors = true;
 			return -1;
+		}
 		if (set->init->etype != EXPR_SET)
 			return expr_error(ctx->msgs, set->init, "Set %s: Unexpected initial type %s, missing { }?",
 					  set->handle.set.name, expr_name(set->init));
