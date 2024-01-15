@@ -729,7 +729,6 @@ void chain_free(struct chain *chain)
 	list_for_each_entry_safe(rule, next, &chain->rules, list)
 		rule_free(rule);
 	handle_free(&chain->handle);
-	scope_release(&chain->scope);
 	free_const(chain->type.str);
 	expr_free(chain->dev_expr);
 	for (i = 0; i < chain->dev_array_len; i++)
@@ -738,6 +737,11 @@ void chain_free(struct chain *chain)
 	expr_free(chain->priority.expr);
 	expr_free(chain->policy);
 	free_const(chain->comment);
+
+	/* MUST be released after all expressions, they could
+	 * hold refcounts.
+	 */
+	scope_release(&chain->scope);
 	free(chain);
 }
 
