@@ -3188,6 +3188,11 @@ static int stmt_evaluate_payload(struct eval_ctx *ctx, struct stmt *stmt)
 	payload_byte_size = div_round_up(payload->len + extra_len,
 					 BITS_PER_BYTE);
 
+	if (payload_byte_size > sizeof(data))
+		return expr_error(ctx->msgs, stmt->payload.expr,
+				  "uneven load cannot span more than %u bytes, got %u",
+				  sizeof(data), payload_byte_size);
+
 	if (need_csum && payload_byte_size & 1) {
 		payload_byte_size++;
 
