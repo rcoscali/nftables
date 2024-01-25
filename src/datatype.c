@@ -1090,6 +1090,7 @@ const struct datatype icmpx_code_type = {
 void time_print(uint64_t ms, struct output_ctx *octx)
 {
 	uint64_t days, hours, minutes, seconds;
+	bool printed = false;
 
 	if (nft_output_seconds(octx)) {
 		nft_print(octx, "%" PRIu64 "s", ms / 1000);
@@ -1108,16 +1109,29 @@ void time_print(uint64_t ms, struct output_ctx *octx)
 	seconds = ms / 1000;
 	ms %= 1000;
 
-	if (days > 0)
+	if (days > 0) {
 		nft_print(octx, "%" PRIu64 "d", days);
-	if (hours > 0)
+		printed = true;
+	}
+	if (hours > 0) {
 		nft_print(octx, "%" PRIu64 "h", hours);
-	if (minutes > 0)
+		printed = true;
+	}
+	if (minutes > 0) {
 		nft_print(octx, "%" PRIu64 "m", minutes);
-	if (seconds > 0)
+		printed = true;
+	}
+	if (seconds > 0) {
 		nft_print(octx, "%" PRIu64 "s", seconds);
-	if (ms > 0)
+		printed = true;
+	}
+	if (ms > 0) {
 		nft_print(octx, "%" PRIu64 "ms", ms);
+		printed = true;
+	}
+
+	if (!printed)
+		nft_print(octx, "0s");
 }
 
 enum {
