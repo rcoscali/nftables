@@ -194,6 +194,8 @@ static json_t *set_print_json(struct output_ctx *octx, const struct set *set)
 		tmp = json_pack("i", set->gc_int / 1000);
 		json_object_set_new(root, "gc-interval", tmp);
 	}
+	if (set->automerge)
+		json_object_set_new(root, "auto-merge", json_true());
 
 	if (!nft_output_terse(octx) && set->init && set->init->size > 0) {
 		json_t *array = json_array();

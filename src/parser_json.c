@@ -3369,6 +3369,7 @@ static struct cmd *json_parse_cmd_add_set(struct json_ctx *ctx, json_t *root,
 	if (!json_unpack(root, "{s:i}", "gc-interval", &set->gc_int))
 		set->gc_int *= 1000;
 	json_unpack(root, "{s:i}", "size", &set->desc.size);
+	json_unpack(root, "{s:b}", "auto-merge", &set->automerge);
 
 	if (!json_unpack(root, "{s:o}", "stmt", &stmt_json))
 		json_parse_set_stmt_list(ctx, &set->stmt_list, stmt_json);

@@ -312,7 +312,8 @@ ____
 	"elem":* 'SET_ELEMENTS'*,
 	"timeout":* 'NUMBER'*,
 	"gc-interval":* 'NUMBER'*,
-	"size":* 'NUMBER'
+	"size":* 'NUMBER'*,
+	"auto-merge":* 'BOOLEAN'
 *}}*
 
 *{ "map": {
@@ -327,7 +328,8 @@ ____
 	"elem":* 'SET_ELEMENTS'*,
 	"timeout":* 'NUMBER'*,
 	"gc-interval":* 'NUMBER'*,
-	"size":* 'NUMBER'
+	"size":* 'NUMBER'*,
+	"auto-merge":* 'BOOLEAN'
 *}}*
 
 'SET_TYPE' := 'STRING' | *[* 'SET_TYPE_LIST' *]*
@@ -366,6 +368,8 @@ that they translate a unique key to a value.
 	Garbage collector interval in seconds.
 *size*::
 	Maximum number of elements supported.
+*auto-merge*::
+	Automatic merging of adjacent/overlapping set elements in interval sets.
 
 ==== TYPE
 The set type might be a string, such as *"ipv4_addr"* or an array
