@@ -203,8 +203,12 @@ static unsigned int evaluate_cache_list(struct nft_ctx *nft, struct cmd *cmd,
 {
 	switch (cmd->obj) {
 	case CMD_OBJ_TABLE:
-		if (filter && cmd->handle.table.name) {
+		if (filter)
 			filter->list.family = cmd->handle.family;
+		if (!cmd->handle.table.name) {
+			flags |= NFT_CACHE_TABLE;
+			break;
+		} else if (filter) {
 			filter->list.table = cmd->handle.table.name;
 		}
 		flags |= NFT_CACHE_FULL;
