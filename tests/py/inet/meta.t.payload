@@ -173,3 +173,17 @@ inet test-inet input
   [ bitwise reg 1 = ( reg 1 & 0xffffffbf ) ^ 0x00000040 ]
   [ meta set mark with reg 1 ]
 
+# ip saddr . ether saddr . meta l4proto { 1.2.3.4 . aa:bb:cc:dd:ee:ff . 6 }
+__set%d test-inet 3 size 1
+__set%d test-inet 0
+	element 04030201 ddccbbaa 0000ffee 00000006  : 0 [end]
+inet test-inet input
+  [ meta load nfproto => reg 1 ]
+  [ cmp eq reg 1 0x00000002 ]
+  [ meta load iiftype => reg 1 ]
+  [ cmp eq reg 1 0x00000001 ]
+  [ payload load 4b @ network header + 12 => reg 1 ]
+  [ payload load 6b @ link header + 6 => reg 9 ]
+  [ meta load l4proto => reg 11 ]
+  [ lookup reg 1 set __set%d ]
+

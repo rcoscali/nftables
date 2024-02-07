@@ -199,12 +199,14 @@ static int byteorder_conversion(struct eval_ctx *ctx, struct expr **expr,
 
 			assert(basetype == TYPE_INTEGER);
 
-			op = byteorder_conversion_op(i, byteorder);
-			unary = unary_expr_alloc(&i->location, op, i);
-			if (expr_evaluate(ctx, &unary) < 0)
-				return -1;
+			if (div_round_up(i->len, BITS_PER_BYTE) >= 2) {
+				op = byteorder_conversion_op(i, byteorder);
+				unary = unary_expr_alloc(&i->location, op, i);
+				if (expr_evaluate(ctx, &unary) < 0)
+					return -1;
 
-			list_replace(&i->list, &unary->list);
+				list_replace(&i->list, &unary->list);
+			}
 		}
 
 		return 0;
