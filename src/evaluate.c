@@ -6045,7 +6045,7 @@ static const char * const cmd_op_name[] = {
 
 static const char *cmd_op_to_name(enum cmd_ops op)
 {
-	if (op > CMD_DESCRIBE)
+	if (op >= array_size(cmd_op_name))
 		return "unknown";
 
 	return cmd_op_name[op];
