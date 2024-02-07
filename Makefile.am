@@ -170,7 +170,6 @@ src_libparser_la_SOURCES = \
 
 src_libparser_la_CFLAGS = \
 	$(AM_CFLAGS) \
-	-Wno-implicit-function-declaration \
 	-Wno-missing-declarations \
 	-Wno-missing-prototypes \
 	-Wno-nested-externs \
