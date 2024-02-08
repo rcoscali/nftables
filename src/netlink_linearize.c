@@ -797,6 +797,8 @@ static void netlink_gen_unary(struct netlink_linearize_ctx *ctx,
 	struct nftnl_expr *nle;
 	int byte_size;
 
+	assert(div_round_up(expr->arg->len, BITS_PER_BYTE) != 1);
+
 	if ((expr->arg->len % 64) == 0)
 		byte_size = 8;
 	else if ((expr->arg->len % 32) == 0)
