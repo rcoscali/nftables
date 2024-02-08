@@ -1,1 +1,81 @@
-{"nftables": [{"metainfo": {"version": "VERSION", "release_name": "RELEASE_NAME", "json_schema_version": 1}}, {"table": {"family": "ip", "name": "t", "handle": 0}}, {"set": {"family": "ip", "name": "s", "table": "t", "type": "ipv4_addr", "handle": 0, "size": 256, "flags": ["timeout", "dynamic"]}}, {"chain": {"family": "ip", "table": "t", "name": "c", "handle": 0}}, {"rule": {"family": "ip", "table": "t", "chain": "c", "handle": 0, "expr": [{"match": {"op": "==", "left": {"payload": {"protocol": "tcp", "field": "dport"}}, "right": 80}}, {"meter": {"key": {"payload": {"protocol": "ip", "field": "saddr"}}, "stmt": {"limit": {"rate": 10, "burst": 5, "per": "second"}}, "size": 128, "name": "m"}}]}}]}
+{
+  "nftables": [
+    {
+      "metainfo": {
+        "version": "VERSION",
+        "release_name": "RELEASE_NAME",
+        "json_schema_version": 1
+      }
+    },
+    {
+      "table": {
+        "family": "ip",
+        "name": "t",
+        "handle": 0
+      }
+    },
+    {
+      "set": {
+        "family": "ip",
+        "name": "s",
+        "table": "t",
+        "type": "ipv4_addr",
+        "handle": 0,
+        "size": 256,
+        "flags": [
+          "timeout",
+          "dynamic"
+        ]
+      }
+    },
+    {
+      "chain": {
+        "family": "ip",
+        "table": "t",
+        "name": "c",
+        "handle": 0
+      }
+    },
+    {
+      "rule": {
+        "family": "ip",
+        "table": "t",
+        "chain": "c",
+        "handle": 0,
+        "expr": [
+          {
+            "match": {
+              "op": "==",
+              "left": {
+                "payload": {
+                  "protocol": "tcp",
+                  "field": "dport"
+                }
+              },
+              "right": 80
+            }
+          },
+          {
+            "meter": {
+              "key": {
+                "payload": {
+                  "protocol": "ip",
+                  "field": "saddr"
+                }
+              },
+              "stmt": {
+                "limit": {
+                  "rate": 10,
+                  "burst": 5,
+                  "per": "second"
+                }
+              },
+              "size": 128,
+              "name": "m"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
