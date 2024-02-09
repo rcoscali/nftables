@@ -191,12 +191,7 @@ if [ "$rc_test" -eq 0 -a '(' "$DUMPGEN" = all -o "$DUMPGEN" = y ')' ] ; then
 		cat "$NFT_TEST_TESTTMPDIR/ruleset-after" > "$DUMPFILE"
 	fi
 	if [ "$NFT_TEST_HAVE_json" != n -a "$gen_jdumpfile" = y ] ; then
-		if cmp "$NFT_TEST_TESTTMPDIR/ruleset-after.json" "$JDUMPFILE" &>/dev/null ; then
-			# The .json-nft file is still the non-pretty variant. Keep it.
-			:
-		else
-			cat "$NFT_TEST_TESTTMPDIR/ruleset-after.json-pretty" > "$JDUMPFILE"
-		fi
+		cat "$NFT_TEST_TESTTMPDIR/ruleset-after.json-pretty" > "$JDUMPFILE"
 	fi
 fi
 
@@ -211,16 +206,8 @@ if [ "$rc_test" -ne 77 -a "$dump_written" != y ] ; then
 		fi
 	fi
 	if [ "$NFT_TEST_HAVE_json" != n -a -f "$JDUMPFILE" ] ; then
-		JDUMPFILE2="$NFT_TEST_TESTTMPDIR/json-nft-pretty"
-		json_pretty "$JDUMPFILE" > "$JDUMPFILE2"
-		if cmp "$JDUMPFILE" "$JDUMPFILE2" &>/dev/null ; then
-			# The .json-nft file is already prettified. We can use
-			# it directly.
-			rm -rf "$JDUMPFILE2"
-			JDUMPFILE2="$JDUMPFILE"
-		fi
-		if ! $DIFF -u "$JDUMPFILE2" "$NFT_TEST_TESTTMPDIR/ruleset-after.json-pretty" &> "$NFT_TEST_TESTTMPDIR/ruleset-diff.json" ; then
-			show_file "$NFT_TEST_TESTTMPDIR/ruleset-diff.json" "Failed \`$DIFF -u \"$JDUMPFILE2\" \"$NFT_TEST_TESTTMPDIR/ruleset-after.json-pretty\"\`" >> "$NFT_TEST_TESTTMPDIR/rc-failed-dump"
+		if ! $DIFF -u "$JDUMPFILE" "$NFT_TEST_TESTTMPDIR/ruleset-after.json-pretty" &> "$NFT_TEST_TESTTMPDIR/ruleset-diff.json" ; then
+			show_file "$NFT_TEST_TESTTMPDIR/ruleset-diff.json" "Failed \`$DIFF -u \"$JDUMPFILE\" \"$NFT_TEST_TESTTMPDIR/ruleset-after.json-pretty\"\`" >> "$NFT_TEST_TESTTMPDIR/rc-failed-dump"
 			rc_dump=1
 		else
 			rm -f "$NFT_TEST_TESTTMPDIR/ruleset-diff.json"
