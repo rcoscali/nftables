@@ -2722,10 +2722,11 @@ static struct expr *expr_postprocess_string(struct expr *expr)
 
 static void expr_postprocess_value(struct rule_pp_ctx *ctx, struct expr **exprp)
 {
+	bool interval = (ctx->set && ctx->set->flags & NFT_SET_INTERVAL);
 	struct expr *expr = *exprp;
 
 	// FIXME
-	if (expr->byteorder == BYTEORDER_HOST_ENDIAN)
+	if (expr->byteorder == BYTEORDER_HOST_ENDIAN && !interval)
 		mpz_switch_byteorder(expr->value, expr->len / BITS_PER_BYTE);
 
 	if (expr_basetype(expr)->type == TYPE_STRING)
@@ -2869,7 +2870,9 @@ static void expr_postprocess(struct rule_pp_ctx *ctx, struct expr **exprp)
 
 				datatype_set(expr->left, expr->right->dtype);
 			}
+			ctx->set = expr->right->set;
 			expr_postprocess(ctx, &expr->left);
+			ctx->set = NULL;
 			break;
 		default:
 			expr_postprocess(ctx, &expr->left);

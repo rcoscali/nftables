@@ -61,6 +61,7 @@ struct rule_pp_ctx {
 	struct dl_proto_ctx	*dl;
 	struct stmt		*stmt;
 	unsigned int		flags;
+	struct set		*set;
 };
 
 extern const struct input_descriptor indesc_netlink;
