@@ -140,8 +140,10 @@ void expr_describe(const struct expr *expr, struct output_ctx *octx)
 		nft_print(octx, "%s expression, datatype %s (%s)",
 			  expr_name(expr), dtype->name, dtype->desc);
 
-		if (dtype == &invalid_type)
+		if (dtype == &invalid_type) {
+			nft_print(octx, "\n");
 			return;
+		}
 	}
 
 	if (dtype->basetype != NULL) {
