@@ -10,3 +10,14 @@ table netdev t {
 		ether type != 8021q update @s { ether daddr . 123 timeout 1m } counter packets 0 bytes 0 return
 	}
 }
+table ip t {
+	set s {
+		typeof ipsec in reqid . iif
+		size 16
+		flags interval
+	}
+
+	chain c2 {
+		ipsec in reqid . "lo" @s
+	}
+}
