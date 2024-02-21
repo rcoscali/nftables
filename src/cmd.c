@@ -311,6 +311,12 @@ void nft_cmd_error(struct netlink_ctx *ctx, struct cmd *cmd,
 		break;
 	}
 
+	if (cmd->op == CMD_DESTROY && err->err == EINVAL) {
+		netlink_io_error(ctx, loc,
+				 "\"destroy\" command is not supported, perhaps kernel support is missing?");
+		return;
+	}
+
 	netlink_io_error(ctx, loc, "Could not process rule: %s",
 			 strerror(err->err));
 }
