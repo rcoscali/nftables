@@ -670,7 +670,7 @@ static struct expr *json_parse_tcp_option_expr(struct json_ctx *ctx,
 		if (kind < 0 || kind > 255)
 			return NULL;
 
-		if (len <= 0 || len > (int)NFT_MAX_EXPR_LEN_BITS) {
+		if (len < 0 || len > (int)NFT_MAX_EXPR_LEN_BITS) {
 			json_error(ctx, "option length must be between 0 and %lu, got %d",
 				   NFT_MAX_EXPR_LEN_BITS, len);
 			return NULL;
