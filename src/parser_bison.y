@@ -812,8 +812,8 @@ int nft_lex(void *, void *, void *);
 
 %type <expr>			symbol_expr verdict_expr integer_expr variable_expr chain_expr policy_expr
 %destructor { expr_free($$); }	symbol_expr verdict_expr integer_expr variable_expr chain_expr policy_expr
-%type <expr>			primary_expr shift_expr and_expr typeof_expr typeof_data_expr typeof_verdict_expr
-%destructor { expr_free($$); }	primary_expr shift_expr and_expr typeof_expr typeof_data_expr typeof_verdict_expr
+%type <expr>			primary_expr shift_expr and_expr typeof_expr typeof_data_expr typeof_key_expr typeof_verdict_expr
+%destructor { expr_free($$); }	primary_expr shift_expr and_expr typeof_expr typeof_data_expr typeof_key_expr typeof_verdict_expr
 %type <expr>			exclusive_or_expr inclusive_or_expr
 %destructor { expr_free($$); }	exclusive_or_expr inclusive_or_expr
 %type <expr>			basic_expr
@@ -2182,27 +2182,21 @@ set_block_alloc		:	/* empty */
 			}
 			;
 
+typeof_key_expr		:	TYPEOF	typeof_expr { $$ = $2; }
+			|	TYPE	data_type_expr close_scope_type { $$ = $2; }
+			;
+
 set_block		:	/* empty */	{ $$ = $<set>-1; }
 			|	set_block	common_block
 			|	set_block	stmt_separator
-			|	set_block	TYPE		data_type_expr	stmt_separator	close_scope_type
+			|	set_block	typeof_key_expr	stmt_separator
 			{
 				if (already_set($1->key, &@2, state)) {
-					expr_free($3);
+					expr_free($2);
 					YYERROR;
 				}
 
-				$1->key = $3;
-				$$ = $1;
-			}
-			|	set_block	TYPEOF		typeof_expr	stmt_separator
-			{
-				if (already_set($1->key, &@2, state)) {
-					expr_free($3);
-					YYERROR;
-				}
-				$1->key = $3;
-				datatype_set($1->key, $3->dtype);
+				$1->key = $2;
 				$$ = $1;
 			}
 			|	set_block	FLAGS		set_flag_list	stmt_separator
