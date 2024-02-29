@@ -2340,6 +2340,15 @@ map_block		:	/* empty */	{ $$ = $<set>-1; }
 				$1->flags  |= NFT_SET_OBJECT;
 				$$ = $1;
 			}
+			|	map_block	TYPEOF
+						typeof_expr 	COLON	map_block_obj_type
+						stmt_separator
+			{
+				$1->key = $3;
+				$1->objtype = $5;
+				$1->flags  |= NFT_SET_OBJECT;
+				$$ = $1;
+			}
 			|	map_block	FLAGS		set_flag_list	stmt_separator
 			{
 				$1->flags |= $3;
