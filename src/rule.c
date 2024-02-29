@@ -977,10 +977,11 @@ static const char *prio2str(const struct output_ctx *octx,
 			    const struct expr *expr)
 {
 	const struct prio_tag *prio_arr;
-	int std_prio, offset, prio;
+	const uint32_t reach = 10;
 	const char *std_prio_str;
-	const int reach = 10;
+	int std_prio, prio;
 	size_t i, arr_size;
+	int64_t offset;
 
 	mpz_export_data(&prio, expr->value, BYTEORDER_HOST_ENDIAN, sizeof(int));
 	if (family == NFPROTO_BRIDGE) {
@@ -995,19 +996,21 @@ static const char *prio2str(const struct output_ctx *octx,
 		for (i = 0; i < arr_size; ++i) {
 			std_prio = prio_arr[i].val;
 			std_prio_str = prio_arr[i].str;
-			if (abs(prio - std_prio) <= reach) {
+
+			offset = (int64_t)prio - std_prio;
+			if (llabs(offset) <= reach) {
 				if (!std_prio_family_hook_compat(std_prio,
 								 family, hook))
 					break;
-				offset = prio - std_prio;
+
 				strncpy(buf, std_prio_str, bufsize);
 				if (offset > 0)
 					snprintf(buf + strlen(buf),
-						 bufsize - strlen(buf), " + %d",
+						 bufsize - strlen(buf), " + %" PRIu64,
 						 offset);
 				else if (offset < 0)
 					snprintf(buf + strlen(buf),
-						 bufsize - strlen(buf), " - %d",
+						 bufsize - strlen(buf), " - %" PRIu64,
 						 -offset);
 				return buf;
 			}
