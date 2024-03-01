@@ -2329,9 +2329,16 @@ map_block		:	/* empty */	{ $$ = $<set>-1; }
 				}
 
 				$1->key = $3;
-				$1->data = $5;
 
-				$1->flags |= NFT_SET_MAP;
+				if ($5->etype == EXPR_CT && $5->ct.key == NFT_CT_HELPER) {
+					$1->objtype = NFT_OBJECT_CT_HELPER;
+					$1->flags  |= NFT_SET_OBJECT;
+					expr_free($5);
+				} else {
+					$1->data = $5;
+					$1->flags |= NFT_SET_MAP;
+				}
+
 				$$ = $1;
 			}
 			|	map_block	TYPE
