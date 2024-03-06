@@ -14,7 +14,12 @@ RULESET="
 "
 
 expected_output="table ip t {
-	meter m {
+	set s {
+		type ipv4_addr
+		size 256
+		flags dynamic,timeout
+	}
+	set m {
 		type ipv4_addr
 		size 128
 		flags dynamic

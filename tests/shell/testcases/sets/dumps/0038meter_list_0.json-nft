@@ -29,6 +29,19 @@
       }
     },
     {
+      "set": {
+        "family": "ip",
+        "name": "m",
+        "table": "t",
+        "type": "ipv4_addr",
+        "handle": 0,
+        "size": 128,
+        "flags": [
+          "dynamic"
+        ]
+      }
+    },
+    {
       "chain": {
         "family": "ip",
         "table": "t",
@@ -56,22 +69,24 @@
             }
           },
           {
-            "meter": {
-              "key": {
+            "set": {
+              "op": "add",
+              "elem": {
                 "payload": {
                   "protocol": "ip",
                   "field": "saddr"
                 }
               },
-              "stmt": {
-                "limit": {
-                  "rate": 10,
-                  "burst": 5,
-                  "per": "second"
+              "set": "@m",
+              "stmt": [
+                {
+                  "limit": {
+                    "rate": 10,
+                    "burst": 5,
+                    "per": "second"
+                  }
                 }
-              },
-              "size": 128,
-              "name": "m"
+              ]
             }
           }
         ]
