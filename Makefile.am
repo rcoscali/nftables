@@ -342,6 +342,7 @@ EXTRA_DIST += \
 CLEANFILES += doc/*~
 
 doc/nft.8: $(ASCIIDOCS)
+	mkdir -p ${builddir}/doc
 	$(AM_V_GEN)$(A2X) $(A2X_OPTS_MANPAGE) $<
 
 .adoc.3:
