@@ -1704,6 +1704,11 @@ static json_t *table_print_json_full(struct netlink_ctx *ctx,
 	tmp = table_print_json(table);
 	json_array_append_new(root, tmp);
 
+	/* both maps and rules may refer to chains, list them first */
+	list_for_each_entry(chain, &table->chain_cache.list, cache.list) {
+		tmp = chain_print_json(chain);
+		json_array_append_new(root, tmp);
+	}
 	list_for_each_entry(obj, &table->obj_cache.list, cache.list) {
 		tmp = obj_print_json(obj);
 		json_array_append_new(root, tmp);
@@ -1719,9 +1724,6 @@ static json_t *table_print_json_full(struct netlink_ctx *ctx,
 		json_array_append_new(root, tmp);
 	}
 	list_for_each_entry(chain, &table->chain_cache.list, cache.list) {
-		tmp = chain_print_json(chain);
-		json_array_append_new(root, tmp);
-
 		list_for_each_entry(rule, &chain->rules, list) {
 			tmp = rule_print_json(&ctx->nft->output, rule);
 			json_array_append_new(rules, tmp);
