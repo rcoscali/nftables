@@ -130,15 +130,15 @@ static json_t *set_stmt_list_json(const struct list_head *stmt_list,
 
 static json_t *set_print_json(struct output_ctx *octx, const struct set *set)
 {
-	json_t *root, *tmp;
-	const char *type, *datatype_ext = NULL;
+	json_t *root, *tmp, *datatype_ext = NULL;
+	const char *type;
 
 	if (set_is_datamap(set->flags)) {
 		type = "map";
-		datatype_ext = set->data->dtype->name;
+		datatype_ext = set_dtype_json(set->data);
 	} else if (set_is_objmap(set->flags)) {
 		type = "map";
-		datatype_ext = obj_type_name(set->objtype);
+		datatype_ext = json_string(obj_type_name(set->objtype));
 	} else if (set_is_meter(set->flags)) {
 		type = "meter";
 	} else {
@@ -155,7 +155,7 @@ static json_t *set_print_json(struct output_ctx *octx, const struct set *set)
 	if (set->comment)
 		json_object_set_new(root, "comment", json_string(set->comment));
 	if (datatype_ext)
-		json_object_set_new(root, "map", json_string(datatype_ext));
+		json_object_set_new(root, "map", datatype_ext);
 
 	if (!(set->flags & (NFT_SET_CONSTANT))) {
 		if (set->policy != NFT_SET_POL_PERFORMANCE) {
