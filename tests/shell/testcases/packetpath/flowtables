@@ -79,17 +79,17 @@ ip netns exec $R sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=86
 # A trick to control the timing to send a packet
 ip netns exec $S socat TCP6-LISTEN:10001 GOPEN:pipefile,ignoreeof &
 sleep 1
-ip netns exec $C socat -b 2048 PIPE:pipefile TCP:[2001:db8:ffff:22::1]:10001 &
+ip netns exec $C socat -b 2048 PIPE:/tmp/pipefile-$rnd 'TCP:[2001:db8:ffff:22::1]:10001' &
 sleep 1
 ip netns exec $R grep 'OFFLOAD' /proc/net/nf_conntrack   || { echo "check [OFFLOAD] tag (failed)"; exit 1; }
 ip netns exec $R cat /proc/net/nf_conntrack
 sleep 6
 ip netns exec $R grep 'OFFLOAD' /proc/net/nf_conntrack   && { echo "CT OFFLOAD timeout, fail back to classical path (failed)"; exit 1; }
 ip netns exec $R grep '8639[0-9]' /proc/net/nf_conntrack || { echo "check nf_conntrack_tcp_timeout_established (failed)"; exit 1; }
-ip netns exec $C echo "send sth" >> pipefile
+ip netns exec $C echo "send sth" >> /tmp/pipefile-$rnd
 ip netns exec $R grep 'OFFLOAD' /proc/net/nf_conntrack   || { echo "traffic seen, back to OFFLOAD path (failed)"; exit 1; }
 ip netns exec $C sleep 3
-ip netns exec $C echo "send sth" >> pipefile
+ip netns exec $C echo "send sth" >> /tmp/pipefile-$rnd
 ip netns exec $C sleep 3
 ip netns exec $R grep 'OFFLOAD' /proc/net/nf_conntrack   || { echo "Traffic seen in 5s (nf_flowtable_tcp_timeout), so stay in OFFLOAD (failed)"; exit 1; }
 
