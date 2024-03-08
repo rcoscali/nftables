@@ -3217,14 +3217,18 @@ static struct cmd *json_parse_cmd_add_rule(struct json_ctx *ctx, json_t *root,
 static int string_to_nft_object(const char *str)
 {
 	const char *obj_tbl[__NFT_OBJECT_MAX] = {
-		[NFT_OBJECT_COUNTER] = "counter",
-		[NFT_OBJECT_QUOTA] = "quota",
-		[NFT_OBJECT_LIMIT] = "limit",
-		[NFT_OBJECT_SECMARK] = "secmark",
+		[NFT_OBJECT_COUNTER]	= "counter",
+		[NFT_OBJECT_QUOTA]	= "quota",
+		[NFT_OBJECT_CT_HELPER]	= "ct helper",
+		[NFT_OBJECT_LIMIT]	= "limit",
+		[NFT_OBJECT_CT_TIMEOUT]	= "ct timeout",
+		[NFT_OBJECT_SECMARK]	= "secmark",
+		[NFT_OBJECT_CT_EXPECT]	= "ct expectation",
+		[NFT_OBJECT_SYNPROXY]	= "synproxy",
 	};
 	unsigned int i;
 
-	for (i = 0; i < NFT_OBJECT_MAX; i++) {
+	for (i = 0; i <= NFT_OBJECT_MAX; i++) {
 		if (obj_tbl[i] && !strcmp(str, obj_tbl[i]))
 			return i;
 	}
@@ -3759,7 +3763,8 @@ static struct cmd *json_parse_cmd_add(struct json_ctx *ctx,
 		{ "ct timeout", NFT_OBJECT_CT_TIMEOUT, json_parse_cmd_add_object },
 		{ "ct expectation", NFT_OBJECT_CT_EXPECT, json_parse_cmd_add_object },
 		{ "limit", CMD_OBJ_LIMIT, json_parse_cmd_add_object },
-		{ "secmark", CMD_OBJ_SECMARK, json_parse_cmd_add_object }
+		{ "secmark", CMD_OBJ_SECMARK, json_parse_cmd_add_object },
+		{ "synproxy", CMD_OBJ_SYNPROXY, json_parse_cmd_add_object }
 	};
 	unsigned int i;
 	json_t *tmp;
