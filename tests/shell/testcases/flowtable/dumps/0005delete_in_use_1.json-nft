@@ -15,6 +15,14 @@
       }
     },
     {
+      "chain": {
+        "family": "ip",
+        "table": "x",
+        "name": "x",
+        "handle": 0
+      }
+    },
+    {
       "flowtable": {
         "family": "ip",
         "name": "y",
@@ -23,14 +31,6 @@
         "hook": "ingress",
         "prio": 0,
         "dev": "lo"
-      }
-    },
-    {
-      "chain": {
-        "family": "ip",
-        "table": "x",
-        "name": "x",
-        "handle": 0
       }
     },
     {

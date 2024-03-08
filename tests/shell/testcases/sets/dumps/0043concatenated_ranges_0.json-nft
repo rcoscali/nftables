@@ -15,6 +15,18 @@
       }
     },
     {
+      "chain": {
+        "family": "inet",
+        "table": "filter",
+        "name": "output",
+        "handle": 0,
+        "type": "filter",
+        "hook": "output",
+        "prio": 0,
+        "policy": "accept"
+      }
+    },
+    {
       "map": {
         "family": "inet",
         "name": "test",
@@ -30,18 +42,6 @@
           "interval",
           "timeout"
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "inet",
-        "table": "filter",
-        "name": "output",
-        "handle": 0,
-        "type": "filter",
-        "hook": "output",
-        "prio": 0,
-        "policy": "accept"
       }
     },
     {

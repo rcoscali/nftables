@@ -15,6 +15,18 @@
       }
     },
     {
+      "chain": {
+        "family": "inet",
+        "table": "filter",
+        "name": "input",
+        "handle": 0,
+        "type": "filter",
+        "hook": "input",
+        "prio": 0,
+        "policy": "accept"
+      }
+    },
+    {
       "limit": {
         "family": "inet",
         "name": "tarpit-pps",
@@ -249,18 +261,6 @@
             "tarpit-pps"
           ]
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "inet",
-        "table": "filter",
-        "name": "input",
-        "handle": 0,
-        "type": "filter",
-        "hook": "input",
-        "prio": 0,
-        "policy": "accept"
       }
     },
     {

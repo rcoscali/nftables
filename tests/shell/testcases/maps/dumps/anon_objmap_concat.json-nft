@@ -15,6 +15,18 @@
       }
     },
     {
+      "chain": {
+        "family": "inet",
+        "table": "filter",
+        "name": "input",
+        "handle": 0,
+        "type": "filter",
+        "hook": "input",
+        "prio": 0,
+        "policy": "accept"
+      }
+    },
+    {
       "ct helper": {
         "family": "inet",
         "name": "sip-5060u",
@@ -34,18 +46,6 @@
         "type": "sip",
         "protocol": "tcp",
         "l3proto": "ip"
-      }
-    },
-    {
-      "chain": {
-        "family": "inet",
-        "table": "filter",
-        "name": "input",
-        "handle": 0,
-        "type": "filter",
-        "hook": "input",
-        "prio": 0,
-        "policy": "accept"
       }
     },
     {

@@ -15,6 +15,14 @@
       }
     },
     {
+      "chain": {
+        "family": "ip",
+        "table": "t",
+        "name": "c",
+        "handle": 0
+      }
+    },
+    {
       "set": {
         "family": "ip",
         "name": "set1",
@@ -34,14 +42,6 @@
         "flags": [
           "dynamic"
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "ip",
-        "table": "t",
-        "name": "c",
-        "handle": 0
       }
     },
     {

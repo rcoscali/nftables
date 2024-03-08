@@ -15,6 +15,14 @@
       }
     },
     {
+      "chain": {
+        "family": "netdev",
+        "table": "x",
+        "name": "y",
+        "handle": 0
+      }
+    },
+    {
       "set": {
         "family": "netdev",
         "name": "x",
@@ -45,14 +53,6 @@
         "flags": [
           "dynamic"
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "netdev",
-        "table": "x",
-        "name": "y",
-        "handle": 0
       }
     },
     {

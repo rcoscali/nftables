@@ -15,21 +15,6 @@
       }
     },
     {
-      "map": {
-        "family": "ip",
-        "name": "mapping",
-        "table": "x",
-        "type": "ipv4_addr",
-        "handle": 0,
-        "map": "inet_service",
-        "size": 65535,
-        "flags": [
-          "timeout",
-          "dynamic"
-        ]
-      }
-    },
-    {
       "chain": {
         "family": "ip",
         "table": "x",
@@ -43,6 +28,21 @@
         "table": "x",
         "name": "z",
         "handle": 0
+      }
+    },
+    {
+      "map": {
+        "family": "ip",
+        "name": "mapping",
+        "table": "x",
+        "type": "ipv4_addr",
+        "handle": 0,
+        "map": "inet_service",
+        "size": 65535,
+        "flags": [
+          "timeout",
+          "dynamic"
+        ]
       }
     },
     {

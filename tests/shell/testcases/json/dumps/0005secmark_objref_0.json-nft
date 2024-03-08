@@ -15,15 +15,6 @@
       }
     },
     {
-      "secmark": {
-        "family": "inet",
-        "name": "ssh_server",
-        "table": "x",
-        "handle": 0,
-        "context": "system_u:object_r:ssh_server_packet_t:s0"
-      }
-    },
-    {
       "chain": {
         "family": "inet",
         "table": "x",
@@ -45,6 +36,15 @@
         "hook": "output",
         "prio": 225,
         "policy": "accept"
+      }
+    },
+    {
+      "secmark": {
+        "family": "inet",
+        "name": "ssh_server",
+        "table": "x",
+        "handle": 0,
+        "context": "system_u:object_r:ssh_server_packet_t:s0"
       }
     },
     {

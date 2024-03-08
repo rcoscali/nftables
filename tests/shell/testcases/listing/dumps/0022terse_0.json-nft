@@ -15,6 +15,18 @@
       }
     },
     {
+      "chain": {
+        "family": "inet",
+        "table": "filter",
+        "name": "input",
+        "handle": 0,
+        "type": "filter",
+        "hook": "prerouting",
+        "prio": 0,
+        "policy": "accept"
+      }
+    },
+    {
       "set": {
         "family": "inet",
         "name": "example",
@@ -28,18 +40,6 @@
           "10.10.10.10",
           "10.10.11.11"
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "inet",
-        "table": "filter",
-        "name": "input",
-        "handle": 0,
-        "type": "filter",
-        "hook": "prerouting",
-        "prio": 0,
-        "policy": "accept"
       }
     },
     {

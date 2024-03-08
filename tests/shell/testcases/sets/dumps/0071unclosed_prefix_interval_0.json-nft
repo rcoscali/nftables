@@ -15,6 +15,14 @@
       }
     },
     {
+      "chain": {
+        "family": "inet",
+        "table": "t",
+        "name": "c",
+        "handle": 0
+      }
+    },
+    {
       "set": {
         "family": "inet",
         "name": "s1",
@@ -64,14 +72,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "inet",
-        "table": "t",
-        "name": "c",
-        "handle": 0
       }
     },
     {

@@ -15,6 +15,22 @@
       }
     },
     {
+      "chain": {
+        "family": "inet",
+        "table": "filter",
+        "name": "udp_input",
+        "handle": 0
+      }
+    },
+    {
+      "chain": {
+        "family": "inet",
+        "table": "filter",
+        "name": "tcp_input",
+        "handle": 0
+      }
+    },
+    {
       "set": {
         "family": "inet",
         "name": "udp_accepted",
@@ -38,22 +54,6 @@
           80,
           443
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "inet",
-        "table": "filter",
-        "name": "udp_input",
-        "handle": 0
-      }
-    },
-    {
-      "chain": {
-        "family": "inet",
-        "table": "filter",
-        "name": "tcp_input",
-        "handle": 0
       }
     },
     {

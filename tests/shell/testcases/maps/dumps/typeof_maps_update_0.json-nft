@@ -15,6 +15,22 @@
       }
     },
     {
+      "chain": {
+        "family": "ip",
+        "table": "kube-nfproxy-v4",
+        "name": "k8s-nfproxy-sep-TMVEFT7EX55F4T62",
+        "handle": 0
+      }
+    },
+    {
+      "chain": {
+        "family": "ip",
+        "table": "kube-nfproxy-v4",
+        "name": "k8s-nfproxy-sep-GMVEFT7EX55F4T62",
+        "handle": 0
+      }
+    },
+    {
       "map": {
         "family": "ip",
         "name": "sticky-set-svc-M53CN2XYVUHRQ7UB",
@@ -42,22 +58,6 @@
           "timeout"
         ],
         "timeout": 60
-      }
-    },
-    {
-      "chain": {
-        "family": "ip",
-        "table": "kube-nfproxy-v4",
-        "name": "k8s-nfproxy-sep-TMVEFT7EX55F4T62",
-        "handle": 0
-      }
-    },
-    {
-      "chain": {
-        "family": "ip",
-        "table": "kube-nfproxy-v4",
-        "name": "k8s-nfproxy-sep-GMVEFT7EX55F4T62",
-        "handle": 0
       }
     },
     {

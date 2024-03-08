@@ -15,6 +15,18 @@
       }
     },
     {
+      "chain": {
+        "family": "inet",
+        "table": "filter",
+        "name": "input",
+        "handle": 0,
+        "type": "filter",
+        "hook": "input",
+        "prio": 0,
+        "policy": "drop"
+      }
+    },
+    {
       "set": {
         "family": "inet",
         "name": "ip-block-4-test",
@@ -28,18 +40,6 @@
         "elem": [
           "1.1.1.1"
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "inet",
-        "table": "filter",
-        "name": "input",
-        "handle": 0,
-        "type": "filter",
-        "hook": "input",
-        "prio": 0,
-        "policy": "drop"
       }
     },
     {

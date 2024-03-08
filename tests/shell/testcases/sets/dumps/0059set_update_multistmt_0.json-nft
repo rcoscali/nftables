@@ -15,6 +15,18 @@
       }
     },
     {
+      "chain": {
+        "family": "ip",
+        "table": "x",
+        "name": "z",
+        "handle": 0,
+        "type": "filter",
+        "hook": "output",
+        "prio": 0,
+        "policy": "accept"
+      }
+    },
+    {
       "set": {
         "family": "ip",
         "name": "y",
@@ -27,18 +39,6 @@
           "dynamic"
         ],
         "timeout": 3600
-      }
-    },
-    {
-      "chain": {
-        "family": "ip",
-        "table": "x",
-        "name": "z",
-        "handle": 0,
-        "type": "filter",
-        "hook": "output",
-        "prio": 0,
-        "policy": "accept"
       }
     },
     {

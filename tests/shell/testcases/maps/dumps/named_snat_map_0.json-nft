@@ -15,6 +15,14 @@
       }
     },
     {
+      "chain": {
+        "family": "ip",
+        "table": "nat",
+        "name": "postrouting",
+        "handle": 0
+      }
+    },
+    {
       "map": {
         "family": "ip",
         "name": "m",
@@ -28,14 +36,6 @@
             "2.2.2.2"
           ]
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "ip",
-        "table": "nat",
-        "name": "postrouting",
-        "handle": 0
       }
     },
     {

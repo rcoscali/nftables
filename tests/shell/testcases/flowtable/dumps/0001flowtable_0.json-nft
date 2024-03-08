@@ -15,6 +15,14 @@
       }
     },
     {
+      "chain": {
+        "family": "inet",
+        "table": "t",
+        "name": "c",
+        "handle": 0
+      }
+    },
+    {
       "flowtable": {
         "family": "inet",
         "name": "f",
@@ -23,14 +31,6 @@
         "hook": "ingress",
         "prio": 10,
         "dev": "lo"
-      }
-    },
-    {
-      "chain": {
-        "family": "inet",
-        "table": "t",
-        "name": "c",
-        "handle": 0
       }
     },
     {

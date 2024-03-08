@@ -15,6 +15,14 @@
       }
     },
     {
+      "chain": {
+        "family": "ip",
+        "table": "filter",
+        "name": "c",
+        "handle": 0
+      }
+    },
+    {
       "ct expectation": {
         "family": "ip",
         "name": "ctexpect",
@@ -25,14 +33,6 @@
         "timeout": 60000,
         "size": 12,
         "l3proto": "ip"
-      }
-    },
-    {
-      "chain": {
-        "family": "ip",
-        "table": "filter",
-        "name": "c",
-        "handle": 0
       }
     },
     {

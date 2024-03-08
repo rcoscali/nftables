@@ -15,19 +15,6 @@
       }
     },
     {
-      "set": {
-        "family": "ip",
-        "name": "s",
-        "table": "x",
-        "type": "ipv4_addr",
-        "handle": 0,
-        "size": 65535,
-        "flags": [
-          "dynamic"
-        ]
-      }
-    },
-    {
       "chain": {
         "family": "ip",
         "table": "x",
@@ -49,6 +36,19 @@
         "table": "x",
         "name": "y",
         "handle": 0
+      }
+    },
+    {
+      "set": {
+        "family": "ip",
+        "name": "s",
+        "table": "x",
+        "type": "ipv4_addr",
+        "handle": 0,
+        "size": 65535,
+        "flags": [
+          "dynamic"
+        ]
       }
     },
     {

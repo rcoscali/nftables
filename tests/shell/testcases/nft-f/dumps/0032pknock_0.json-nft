@@ -15,6 +15,18 @@
       }
     },
     {
+      "chain": {
+        "family": "inet",
+        "table": "portknock",
+        "name": "input",
+        "handle": 0,
+        "type": "filter",
+        "hook": "input",
+        "prio": -10,
+        "policy": "accept"
+      }
+    },
+    {
       "set": {
         "family": "inet",
         "name": "clients_ipv4",
@@ -43,18 +55,6 @@
           "timeout",
           "dynamic"
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "inet",
-        "table": "portknock",
-        "name": "input",
-        "handle": 0,
-        "type": "filter",
-        "hook": "input",
-        "prio": -10,
-        "policy": "accept"
       }
     },
     {

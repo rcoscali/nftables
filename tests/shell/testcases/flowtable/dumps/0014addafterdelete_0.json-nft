@@ -15,17 +15,6 @@
       }
     },
     {
-      "flowtable": {
-        "family": "inet",
-        "name": "f",
-        "table": "filter",
-        "handle": 0,
-        "hook": "ingress",
-        "prio": -1,
-        "dev": "lo"
-      }
-    },
-    {
       "chain": {
         "family": "inet",
         "table": "filter",
@@ -35,6 +24,17 @@
         "hook": "forward",
         "prio": 0,
         "policy": "accept"
+      }
+    },
+    {
+      "flowtable": {
+        "family": "inet",
+        "name": "f",
+        "table": "filter",
+        "handle": 0,
+        "hook": "ingress",
+        "prio": -1,
+        "dev": "lo"
       }
     },
     {

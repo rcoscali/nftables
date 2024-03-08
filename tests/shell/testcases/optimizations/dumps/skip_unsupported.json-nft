@@ -15,6 +15,14 @@
       }
     },
     {
+      "chain": {
+        "family": "inet",
+        "table": "x",
+        "name": "y",
+        "handle": 0
+      }
+    },
+    {
       "set": {
         "family": "inet",
         "name": "GEOIP_CC_wan-lan_120",
@@ -98,14 +106,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "inet",
-        "table": "x",
-        "name": "y",
-        "handle": 0
       }
     },
     {

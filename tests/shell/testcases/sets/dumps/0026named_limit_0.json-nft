@@ -15,17 +15,6 @@
       }
     },
     {
-      "limit": {
-        "family": "ip",
-        "name": "http-traffic",
-        "table": "filter",
-        "handle": 0,
-        "rate": 1,
-        "per": "second",
-        "burst": 5
-      }
-    },
-    {
       "chain": {
         "family": "ip",
         "table": "filter",
@@ -35,6 +24,17 @@
         "hook": "input",
         "prio": 0,
         "policy": "accept"
+      }
+    },
+    {
+      "limit": {
+        "family": "ip",
+        "name": "http-traffic",
+        "table": "filter",
+        "handle": 0,
+        "rate": 1,
+        "per": "second",
+        "burst": 5
       }
     },
     {

@@ -15,6 +15,14 @@
       }
     },
     {
+      "chain": {
+        "family": "ip",
+        "table": "x",
+        "name": "y",
+        "handle": 0
+      }
+    },
+    {
       "map": {
         "family": "ip",
         "name": "y",
@@ -60,14 +68,6 @@
             "192.168.0.3"
           ]
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "ip",
-        "table": "x",
-        "name": "y",
-        "handle": 0
       }
     },
     {

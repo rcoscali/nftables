@@ -15,6 +15,18 @@
       }
     },
     {
+      "chain": {
+        "family": "ip",
+        "table": "testt",
+        "name": "testc",
+        "handle": 0,
+        "type": "filter",
+        "hook": "input",
+        "prio": 0,
+        "policy": "accept"
+      }
+    },
+    {
       "set": {
         "family": "ip",
         "name": "ssh_meter",
@@ -25,18 +37,6 @@
         "flags": [
           "dynamic"
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "ip",
-        "table": "testt",
-        "name": "testc",
-        "handle": 0,
-        "type": "filter",
-        "hook": "input",
-        "prio": 0,
-        "policy": "accept"
       }
     },
     {

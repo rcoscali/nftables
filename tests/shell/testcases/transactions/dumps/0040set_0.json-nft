@@ -15,16 +15,6 @@
       }
     },
     {
-      "map": {
-        "family": "ip",
-        "name": "client_to_any",
-        "table": "filter",
-        "type": "ipv4_addr",
-        "handle": 0,
-        "map": "verdict"
-      }
-    },
-    {
       "chain": {
         "family": "ip",
         "table": "filter",
@@ -42,6 +32,16 @@
         "table": "filter",
         "name": "client_to_any",
         "handle": 0
+      }
+    },
+    {
+      "map": {
+        "family": "ip",
+        "name": "client_to_any",
+        "table": "filter",
+        "type": "ipv4_addr",
+        "handle": 0,
+        "map": "verdict"
       }
     },
     {

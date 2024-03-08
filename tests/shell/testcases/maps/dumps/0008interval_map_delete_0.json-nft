@@ -15,6 +15,18 @@
       }
     },
     {
+      "chain": {
+        "family": "ip",
+        "table": "filter",
+        "name": "input",
+        "handle": 0,
+        "type": "filter",
+        "hook": "input",
+        "prio": 0,
+        "policy": "accept"
+      }
+    },
+    {
       "map": {
         "family": "ip",
         "name": "m",
@@ -35,18 +47,6 @@
             3
           ]
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "ip",
-        "table": "filter",
-        "name": "input",
-        "handle": 0,
-        "type": "filter",
-        "hook": "input",
-        "prio": 0,
-        "policy": "accept"
       }
     },
     {

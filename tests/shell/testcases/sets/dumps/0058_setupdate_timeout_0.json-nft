@@ -15,6 +15,14 @@
       }
     },
     {
+      "chain": {
+        "family": "inet",
+        "table": "filter",
+        "name": "test",
+        "handle": 0
+      }
+    },
+    {
       "set": {
         "family": "inet",
         "name": "ssh_meter",
@@ -27,14 +35,6 @@
           "dynamic"
         ],
         "timeout": 2592000
-      }
-    },
-    {
-      "chain": {
-        "family": "inet",
-        "table": "filter",
-        "name": "test",
-        "handle": 0
       }
     },
     {

@@ -15,6 +15,18 @@
       }
     },
     {
+      "chain": {
+        "family": "ip",
+        "table": "filter",
+        "name": "FORWARD",
+        "handle": 0,
+        "type": "filter",
+        "hook": "forward",
+        "prio": 0,
+        "policy": "drop"
+      }
+    },
+    {
       "map": {
         "family": "ip",
         "name": "forwport",
@@ -56,18 +68,6 @@
             "counter": null
           }
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "ip",
-        "table": "filter",
-        "name": "FORWARD",
-        "handle": 0,
-        "type": "filter",
-        "hook": "forward",
-        "prio": 0,
-        "policy": "drop"
       }
     },
     {

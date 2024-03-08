@@ -15,6 +15,14 @@
       }
     },
     {
+      "chain": {
+        "family": "ip",
+        "table": "filter",
+        "name": "c",
+        "handle": 0
+      }
+    },
+    {
       "ct timeout": {
         "family": "ip",
         "name": "cttime",
@@ -26,14 +34,6 @@
           "established": 123,
           "close": 12
         }
-      }
-    },
-    {
-      "chain": {
-        "family": "ip",
-        "table": "filter",
-        "name": "c",
-        "handle": 0
       }
     },
     {

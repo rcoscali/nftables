@@ -15,6 +15,14 @@
       }
     },
     {
+      "chain": {
+        "family": "inet",
+        "table": "t",
+        "name": "c",
+        "handle": 0
+      }
+    },
+    {
       "map": {
         "family": "inet",
         "name": "m",
@@ -28,14 +36,6 @@
         "flags": [
           "interval"
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "inet",
-        "table": "t",
-        "name": "c",
-        "handle": 0
       }
     }
   ]

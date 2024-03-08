@@ -15,6 +15,18 @@
       }
     },
     {
+      "chain": {
+        "family": "ip",
+        "table": "x",
+        "name": "k",
+        "handle": 0,
+        "type": "filter",
+        "hook": "input",
+        "prio": 1,
+        "policy": "accept"
+      }
+    },
+    {
       "map": {
         "family": "ip",
         "name": "w",
@@ -64,18 +76,6 @@
             "counter": null
           }
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "ip",
-        "table": "x",
-        "name": "k",
-        "handle": 0,
-        "type": "filter",
-        "hook": "input",
-        "prio": 1,
-        "policy": "accept"
       }
     },
     {

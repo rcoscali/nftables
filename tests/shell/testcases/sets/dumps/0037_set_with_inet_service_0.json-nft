@@ -15,6 +15,18 @@
       }
     },
     {
+      "chain": {
+        "family": "inet",
+        "table": "filter",
+        "name": "forward",
+        "handle": 0,
+        "type": "filter",
+        "hook": "forward",
+        "prio": 0,
+        "policy": "drop"
+      }
+    },
+    {
       "set": {
         "family": "inet",
         "name": "myset",
@@ -62,18 +74,6 @@
             ]
           }
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "inet",
-        "table": "filter",
-        "name": "forward",
-        "handle": 0,
-        "type": "filter",
-        "hook": "forward",
-        "prio": 0,
-        "policy": "drop"
       }
     },
     {

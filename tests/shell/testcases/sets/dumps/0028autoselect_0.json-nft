@@ -15,6 +15,18 @@
       }
     },
     {
+      "chain": {
+        "family": "ip",
+        "table": "t",
+        "name": "c",
+        "handle": 0,
+        "type": "filter",
+        "hook": "input",
+        "prio": 0,
+        "policy": "accept"
+      }
+    },
+    {
       "set": {
         "family": "ip",
         "name": "s1",
@@ -51,18 +63,6 @@
         "flags": [
           "dynamic"
         ]
-      }
-    },
-    {
-      "chain": {
-        "family": "ip",
-        "table": "t",
-        "name": "c",
-        "handle": 0,
-        "type": "filter",
-        "hook": "input",
-        "prio": 0,
-        "policy": "accept"
       }
     },
     {
