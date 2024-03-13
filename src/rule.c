@@ -2766,7 +2766,6 @@ static void stmt_reduce(const struct rule *rule)
 			switch (stmt->expr->op) {
 			case OP_EQ:
 			case OP_IMPLICIT:
-			case OP_NEQ:
 				break;
 			default:
 				continue;
