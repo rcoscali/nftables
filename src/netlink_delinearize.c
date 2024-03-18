@@ -2517,56 +2517,29 @@ static void relational_binop_postprocess(struct rule_pp_ctx *ctx,
 
 	if (binop->op == OP_AND && (expr->op == OP_NEQ || expr->op == OP_EQ) &&
 	    right->dtype->basetype &&
-	    right->dtype->basetype->type == TYPE_BITMASK) {
-		switch (right->etype) {
-		case EXPR_VALUE:
-			if (!mpz_cmp_ui(right->value, 0)) {
-				/* Flag comparison: data & flags != 0
-				 *
-				 * Split the flags into a list of flag values and convert the
-				 * op to OP_EQ.
-				 */
-				expr_free(right);
+	    right->dtype->basetype->type == TYPE_BITMASK &&
+	    right->etype == EXPR_VALUE &&
+	    !mpz_cmp_ui(right->value, 0)) {
+		/* Flag comparison: data & flags != 0
+		 *
+		 * Split the flags into a list of flag values and convert the
+		 * op to OP_EQ.
+		 */
+		expr_free(right);
 
-				expr->left  = expr_get(binop->left);
-				expr->right = binop_tree_to_list(NULL, binop->right);
-				switch (expr->op) {
-				case OP_NEQ:
-					expr->op = OP_IMPLICIT;
-					break;
-				case OP_EQ:
-					expr->op = OP_NEG;
-					break;
-				default:
-					BUG("unknown operation type %d\n", expr->op);
-				}
-				expr_free(binop);
-			} else if (binop->right->etype == EXPR_VALUE &&
-				   right->etype == EXPR_VALUE &&
-				   !mpz_cmp(right->value, binop->right->value)) {
-				/* Skip flag / flag representation for:
-				 * data & flag == flag
-				 * data & flag != flag
-				 */
-				;
-			} else {
-				*exprp = flagcmp_expr_alloc(&expr->location, expr->op,
-							    expr_get(binop->left),
-							    binop_tree_to_list(NULL, binop->right),
-							    expr_get(right));
-				expr_free(expr);
-			}
+		expr->left  = expr_get(binop->left);
+		expr->right = binop_tree_to_list(NULL, binop->right);
+		switch (expr->op) {
+		case OP_NEQ:
+			expr->op = OP_IMPLICIT;
 			break;
-		case EXPR_BINOP:
-			*exprp = flagcmp_expr_alloc(&expr->location, expr->op,
-						    expr_get(binop->left),
-						    binop_tree_to_list(NULL, binop->right),
-						    binop_tree_to_list(NULL, right));
-			expr_free(expr);
+		case OP_EQ:
+			expr->op = OP_NEG;
 			break;
 		default:
-			break;
+			BUG("unknown operation type %d\n", expr->op);
 		}
+		expr_free(binop);
 	} else if (binop->left->dtype->flags & DTYPE_F_PREFIX &&
 		   binop->op == OP_AND && expr->right->etype == EXPR_VALUE &&
 		   expr_mask_is_prefix(binop->right)) {

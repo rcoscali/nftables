@@ -1712,7 +1712,7 @@
     }
 ]
 
-# tcp flags & (fin | syn | rst | ack) == (syn | ack)
+# tcp flags & (fin | syn | rst | ack) == syn | ack
 [
     {
         "match": {
@@ -1741,7 +1741,7 @@
     }
 ]
 
-# tcp flags & (fin | syn | rst | ack) != (syn | ack)
+# tcp flags & (syn | ack) == syn | ack
 [
     {
         "match": {
@@ -1754,45 +1754,57 @@
                         }
                     },
                     [
-                        "fin",
                         "syn",
-                        "rst",
                         "ack"
                     ]
+                ]
+            },
+            "op": "==",
+            "right": [
+                "syn",
+                "ack"
+            ]
+        }
+    }
+]
+
+# tcp flags & (fin | syn | rst | ack) != syn | ack
+[
+    {
+        "match": {
+            "left": {
+                "&": [
+                    {
+                        "payload": {
+                            "field": "flags",
+                            "protocol": "tcp"
+                        }
+                    },
+                    {
+                        "|": [
+                            {
+                                "|": [
+                                    {
+                                        "|": [
+                                            "fin",
+                                            "syn"
+                                        ]
+                                    },
+                                    "rst"
+                                ]
+                            },
+                            "ack"
+                        ]
+                    }
                 ]
             },
             "op": "!=",
-            "right": [
-                "syn",
-                "ack"
-            ]
-        }
-    }
-]
-
-# tcp flags & (syn | ack) == (syn | ack)
-[
-    {
-        "match": {
-            "left": {
-                "&": [
-                    {
-                        "payload": {
-                            "field": "flags",
-                            "protocol": "tcp"
-                        }
-                    },
-                    [
-                        "syn",
-                        "ack"
-                    ]
+            "right": {
+                "|": [
+                    "syn",
+                    "ack"
                 ]
-            },
-            "op": "==",
-            "right": [
-                "syn",
-                "ack"
-            ]
+            }
         }
     }
 ]

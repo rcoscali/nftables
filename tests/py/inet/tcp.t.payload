@@ -442,7 +442,7 @@ inet test-inet input
   [ bitwise reg 1 = ( reg 1 & 0x00000017 ) ^ 0x00000000 ]
   [ cmp neq reg 1 0x00000002 ]
 
-# tcp flags & (fin | syn | rst | ack) == (syn | ack)
+# tcp flags & (fin | syn | rst | ack) == syn | ack
 inet test-inet input
   [ meta load l4proto => reg 1 ]
   [ cmp eq reg 1 0x00000006 ]
@@ -450,7 +450,7 @@ inet test-inet input
   [ bitwise reg 1 = ( reg 1 & 0x00000017 ) ^ 0x00000000 ]
   [ cmp eq reg 1 0x00000012 ]
 
-# tcp flags & (fin | syn | rst | ack) != (syn | ack)
+# tcp flags & (fin | syn | rst | ack) != syn | ack
 inet test-inet input
   [ meta load l4proto => reg 1 ]
   [ cmp eq reg 1 0x00000006 ]
@@ -458,7 +458,7 @@ inet test-inet input
   [ bitwise reg 1 = ( reg 1 & 0x00000017 ) ^ 0x00000000 ]
   [ cmp neq reg 1 0x00000012 ]
 
-# tcp flags & (syn | ack) == (syn | ack)
+# tcp flags & (syn | ack) == syn | ack
 inet test-inet input
   [ meta load l4proto => reg 1 ]
   [ cmp eq reg 1 0x00000006 ]

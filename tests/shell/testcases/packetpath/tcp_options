@@ -15,14 +15,14 @@ table inet t {
 	chain c {
 		type filter hook output priority 0;
 		tcp dport != 22345 accept
-		tcp flags syn / fin,syn,rst,ack tcp option 254  length ge 4 counter name nomatchc drop
-		tcp flags syn / fin,syn,rst,ack tcp option fastopen length ge 2 reset tcp option fastopen counter name nomatchc
-		tcp flags syn / fin,syn,rst,ack tcp option sack-perm missing counter name nomatchc
-		tcp flags syn / fin,syn,rst,ack tcp option sack-perm exists counter name sackpermc
-		tcp flags syn / fin,syn,rst,ack tcp option maxseg size gt 1400 counter name maxsegc
-		tcp flags syn / fin,syn,rst,ack tcp option nop missing counter name nomatchc
-		tcp flags syn / fin,syn,rst,ack tcp option nop exists counter name nopc
-		tcp flags syn / fin,syn,rst,ack drop
+		tcp flags & (fin | syn | rst | ack ) == syn tcp option 254  length ge 4 counter name nomatchc drop
+		tcp flags & (fin | syn | rst | ack ) == syn tcp option fastopen length ge 2 reset tcp option fastopen counter name nomatchc
+		tcp flags & (fin | syn | rst | ack ) == syn tcp option sack-perm missing counter name nomatchc
+		tcp flags & (fin | syn | rst | ack) == syn tcp option sack-perm exists counter name sackpermc
+		tcp flags & (fin | syn | rst | ack) == syn tcp option maxseg size gt 1400 counter name maxsegc
+		tcp flags & (fin | syn | rst | ack) == syn tcp option nop missing counter name nomatchc
+		tcp flags & (fin | syn | rst | ack) == syn tcp option nop exists counter name nopc
+		tcp flags & (fin | syn | rst | ack) == syn drop
 	}
 }
 EOF

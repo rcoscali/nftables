@@ -73,7 +73,7 @@ table inet filter {
 
 	chain ct_new_pre {
 		jump rpfilter
-		tcp flags != syn / fin,syn,rst,ack counter packets 0 bytes 0 drop
+		tcp flags & (fin | syn | rst | ack) != syn counter packets 0 bytes 0 drop
 		iifname "eth0" meta nfproto vmap { ipv4 : jump blacklist_input_ipv4, ipv6 : jump blacklist_input_ipv6 }
 	}
 
@@ -131,7 +131,7 @@ table inet filter {
 		type filter hook forward priority mangle; policy accept;
 		oifname "eth0" jump {
 			ct state new meta nfproto vmap { ipv4 : jump blacklist_output_ipv4, ipv6 : jump blacklist_output_ipv6 }
-			tcp flags syn / syn,rst tcp option maxseg size set rt mtu
+			tcp flags & (syn | rst) == syn tcp option maxseg size set rt mtu
 		}
 	}
 
