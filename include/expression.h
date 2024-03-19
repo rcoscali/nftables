@@ -530,5 +530,6 @@ struct expr *flagcmp_expr_alloc(const struct location *loc, enum ops op,
 
 extern void range_expr_value_low(mpz_t rop, const struct expr *expr);
 extern void range_expr_value_high(mpz_t rop, const struct expr *expr);
+void range_expr_swap_values(struct expr *range);
 
 #endif /* NFTABLES_EXPRESSION_H */

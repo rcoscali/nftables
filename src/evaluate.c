@@ -2470,7 +2470,7 @@ static int binop_transfer(struct eval_ctx *ctx, struct expr **expr)
 	return 0;
 }
 
-static bool lhs_is_meta_hour(const struct expr *meta)
+bool lhs_is_meta_hour(const struct expr *meta)
 {
 	if (meta->etype != EXPR_META)
 		return false;
@@ -2479,7 +2479,7 @@ static bool lhs_is_meta_hour(const struct expr *meta)
 	       meta->meta.key == NFT_META_TIME_DAY;
 }
 
-static void swap_values(struct expr *range)
+void range_expr_swap_values(struct expr *range)
 {
 	struct expr *left_tmp;
 
@@ -2561,10 +2561,10 @@ static int expr_evaluate_relational(struct eval_ctx *ctx, struct expr **expr)
 					  "Inverting range values for cross-day hour matching\n\n");
 
 			if (rel->op == OP_EQ || rel->op == OP_IMPLICIT) {
-				swap_values(range);
+				range_expr_swap_values(range);
 				rel->op = OP_NEQ;
 			} else if (rel->op == OP_NEQ) {
-				swap_values(range);
+				range_expr_swap_values(range);
 				rel->op = OP_EQ;
 			}
 		}

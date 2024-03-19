@@ -2847,6 +2847,28 @@ static void expr_postprocess(struct rule_pp_ctx *ctx, struct expr **exprp)
 			expr_postprocess(ctx, &expr->left);
 			ctx->set = NULL;
 			break;
+		case EXPR_UNARY:
+			if (lhs_is_meta_hour(expr->left->arg) &&
+			    expr->right->etype == EXPR_RANGE) {
+				struct expr *range = expr->right;
+
+				/* Cross-day range needs to be reversed.
+				 * Kernel handles time in UTC. Therefore,
+				 * 03:00-14:00 AEDT (Sidney, Australia) time
+				 * is a cross-day range.
+				 */
+				if (mpz_cmp(range->left->value,
+					    range->right->value) <= 0) {
+					if (expr->op == OP_NEQ) {
+		                                range_expr_swap_values(range);
+		                                expr->op = OP_IMPLICIT;
+					} else if (expr->op == OP_IMPLICIT) {
+		                                range_expr_swap_values(range);
+					        expr->op = OP_NEG;
+					}
+				}
+			}
+			/* fallthrough */
 		default:
 			expr_postprocess(ctx, &expr->left);
 			break;

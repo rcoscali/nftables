@@ -45,4 +45,6 @@ extern const struct datatype date_type;
 extern const struct datatype hour_type;
 extern const struct datatype day_type;
 
+bool lhs_is_meta_hour(const struct expr *meta);
+
 #endif /* NFTABLES_META_H */
