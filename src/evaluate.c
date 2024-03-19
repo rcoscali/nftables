@@ -1275,8 +1275,8 @@ static int expr_evaluate_range(struct eval_ctx *ctx, struct expr **expr)
 	right = range->right;
 
 	if (mpz_cmp(left->value, right->value) > 0)
-		return expr_error(ctx->msgs, range,
-				  "Range has zero or negative size");
+		return expr_error(ctx->msgs, range, "Range negative size");
+
 	datatype_set(range, left->dtype);
 	range->flags |= EXPR_F_CONSTANT;
 	return 0;
