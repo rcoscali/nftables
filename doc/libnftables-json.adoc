@@ -1343,15 +1343,17 @@ Perform kernel Forwarding Information Base lookups.
 
 === BINARY OPERATION
 [verse]
-*{ "|": [* 'EXPRESSION'*,* 'EXPRESSION' *] }*
-*{ "^": [* 'EXPRESSION'*,* 'EXPRESSION' *] }*
-*{ "&": [* 'EXPRESSION'*,* 'EXPRESSION' *] }*
-*{ "+<<+": [* 'EXPRESSION'*,* 'EXPRESSION' *] }*
-*{ ">>": [* 'EXPRESSION'*,* 'EXPRESSION' *] }*
+*{ "|": [* 'EXPRESSION'*,* 'EXPRESSIONS' *] }*
+*{ "^": [* 'EXPRESSION'*,* 'EXPRESSIONS' *] }*
+*{ "&": [* 'EXPRESSION'*,* 'EXPRESSIONS' *] }*
+*{ "+<<+": [* 'EXPRESSION'*,* 'EXPRESSIONS' *] }*
+*{ ">>": [* 'EXPRESSION'*,* 'EXPRESSIONS' *] }*
+'EXPRESSIONS' := 'EXPRESSION' | 'EXPRESSION'*,* 'EXPRESSIONS'
 
-All binary operations expect an array of exactly two expressions, of which the
+All binary operations expect an array of at least two expressions, of which the
 first element denotes the left hand side and the second one the right hand
-side.
+side. Extra elements are accepted in the given array and appended to the term
+accordingly.
 
 === VERDICT
 [verse]

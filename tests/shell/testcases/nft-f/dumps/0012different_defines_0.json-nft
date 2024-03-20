@@ -169,12 +169,8 @@
               },
               "right": {
                 "|": [
-                  {
-                    "|": [
-                      "established",
-                      "related"
-                    ]
-                  },
+                  "established",
+                  "related",
                   "new"
                 ]
               }

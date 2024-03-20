@@ -1204,6 +1204,18 @@ static struct expr *json_parse_binop_expr(struct json_ctx *ctx,
 		return NULL;
 	}
 
+	if (json_array_size(root) > 2) {
+		left = json_parse_primary_expr(ctx, json_array_get(root, 0));
+		right = json_parse_primary_expr(ctx, json_array_get(root, 1));
+		left = binop_expr_alloc(int_loc, thisop, left, right);
+		for (i = 2; i < json_array_size(root); i++) {
+			jright = json_array_get(root, i);
+			right = json_parse_primary_expr(ctx, jright);
+			left = binop_expr_alloc(int_loc, thisop, left, right);
+		}
+		return left;
+	}
+
 	if (json_unpack_err(ctx, root, "[o, o!]", &jleft, &jright))
 		return NULL;
 

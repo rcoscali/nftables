@@ -540,11 +540,24 @@ json_t *flagcmp_expr_json(const struct expr *expr, struct output_ctx *octx)
 			 "right", expr_print_json(expr->flagcmp.value, octx));
 }
 
+static json_t *
+__binop_expr_json(int op, const struct expr *expr, struct output_ctx *octx)
+{
+	json_t *a = json_array();
+
+	if (expr->etype == EXPR_BINOP && expr->op == op) {
+		json_array_extend(a, __binop_expr_json(op, expr->left, octx));
+		json_array_extend(a, __binop_expr_json(op, expr->right, octx));
+	} else {
+		json_array_append_new(a, expr_print_json(expr, octx));
+	}
+	return a;
+}
+
 json_t *binop_expr_json(const struct expr *expr, struct output_ctx *octx)
 {
-	return json_pack("{s:[o, o]}", expr_op_symbols[expr->op],
-			 expr_print_json(expr->left, octx),
-			 expr_print_json(expr->right, octx));
+	return json_pack("{s:o}", expr_op_symbols[expr->op],
+			 __binop_expr_json(expr->op, expr, octx));
 }
 
 json_t *relational_expr_json(const struct expr *expr, struct output_ctx *octx)
