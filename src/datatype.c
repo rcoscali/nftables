@@ -1015,7 +1015,6 @@ const struct datatype mark_type = {
 	.print		= mark_type_print,
 	.json		= mark_type_json,
 	.parse		= mark_type_parse,
-	.flags		= DTYPE_F_PREFIX,
 };
 
 static const struct symbol_table icmp_code_tbl = {

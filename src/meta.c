@@ -363,7 +363,6 @@ const struct datatype devgroup_type = {
 	.print		= devgroup_type_print,
 	.json		= devgroup_type_json,
 	.parse		= devgroup_type_parse,
-	.flags		= DTYPE_F_PREFIX,
 };
 
 const struct datatype ifname_type = {
