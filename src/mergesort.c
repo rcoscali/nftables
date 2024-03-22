@@ -78,7 +78,7 @@ void list_splice_sorted(struct list_head *list, struct list_head *head)
 	while (l != list) {
 		if (h == head ||
 		    expr_msort_cmp(list_entry(l, typeof(struct expr), list),
-				   list_entry(h, typeof(struct expr), list)) < 0) {
+				   list_entry(h, typeof(struct expr), list)) <= 0) {
 			l = l->next;
 			list_add_tail(l->prev, h);
 			continue;

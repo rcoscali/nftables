@@ -466,7 +466,7 @@ static int __set_delete(struct list_head *msgs, struct expr *i,	struct set *set,
 			unsigned int debug_mask)
 {
 	i->flags |= EXPR_F_REMOVE;
-	list_move(&i->list, &existing_set->init->expressions);
+	list_move_tail(&i->list, &existing_set->init->expressions);
 	list_expr_sort(&existing_set->init->expressions);
 
 	return setelem_delete(msgs, set, init, existing_set->init, debug_mask);
