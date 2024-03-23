@@ -860,7 +860,7 @@ job_start() {
 	local testfile="$1"
 	local testidx="$2"
 
-	if [ "$NFT_TEST_JOBS" -le 1 ] ; then
+	if [ "$NFT_TEST_JOBS" -le 1 ] && [[ -t 1 ]]; then
 		print_test_header I "$testfile" "$testidx" "EXECUTING"
 	fi
 
@@ -873,7 +873,7 @@ job_start() {
 	$NFT_TEST_UNSHARE_CMD "$NFT_TEST_BASEDIR/helpers/test-wrapper.sh" "$testfile"
 	local rc_got=$?
 
-	if [ "$NFT_TEST_JOBS" -le 1 ] ; then
+	if [ "$NFT_TEST_JOBS" -le 1 ] && [[ -t 1 ]]; then
 		echo -en "\033[1A\033[K" # clean the [EXECUTING] foobar line
 	fi
 
