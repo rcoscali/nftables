@@ -77,7 +77,7 @@ ip netns exec $R sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=86
 }
 
 # A trick to control the timing to send a packet
-ip netns exec $S socat TCP6-LISTEN:10001 GOPEN:pipefile,ignoreeof &
+ip netns exec $S socat TCP6-LISTEN:10001 GOPEN:/tmp/pipefile-$rnd,ignoreeof &
 sleep 1
 ip netns exec $C socat -b 2048 PIPE:/tmp/pipefile-$rnd 'TCP:[2001:db8:ffff:22::1]:10001' &
 sleep 1
