@@ -53,7 +53,15 @@ printf "\t\tmeta hour \"%02d:%02d\"-\"%02d:%02d\"\n" 0 0 0 59 >> "$TMP1"
 
 check_decode UTC-1
 
+$NFT flush chain t c
 TZ=EADT $NFT add rule t c meta hour "03:00"-"14:00"
 TZ=EADT $NFT add rule t c meta hour "04:00"-"15:00"
 TZ=EADT $NFT add rule t c meta hour "05:00"-"16:00"
 TZ=EADT $NFT add rule t c meta hour "06:00"-"17:00"
+
+printf "\t\tmeta hour \"%02d:%02d\"-\"%02d:%02d\"\n" 3 0 14 0 > "$TMP1"
+printf "\t\tmeta hour \"%02d:%02d\"-\"%02d:%02d\"\n" 4 0 15 0 >> "$TMP1"
+printf "\t\tmeta hour \"%02d:%02d\"-\"%02d:%02d\"\n" 5 0 16 0 >> "$TMP1"
+printf "\t\tmeta hour \"%02d:%02d\"-\"%02d:%02d\"\n" 6 0 17 0 >> "$TMP1"
+
+check_decode EADT

@@ -2858,14 +2858,10 @@ static void expr_postprocess(struct rule_pp_ctx *ctx, struct expr **exprp)
 				 * is a cross-day range.
 				 */
 				if (mpz_cmp(range->left->value,
-					    range->right->value) <= 0) {
-					if (expr->op == OP_NEQ) {
-		                                range_expr_swap_values(range);
-		                                expr->op = OP_IMPLICIT;
-					} else if (expr->op == OP_IMPLICIT) {
-		                                range_expr_swap_values(range);
-					        expr->op = OP_NEG;
-					}
+					    range->right->value) <= 0 &&
+				    expr->op == OP_NEQ) {
+					range_expr_swap_values(range);
+					expr->op = OP_IMPLICIT;
 				}
 			}
 			/* fallthrough */
