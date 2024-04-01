@@ -2331,17 +2331,17 @@ static struct stmt *json_parse_reject_stmt(struct json_ctx *ctx,
 			stmt->reject.icmp_code = 0;
 		} else if (!strcmp(type, "icmpx")) {
 			stmt->reject.type = NFT_REJECT_ICMPX_UNREACH;
-			dtype = &icmpx_code_type;
+			dtype = &reject_icmpx_code_type;
 			stmt->reject.icmp_code = 0;
 		} else if (!strcmp(type, "icmp")) {
 			stmt->reject.type = NFT_REJECT_ICMP_UNREACH;
 			stmt->reject.family = NFPROTO_IPV4;
-			dtype = &icmp_code_type;
+			dtype = &reject_icmp_code_type;
 			stmt->reject.icmp_code = 0;
 		} else if (!strcmp(type, "icmpv6")) {
 			stmt->reject.type = NFT_REJECT_ICMP_UNREACH;
 			stmt->reject.family = NFPROTO_IPV6;
-			dtype = &icmpv6_code_type;
+			dtype = &reject_icmpv6_code_type;
 			stmt->reject.icmp_code = 0;
 		}
 	}

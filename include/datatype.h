@@ -283,6 +283,11 @@ extern const struct datatype priority_type;
 extern const struct datatype policy_type;
 extern const struct datatype cgroupv2_type;
 
+/* private datatypes for reject statement. */
+extern const struct datatype reject_icmp_code_type;
+extern const struct datatype reject_icmpv6_code_type;
+extern const struct datatype reject_icmpx_code_type;
+
 void inet_service_type_print(const struct expr *expr, struct output_ctx *octx);
 
 extern const struct datatype *concat_type_alloc(uint32_t type);

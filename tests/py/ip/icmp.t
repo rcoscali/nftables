@@ -26,8 +26,8 @@ icmp code 111 accept;ok
 icmp code != 111 accept;ok
 icmp code 33-55;ok
 icmp code != 33-55;ok
-icmp code { 2, 4, 54, 33, 56};ok;icmp code { prot-unreachable, frag-needed, 33, 54, 56}
-icmp code != { prot-unreachable, frag-needed, 33, 54, 56};ok
+icmp code { 2, 4, 54, 33, 56};ok
+icmp code != { prot-unreachable, frag-needed, 33, 54, 56};ok;icmp code != { 2, 4, 33, 54, 56}
 
 icmp checksum 12343 accept;ok
 icmp checksum != 12343 accept;ok
@@ -73,5 +73,5 @@ icmp gateway != { 33, 55, 67, 88};ok
 icmp gateway != 34;ok
 icmp gateway != { 333, 334};ok
 
-icmp code 1 icmp type 2;ok;icmp type 2 icmp code host-unreachable
+icmp code 1 icmp type 2;ok;icmp type 2 icmp code 1
 icmp code != 1 icmp type 2 icmp mtu 5;fail

@@ -3740,40 +3740,40 @@ reject_opts		:       /* empty */
 				$<stmt>0->reject.family = NFPROTO_IPV4;
 				$<stmt>0->reject.type = NFT_REJECT_ICMP_UNREACH;
 				$<stmt>0->reject.expr = $4;
-				datatype_set($<stmt>0->reject.expr, &icmp_code_type);
+				datatype_set($<stmt>0->reject.expr, &reject_icmp_code_type);
 			}
 			|	WITH	ICMP	reject_with_expr
 			{
 				$<stmt>0->reject.family = NFPROTO_IPV4;
 				$<stmt>0->reject.type = NFT_REJECT_ICMP_UNREACH;
 				$<stmt>0->reject.expr = $3;
-				datatype_set($<stmt>0->reject.expr, &icmp_code_type);
+				datatype_set($<stmt>0->reject.expr, &reject_icmp_code_type);
 			}
 			|	WITH	ICMP6	TYPE	reject_with_expr close_scope_type close_scope_icmp
 			{
 				$<stmt>0->reject.family = NFPROTO_IPV6;
 				$<stmt>0->reject.type = NFT_REJECT_ICMP_UNREACH;
 				$<stmt>0->reject.expr = $4;
-				datatype_set($<stmt>0->reject.expr, &icmpv6_code_type);
+				datatype_set($<stmt>0->reject.expr, &reject_icmpv6_code_type);
 			}
 			|	WITH	ICMP6	reject_with_expr
 			{
 				$<stmt>0->reject.family = NFPROTO_IPV6;
 				$<stmt>0->reject.type = NFT_REJECT_ICMP_UNREACH;
 				$<stmt>0->reject.expr = $3;
-				datatype_set($<stmt>0->reject.expr, &icmpv6_code_type);
+				datatype_set($<stmt>0->reject.expr, &reject_icmpv6_code_type);
 			}
 			|	WITH	ICMPX	TYPE	reject_with_expr close_scope_type
 			{
 				$<stmt>0->reject.type = NFT_REJECT_ICMPX_UNREACH;
 				$<stmt>0->reject.expr = $4;
-				datatype_set($<stmt>0->reject.expr, &icmpx_code_type);
+				datatype_set($<stmt>0->reject.expr, &reject_icmpx_code_type);
 			}
 			|	WITH	ICMPX	reject_with_expr
 			{
 				$<stmt>0->reject.type = NFT_REJECT_ICMPX_UNREACH;
 				$<stmt>0->reject.expr = $3;
-				datatype_set($<stmt>0->reject.expr, &icmpx_code_type);
+				datatype_set($<stmt>0->reject.expr, &reject_icmpx_code_type);
 			}
 			|	WITH	TCP	close_scope_tcp RESET close_scope_reset
 			{

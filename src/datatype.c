@@ -1017,6 +1017,7 @@ const struct datatype mark_type = {
 	.parse		= mark_type_parse,
 };
 
+/* symbol table for private datatypes for reject statement. */
 static const struct symbol_table icmp_code_tbl = {
 	.base		= BASE_DECIMAL,
 	.symbols	= {
@@ -1032,16 +1033,17 @@ static const struct symbol_table icmp_code_tbl = {
 	},
 };
 
-const struct datatype icmp_code_type = {
-	.type		= TYPE_ICMP_CODE,
+/* private datatype for reject statement. */
+const struct datatype reject_icmp_code_type = {
 	.name		= "icmp_code",
-	.desc		= "icmp code",
+	.desc		= "reject icmp code",
 	.size		= BITS_PER_BYTE,
 	.byteorder	= BYTEORDER_BIG_ENDIAN,
 	.basetype	= &integer_type,
 	.sym_tbl	= &icmp_code_tbl,
 };
 
+/* symbol table for private datatypes for reject statement. */
 static const struct symbol_table icmpv6_code_tbl = {
 	.base		= BASE_DECIMAL,
 	.symbols	= {
@@ -1055,16 +1057,17 @@ static const struct symbol_table icmpv6_code_tbl = {
 	},
 };
 
-const struct datatype icmpv6_code_type = {
-	.type		= TYPE_ICMPV6_CODE,
+/* private datatype for reject statement. */
+const struct datatype reject_icmpv6_code_type = {
 	.name		= "icmpv6_code",
-	.desc		= "icmpv6 code",
+	.desc		= "reject icmpv6 code",
 	.size		= BITS_PER_BYTE,
 	.byteorder	= BYTEORDER_BIG_ENDIAN,
 	.basetype	= &integer_type,
 	.sym_tbl	= &icmpv6_code_tbl,
 };
 
+/* symbol table for private datatypes for reject statement. */
 static const struct symbol_table icmpx_code_tbl = {
 	.base		= BASE_DECIMAL,
 	.symbols	= {
@@ -1076,6 +1079,60 @@ static const struct symbol_table icmpx_code_tbl = {
 	},
 };
 
+/* private datatype for reject statement. */
+const struct datatype reject_icmpx_code_type = {
+	.name		= "icmpx_code",
+	.desc		= "reject icmpx code",
+	.size		= BITS_PER_BYTE,
+	.byteorder	= BYTEORDER_BIG_ENDIAN,
+	.basetype	= &integer_type,
+	.sym_tbl	= &icmpx_code_tbl,
+};
+
+/* Backward compatible parser for the reject statement. */
+static struct error_record *icmp_code_parse(struct parse_ctx *ctx,
+					    const struct expr *sym,
+					    struct expr **res)
+{
+	return symbolic_constant_parse(ctx, sym, &icmp_code_tbl, res);
+}
+
+const struct datatype icmp_code_type = {
+	.type		= TYPE_ICMP_CODE,
+	.name		= "icmp_code",
+	.desc		= "icmp code",
+	.size		= BITS_PER_BYTE,
+	.byteorder	= BYTEORDER_BIG_ENDIAN,
+	.basetype	= &integer_type,
+	.parse		= icmp_code_parse,
+};
+
+/* Backward compatible parser for the reject statement. */
+static struct error_record *icmpv6_code_parse(struct parse_ctx *ctx,
+					      const struct expr *sym,
+					      struct expr **res)
+{
+	return symbolic_constant_parse(ctx, sym, &icmpv6_code_tbl, res);
+}
+
+const struct datatype icmpv6_code_type = {
+	.type		= TYPE_ICMPV6_CODE,
+	.name		= "icmpv6_code",
+	.desc		= "icmpv6 code",
+	.size		= BITS_PER_BYTE,
+	.byteorder	= BYTEORDER_BIG_ENDIAN,
+	.basetype	= &integer_type,
+	.parse		= icmpv6_code_parse,
+};
+
+/* Backward compatible parser for the reject statement. */
+static struct error_record *icmpx_code_parse(struct parse_ctx *ctx,
+					     const struct expr *sym,
+					     struct expr **res)
+{
+	return symbolic_constant_parse(ctx, sym, &icmpx_code_tbl, res);
+}
+
 const struct datatype icmpx_code_type = {
 	.type		= TYPE_ICMPX_CODE,
 	.name		= "icmpx_code",
@@ -1083,7 +1140,7 @@ const struct datatype icmpx_code_type = {
 	.size		= BITS_PER_BYTE,
 	.byteorder	= BYTEORDER_BIG_ENDIAN,
 	.basetype	= &integer_type,
-	.sym_tbl	= &icmpx_code_tbl,
+	.parse		= icmpx_code_parse,
 };
 
 void time_print(uint64_t ms, struct output_ctx *octx)

@@ -242,28 +242,6 @@ integer
 
 The ICMP Code type is used to conveniently specify the ICMP header's code field.
 
-.Keywords may be used when specifying the ICMP code
-[options="header"]
-|==================
-|Keyword | Value
-|net-unreachable |
-0
-|host-unreachable |
-1
-|prot-unreachable|
-2
-|port-unreachable|
-3
-|frag-needed|
-4
-|net-prohibited|
-9
-|host-prohibited|
-10
-|admin-prohibited|
-13
-|===================
-
 ICMPV6 TYPE TYPE
 ~~~~~~~~~~~~~~~~
 [options="header"]
@@ -339,52 +317,6 @@ integer
 |===================
 
 The ICMPv6 Code type is used to conveniently specify the ICMPv6 header's code field.
-
-.keywords may be used when specifying the ICMPv6 code
-[options="header"]
-|==================
-|Keyword |Value
-|no-route|
-0
-|admin-prohibited|
-1
-|addr-unreachable|
-3
-|port-unreachable|
-4
-|policy-fail|
-5
-|reject-route|
-6
-|==================
-
-ICMPVX CODE TYPE
-~~~~~~~~~~~~~~~~
-[options="header"]
-|==================
-|Name | Keyword | Size | Base type
-|ICMPvX Code |
-icmpx_code |
-8 bit |
-integer
-|===================
-
-The ICMPvX Code type abstraction is a set of values which overlap between ICMP
-and ICMPv6 Code types to be used from the inet family.
-
-.keywords may be used when specifying the ICMPvX code
-[options="header"]
-|==================
-|Keyword |Value
-|no-route|
-0
-|port-unreachable|
-1
-|host-unreachable|
-2
-|admin-prohibited|
-3
-|=================
 
 CONNTRACK TYPES
 ~~~~~~~~~~~~~~~

@@ -171,9 +171,9 @@ REJECT STATEMENT
 ____
 *reject* [ *with* 'REJECT_WITH' ]
 
-'REJECT_WITH' := *icmp* 'icmp_code' |
-                 *icmpv6* 'icmpv6_code' |
-                 *icmpx* 'icmpx_code' |
+'REJECT_WITH' := *icmp* 'icmp_reject_code' |
+                 *icmpv6* 'icmpv6_reject_code' |
+                 *icmpx* 'icmpx_reject_code' |
                  *tcp reset*
 ____
 
@@ -184,24 +184,64 @@ using the *prerouting*, *input*,
 *forward* or *output* hooks, and user-defined chains which are only called from
 those chains.
 
-.different ICMP reject variants are meant for use in different table families
+.Keywords may be used to reject when specifying the ICMP code
 [options="header"]
 |==================
-|Variant |Family | Type
-|icmp|
-ip|
-icmp_code
-|icmpv6|
-ip6|
-icmpv6_code
-|icmpx|
-inet|
-icmpx_code
+|Keyword | Value
+|net-unreachable |
+0
+|host-unreachable |
+1
+|prot-unreachable|
+2
+|port-unreachable|
+3
+|frag-needed|
+4
+|net-prohibited|
+9
+|host-prohibited|
+10
+|admin-prohibited|
+13
+|===================
+
+.keywords may be used to reject when specifying the ICMPv6 code
+[options="header"]
+|==================
+|Keyword |Value
+|no-route|
+0
+|admin-prohibited|
+1
+|addr-unreachable|
+3
+|port-unreachable|
+4
+|policy-fail|
+5
+|reject-route|
+6
 |==================
 
-For a description of the different types and a list of supported keywords refer
-to DATA TYPES section above. The common default reject value is
-*port-unreachable*. +
+The ICMPvX Code type abstraction is a set of values which overlap between ICMP
+and ICMPv6 Code types to be used from the inet family.
+
+.keywords may be used when specifying the ICMPvX code
+[options="header"]
+|==================
+|Keyword |Value
+|no-route|
+0
+|port-unreachable|
+1
+|host-unreachable|
+2
+|admin-prohibited|
+3
+|=================
+
+The common default ICMP code to reject is *port-unreachable*.
 
 Note that in bridge family, reject statement is only allowed in base chains
 which hook into input or prerouting.

@@ -2948,7 +2948,7 @@ static void stmt_reject_postprocess(struct rule_pp_ctx *rctx)
 	switch (dl->pctx.family) {
 	case NFPROTO_IPV4:
 		stmt->reject.family = dl->pctx.family;
-		datatype_set(stmt->reject.expr, &icmp_code_type);
+		datatype_set(stmt->reject.expr, &reject_icmp_code_type);
 		if (stmt->reject.type == NFT_REJECT_TCP_RST &&
 		    payload_dependency_exists(&dl->pdctx,
 					      PROTO_BASE_TRANSPORT_HDR))
@@ -2957,7 +2957,7 @@ static void stmt_reject_postprocess(struct rule_pp_ctx *rctx)
 		break;
 	case NFPROTO_IPV6:
 		stmt->reject.family = dl->pctx.family;
-		datatype_set(stmt->reject.expr, &icmpv6_code_type);
+		datatype_set(stmt->reject.expr, &reject_icmpv6_code_type);
 		if (stmt->reject.type == NFT_REJECT_TCP_RST &&
 		    payload_dependency_exists(&dl->pdctx,
 					      PROTO_BASE_TRANSPORT_HDR))
@@ -2968,7 +2968,7 @@ static void stmt_reject_postprocess(struct rule_pp_ctx *rctx)
 	case NFPROTO_BRIDGE:
 	case NFPROTO_NETDEV:
 		if (stmt->reject.type == NFT_REJECT_ICMPX_UNREACH) {
-			datatype_set(stmt->reject.expr, &icmpx_code_type);
+			datatype_set(stmt->reject.expr, &reject_icmpx_code_type);
 			break;
 		}
 
@@ -2984,12 +2984,12 @@ static void stmt_reject_postprocess(struct rule_pp_ctx *rctx)
 		case NFPROTO_IPV4:			/* INET */
 		case __constant_htons(ETH_P_IP):	/* BRIDGE, NETDEV */
 			stmt->reject.family = NFPROTO_IPV4;
-			datatype_set(stmt->reject.expr, &icmp_code_type);
+			datatype_set(stmt->reject.expr, &reject_icmp_code_type);
 			break;
 		case NFPROTO_IPV6:			/* INET */
 		case __constant_htons(ETH_P_IPV6):	/* BRIDGE, NETDEV */
 			stmt->reject.family = NFPROTO_IPV6;
-			datatype_set(stmt->reject.expr, &icmpv6_code_type);
+			datatype_set(stmt->reject.expr, &reject_icmpv6_code_type);
 			break;
 		default:
 			break;
