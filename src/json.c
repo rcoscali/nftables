@@ -42,6 +42,15 @@
 })
 #endif
 
+static int json_array_extend_new(json_t *array, json_t *other_array)
+{
+	int ret;
+
+	ret = json_array_extend(array, other_array);
+	json_decref(other_array);
+	return ret;
+}
+
 static json_t *expr_print_json(const struct expr *expr, struct output_ctx *octx)
 {
 	const struct expr_ops *ops;
@@ -546,8 +555,10 @@ __binop_expr_json(int op, const struct expr *expr, struct output_ctx *octx)
 	json_t *a = json_array();
 
 	if (expr->etype == EXPR_BINOP && expr->op == op) {
-		json_array_extend(a, __binop_expr_json(op, expr->left, octx));
-		json_array_extend(a, __binop_expr_json(op, expr->right, octx));
+		json_array_extend_new(a,
+				      __binop_expr_json(op, expr->left, octx));
+		json_array_extend_new(a,
+				      __binop_expr_json(op, expr->right, octx));
 	} else {
 		json_array_append_new(a, expr_print_json(expr, octx));
 	}
@@ -1743,8 +1754,7 @@ static json_t *table_print_json_full(struct netlink_ctx *ctx,
 		}
 	}
 
-	json_array_extend(root, rules);
-	json_decref(rules);
+	json_array_extend_new(root, rules);
 
 	return root;
 }
@@ -1752,7 +1762,7 @@ static json_t *table_print_json_full(struct netlink_ctx *ctx,
 static json_t *do_list_ruleset_json(struct netlink_ctx *ctx, struct cmd *cmd)
 {
 	unsigned int family = cmd->handle.family;
-	json_t *root = json_array(), *tmp;
+	json_t *root = json_array();
 	struct table *table;
 
 	list_for_each_entry(table, &ctx->nft->cache.table_cache.list, cache.list) {
@@ -1760,9 +1770,7 @@ static json_t *do_list_ruleset_json(struct netlink_ctx *ctx, struct cmd *cmd)
 		    table->handle.family != family)
 			continue;
 
-		tmp = table_print_json_full(ctx, table);
-		json_array_extend(root, tmp);
-		json_decref(tmp);
+		json_array_extend_new(root, table_print_json_full(ctx, table));
 	}
 
 	return root;
