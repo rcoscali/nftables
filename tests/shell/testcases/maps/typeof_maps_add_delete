@@ -30,7 +30,7 @@ EXPECTED="table ip dynset {
 	chain input {
 		type filter hook input priority 0; policy accept;
 
-		add @dynmark { 10.2.3.4 timeout 1s : 0x2 } comment \"also check timeout-gc\"
+		add @dynmark { 10.2.3.4 timeout 2s : 0x2 } comment \"also check timeout-gc\"
 		meta l4proto icmp ip daddr 127.0.0.42 jump test_ping
 	}
 }"
@@ -45,7 +45,7 @@ ping -c 1 127.0.0.42
 $NFT get element ip dynset dynmark { 10.2.3.4 }
 
 # wait so that 10.2.3.4 times out.
-sleep 2
+sleep 3
 
 set +e
 $NFT get element ip dynset dynmark { 10.2.3.4 } && exit 1

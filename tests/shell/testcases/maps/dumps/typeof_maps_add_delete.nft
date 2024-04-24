@@ -16,7 +16,7 @@ table ip dynset {
 
 	chain input {
 		type filter hook input priority filter; policy accept;
-		add @dynmark { 10.2.3.4 timeout 1s : 0x00000002 } comment "also check timeout-gc"
+		add @dynmark { 10.2.3.4 timeout 2s : 0x00000002 } comment "also check timeout-gc"
 		meta l4proto icmp ip daddr 127.0.0.42 jump test_ping
 	}
 }
