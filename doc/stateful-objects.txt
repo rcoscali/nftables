@@ -119,7 +119,7 @@ sport=41360 dport=22
 CT EXPECTATION
 ~~~~~~~~~~~~~~
 [verse]
-*add* *ct expectation*  ['family'] 'table' 'name' *{ protocol* 'protocol' *; dport* 'dport' *; timeout* 'timeout' *; size* 'size' *; [*l3proto* 'family' *;*] *}*
+*add* *ct expectation*  ['family'] 'table' 'name' *{ protocol* 'protocol' *; dport* 'dport' *; timeout* 'timeout' *; size* 'size' *;* [*l3proto* 'family' *;*] *}*
 *delete* *ct expectation*  ['family'] 'table' 'name'
 *list* *ct expectations*
 
