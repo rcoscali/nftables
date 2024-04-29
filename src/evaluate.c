@@ -2061,6 +2061,7 @@ static int expr_evaluate_map(struct eval_ctx *ctx, struct expr **expr)
 	mappings->set_flags |= NFT_SET_MAP;
 
 	switch (map->mappings->etype) {
+	case EXPR_VARIABLE:
 	case EXPR_SET:
 		if (ctx->ectx.key && ctx->ectx.key->etype == EXPR_CONCAT) {
 			key = expr_clone(ctx->ectx.key);
@@ -2103,6 +2104,11 @@ static int expr_evaluate_map(struct eval_ctx *ctx, struct expr **expr)
 		ctx->set = mappings->set;
 		if (expr_evaluate(ctx, &map->mappings->set->init) < 0)
 			return -1;
+
+		if (map->mappings->set->init->etype != EXPR_SET) {
+			return expr_error(ctx->msgs, map->mappings->set->init,
+					  "Expression is not a map");
+		}
 
 		if (set_is_interval(map->mappings->set->init->set_flags) &&
 		    !(map->mappings->set->init->set_flags & NFT_SET_CONCAT) &&
@@ -4576,6 +4582,7 @@ static int stmt_evaluate_objref_map(struct eval_ctx *ctx, struct stmt *stmt)
 	mappings->set_flags |= NFT_SET_OBJECT;
 
 	switch (map->mappings->etype) {
+	case EXPR_VARIABLE:
 	case EXPR_SET:
 		key = constant_expr_alloc(&stmt->location,
 					  ctx->ectx.dtype,
@@ -4594,6 +4601,11 @@ static int stmt_evaluate_objref_map(struct eval_ctx *ctx, struct stmt *stmt)
 		ctx->set = mappings->set;
 		if (expr_evaluate(ctx, &map->mappings->set->init) < 0)
 			return -1;
+
+		if (map->mappings->set->init->etype != EXPR_SET) {
+			return expr_error(ctx->msgs, map->mappings->set->init,
+					  "Expression is not a map");
+		}
 
 		if (set_is_interval(map->mappings->set->init->set_flags) &&
 		    !(map->mappings->set->init->set_flags & NFT_SET_CONCAT) &&
