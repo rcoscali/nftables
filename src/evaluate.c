@@ -775,6 +775,46 @@ static bool proto_is_dummy(const struct proto_desc *desc)
 	return desc == &proto_inet || desc == &proto_netdev;
 }
 
+static int stmt_dep_conflict(struct eval_ctx *ctx, const struct stmt *nstmt)
+{
+	struct stmt *stmt;
+
+	list_for_each_entry(stmt, &ctx->rule->stmts, list) {
+		if (stmt == nstmt)
+			break;
+
+		if (stmt->ops->type != STMT_EXPRESSION ||
+		    stmt->expr->etype != EXPR_RELATIONAL ||
+		    stmt->expr->right->etype != EXPR_VALUE ||
+		    stmt->expr->left->etype != EXPR_PAYLOAD ||
+		    stmt->expr->left->etype != nstmt->expr->left->etype ||
+		    stmt->expr->left->len != nstmt->expr->left->len)
+			continue;
+
+		if (stmt->expr->left->payload.desc != nstmt->expr->left->payload.desc ||
+		    stmt->expr->left->payload.inner_desc != nstmt->expr->left->payload.inner_desc ||
+		    stmt->expr->left->payload.base != nstmt->expr->left->payload.base ||
+		    stmt->expr->left->payload.offset != nstmt->expr->left->payload.offset)
+			continue;
+
+		return stmt_binary_error(ctx, stmt, nstmt,
+					 "conflicting statements");
+	}
+
+	return 0;
+}
+
+static int rule_stmt_dep_add(struct eval_ctx *ctx,
+			     struct stmt *nstmt, struct stmt *stmt)
+{
+	rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
+
+	if (stmt_dep_conflict(ctx, nstmt) < 0)
+		return -1;
+
+	return 0;
+}
+
 static int resolve_ll_protocol_conflict(struct eval_ctx *ctx,
 				        const struct proto_desc *desc,
 					struct expr *payload)
@@ -798,7 +838,8 @@ static int resolve_ll_protocol_conflict(struct eval_ctx *ctx,
 				return err;
 
 			desc = payload->payload.desc;
-			rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
+			if (rule_stmt_dep_add(ctx, nstmt, ctx->stmt) < 0)
+				return -1;
 		}
 	} else {
 		unsigned int i;
@@ -810,10 +851,6 @@ static int resolve_ll_protocol_conflict(struct eval_ctx *ctx,
 		}
 	}
 
-	/* This payload and the existing context don't match, conflict. */
-	if (pctx->protocol[base + 1].desc != NULL)
-		return 1;
-
 	link = proto_find_num(desc, payload->payload.desc);
 	if (link < 0 ||
 	    ll_conflict_resolution_gen_dependency(ctx, link, payload, &nstmt) < 0)
@@ -822,7 +859,8 @@ static int resolve_ll_protocol_conflict(struct eval_ctx *ctx,
 	for (i = 0; i < pctx->stacked_ll_count; i++)
 		payload->payload.offset += pctx->stacked_ll[i]->length;
 
-	rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
+	if (rule_stmt_dep_add(ctx, nstmt, ctx->stmt) < 0)
+		return -1;
 
 	return 0;
 }
@@ -850,7 +888,8 @@ static int __expr_evaluate_payload(struct eval_ctx *ctx, struct expr *expr)
 		if (payload_gen_dependency(ctx, payload, &nstmt) < 0)
 			return -1;
 
-		rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
+		if (rule_stmt_dep_add(ctx, nstmt, ctx->stmt) < 0)
+			return -1;
 
 		desc = pctx->protocol[base].desc;
 
@@ -870,7 +909,10 @@ static int __expr_evaluate_payload(struct eval_ctx *ctx, struct expr *expr)
 
 			assert(pctx->stacked_ll_count);
 			payload->payload.offset += pctx->stacked_ll[0]->length;
-			rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
+
+			if (rule_stmt_dep_add(ctx, nstmt, ctx->stmt) < 0)
+				return -1;
+
 			return 1;
 		}
 		goto check_icmp;
@@ -911,8 +953,8 @@ check_icmp:
 		if (payload_gen_icmp_dependency(ctx, expr, &nstmt) < 0)
 			return -1;
 
-		if (nstmt)
-			rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
+		if (nstmt && rule_stmt_dep_add(ctx, nstmt, ctx->stmt) < 0)
+			return -1;
 
 		return 0;
 	}
@@ -988,7 +1030,8 @@ static int expr_evaluate_inner(struct eval_ctx *ctx, struct expr **exprp)
 		if (payload_gen_inner_dependency(ctx, expr, &nstmt) < 0)
 			return -1;
 
-		rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
+		if (rule_stmt_dep_add(ctx, nstmt, ctx->stmt) < 0)
+			return -1;
 
 		proto_ctx_update(pctx, PROTO_BASE_TRANSPORT_HDR, &expr->location, expr->payload.inner_desc);
 	}
@@ -1119,7 +1162,9 @@ static int ct_gen_nh_dependency(struct eval_ctx *ctx, struct expr *ct)
 	relational_expr_pctx_update(pctx, dep);
 
 	nstmt = expr_stmt_alloc(&dep->location, dep);
-	rule_stmt_insert_at(ctx->rule, nstmt, ctx->stmt);
+
+	if (rule_stmt_dep_add(ctx, nstmt, ctx->stmt) < 0)
+		return -1;
 
 	return 0;
 }
