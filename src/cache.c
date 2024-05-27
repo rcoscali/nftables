@@ -297,6 +297,7 @@ static unsigned int evaluate_cache_reset(struct cmd *cmd, unsigned int flags,
 		flags |= NFT_CACHE_TABLE;
 		break;
 	}
+	flags |= NFT_CACHE_REFRESH;
 
 	return flags;
 }
@@ -1177,9 +1178,10 @@ static bool nft_cache_is_complete(struct nft_cache *cache, unsigned int flags)
 	return (cache->flags & flags) == flags;
 }
 
-static bool nft_cache_needs_refresh(struct nft_cache *cache)
+static bool nft_cache_needs_refresh(struct nft_cache *cache, unsigned int flags)
 {
-	return cache->flags & NFT_CACHE_REFRESH;
+	return (cache->flags & NFT_CACHE_REFRESH) ||
+	       (flags & NFT_CACHE_REFRESH);
 }
 
 static bool nft_cache_is_updated(struct nft_cache *cache, uint16_t genid)
@@ -1207,7 +1209,7 @@ int nft_cache_update(struct nft_ctx *nft, unsigned int flags,
 replay:
 	ctx.seqnum = cache->seqnum++;
 	genid = mnl_genid_get(&ctx);
-	if (!nft_cache_needs_refresh(cache) &&
+	if (!nft_cache_needs_refresh(cache, flags) &&
 	    nft_cache_is_complete(cache, flags) &&
 	    nft_cache_is_updated(cache, genid))
 		return 0;
