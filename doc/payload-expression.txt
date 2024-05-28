@@ -670,44 +670,6 @@ integer (24 bit)
 netdev filter ingress udp dport 4789 vxlan tcp dport 80 counter
 ----------------------------------------------------------
 
-ARP HEADER EXPRESSION
-~~~~~~~~~~~~~~~~~~~~~
-[verse]
-*arp* {*htype* | *ptype* | *hlen* | *plen* | *operation* | *saddr* { *ip* | *ether* } | *daddr* { *ip* | *ether* }
-
-.ARP header expression
-[options="header"]
-|==================
-|Keyword| Description| Type
-|htype|
-ARP hardware type|
-integer (16 bit)
-|ptype|
-EtherType|
-ether_type
-|hlen|
-Hardware address len|
-integer (8 bit)
-|plen|
-Protocol address len |
-integer (8 bit)
-|operation|
-Operation |
-arp_op
-|saddr ether|
-Ethernet sender address|
-ether_addr
-|daddr ether|
-Ethernet target address|
-ether_addr
-|saddr ip|
-IPv4 sender address|
-ipv4_addr
-|daddr ip|
-IPv4 target address|
-ipv4_addr
-|======================
-
 RAW PAYLOAD EXPRESSION
 ~~~~~~~~~~~~~~~~~~~~~~
 [verse]
