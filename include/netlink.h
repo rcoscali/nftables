@@ -67,6 +67,15 @@ struct rule_pp_ctx {
 extern const struct input_descriptor indesc_netlink;
 extern const struct location netlink_location;
 
+
+enum nlfw_target {
+	NLFIREWALL_TARGET_HOST 	= (1 << 0),
+	NLFIREWALL_TARGET_APP	= (1 << 1),
+	
+	__NLFIREWALL_ATTR_MAX,
+	NLFIREWALL_ATTR_MAX = __NLFIREWALL_ATTR_MAX - 1
+};
+
 /** 
  * struct netlink_ctx
  *
@@ -86,6 +95,7 @@ struct netlink_ctx {
 	uint32_t		seqnum;
 	struct nftnl_batch	*batch;
 	int			maybe_emsgsize;
+  	enum nlfw_target	target;
 };
 
 extern struct nftnl_expr *alloc_nft_expr(const char *name);
