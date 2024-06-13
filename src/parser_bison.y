@@ -320,6 +320,8 @@ int nft_lex(void *, void *, void *);
 %token HANDLE			"handle"
 %token RULESET			"ruleset"
 %token TRACE			"trace"
+%token APPFW			"appfw"
+%token HOSTFW			"hostfw"
 
 %token INET			"inet"
 %token NETDEV			"netdev"
@@ -680,14 +682,14 @@ int nft_lex(void *, void *, void *);
 
 %token EXTHDR			"exthdr"
 
-%token IPSEC		"ipsec"
-%token REQID		"reqid"
-%token SPNUM		"spnum"
+%token IPSEC			"ipsec"
+%token REQID			"reqid"
+%token SPNUM			"spnum"
 
 %token IN			"in"
 %token OUT			"out"
 
-%token XT		"xt"
+%token XT			"xt"
 
 %type <limit_rate>		limit_rate_pkts
 %type <limit_rate>		limit_rate_bytes
@@ -703,8 +705,8 @@ int nft_lex(void *, void *, void *);
 %type <cmd>			line
 %destructor { cmd_free($$); }	line
 
-%type <cmd>			base_cmd add_cmd replace_cmd create_cmd insert_cmd delete_cmd get_cmd list_cmd reset_cmd flush_cmd rename_cmd export_cmd monitor_cmd describe_cmd import_cmd destroy_cmd
-%destructor { cmd_free($$); }	base_cmd add_cmd replace_cmd create_cmd insert_cmd delete_cmd get_cmd list_cmd reset_cmd flush_cmd rename_cmd export_cmd monitor_cmd describe_cmd import_cmd destroy_cmd
+%type <cmd>			base_cmd add_cmd replace_cmd create_cmd insert_cmd delete_cmd get_cmd list_cmd reset_cmd flush_cmd appfw_cmd hostfw_cmd rename_cmd export_cmd monitor_cmd describe_cmd import_cmd destroy_cmd
+%destructor { cmd_free($$); }	base_cmd add_cmd replace_cmd create_cmd insert_cmd delete_cmd get_cmd list_cmd reset_cmd flush_cmd appfw_cmd hostfw_cmd rename_cmd export_cmd monitor_cmd describe_cmd import_cmd destroy_cmd
 
 %type <handle>			table_spec tableid_spec table_or_id_spec
 %destructor { handle_free(&$$); } table_spec tableid_spec table_or_id_spec
@@ -1164,6 +1166,8 @@ base_cmd		:	/* empty */	add_cmd		{ $$ = $1; }
 			|	LIST		list_cmd	close_scope_list	{ $$ = $2; }
 			|	RESET		reset_cmd	close_scope_reset	{ $$ = $2; }
 			|	FLUSH		flush_cmd	{ $$ = $2; }
+			|	APPFW		appfw_cmd	{ $$ = $2; }
+			|	HOSTFW		hostfw_cmd	{ $$ = $2; }
 			|	RENAME		rename_cmd	{ $$ = $2; }
 			|       IMPORT          import_cmd	close_scope_import	{ $$ = $2; }
 			|	EXPORT		export_cmd	close_scope_export	{ $$ = $2; }
@@ -1818,6 +1822,20 @@ flush_cmd		:	TABLE		table_spec
 			|	RULESET		ruleset_spec
 			{
 				$$ = cmd_alloc(CMD_FLUSH, CMD_OBJ_RULESET, &$2, &@$, NULL);
+			}
+			;
+
+appfw_cmd		:       
+			{
+			  	const char *appfw = "appfw";
+			  	$$ = cmd_alloc(CMD_APPFW, CMD_OBJ_INVALID, &appfw, &@$, NULL);
+			}
+			;
+
+hostfw_cmd		:	
+			{
+			  	const char *hostfw = "hostfw";
+			  	$$ = cmd_alloc(CMD_HOSTFW, CMD_OBJ_INVALID, &hostfw, &@$, NULL);
 			}
 			;
 
