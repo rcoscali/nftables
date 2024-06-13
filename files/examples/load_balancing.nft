@@ -8,6 +8,8 @@
 
 flush ruleset
 
+appfw
+
 table ip nat {
 	chain prerouting {
 		type nat hook prerouting priority -300;
