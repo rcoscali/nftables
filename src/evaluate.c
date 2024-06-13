@@ -6167,6 +6167,9 @@ int cmd_evaluate(struct eval_ctx *ctx, struct cmd *cmd)
 		return cmd_evaluate_monitor(ctx, cmd);
 	case CMD_IMPORT:
 		return cmd_evaluate_import(ctx, cmd);
+	case CMD_APPFW:
+	case CMD_HOSTFW:
+		return 0;
 	default:
 		BUG("invalid command operation %u\n", cmd->op);
 	};
