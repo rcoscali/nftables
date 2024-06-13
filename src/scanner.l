@@ -360,6 +360,8 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "list"			{ scanner_push_start_cond(yyscanner, SCANSTATE_CMD_LIST); return LIST; }
 "reset"			{ scanner_push_start_cond(yyscanner, SCANSTATE_CMD_RESET); return RESET; }
 "flush"			{ return FLUSH; }
+"appfw"			{ return APPFW; }
+"hostfw"		{ return HOSTFW; }
 "rename"		{ return RENAME; }
 "import"                { scanner_push_start_cond(yyscanner, SCANSTATE_CMD_IMPORT); return IMPORT; }
 "export"		{ scanner_push_start_cond(yyscanner, SCANSTATE_CMD_EXPORT); return EXPORT; }
