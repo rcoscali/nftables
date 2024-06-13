@@ -2604,6 +2604,22 @@ struct cmd *cmd_alloc_obj_ct(enum cmd_ops op, int type, const struct handle *h,
 	return cmd_alloc(op, cmd_obj, h, loc, obj);
 }
 
+static int do_command_switch_target(struct netlink_ctx *ctx, enum cmd_ops cmd_op)
+{
+  	switch (cmd_op) {
+	case CMD_HOSTFW:
+	  	ctx->target = NLFIREWALL_TARGET_HOST;
+	  	break;
+	case CMD_APPFW:
+	  	ctx->target = NLFIREWALL_TARGET_APP;
+	  	break;
+	default:
+	  	BUG("invalid target type %u\n", cmd_op);
+		return 0;
+	}
+	return 1;
+}
+
 int do_command(struct netlink_ctx *ctx, struct cmd *cmd)
 {
 	switch (cmd->op) {
@@ -2636,6 +2652,9 @@ int do_command(struct netlink_ctx *ctx, struct cmd *cmd)
 		return do_command_monitor(ctx, cmd);
 	case CMD_DESCRIBE:
 		return do_command_describe(ctx, cmd, &ctx->nft->output);
+	case CMD_APPFW:
+	case CMD_HOSTFW:
+	  	return do_command_switch_target(ctx, cmd->op);
 	default:
 		BUG("invalid command object type %u\n", cmd->obj);
 	}
