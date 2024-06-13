@@ -13,6 +13,7 @@
 
 
 flush ruleset
+appfw
 table inet filter {
 	# declare helpers of this table
 	ct helper ftp-standard {
