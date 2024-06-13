@@ -454,6 +454,12 @@ int nft_cache_evaluate(struct nft_ctx *nft, struct list_head *cmds,
 		case CMD_MONITOR:
 			flags |= NFT_CACHE_FULL;
 			break;
+		case CMD_APPFW:
+		  	flags |= TABLE_F_APPTGT;
+		  	break;
+		case CMD_HOSTFW:
+		  	flags |= TABLE_F_HOSTTGT;
+		  	break;
 		case CMD_FLUSH:
 			flags = evaluate_cache_flush(cmd, flags, filter);
 			break;
