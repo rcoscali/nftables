@@ -7,6 +7,9 @@
 
 #define TABSIZE				8
 
+#ifdef  YYLTYPE
+#undef  YYLTYPE
+#endif
 #define YYLTYPE				struct location
 #define YYLTYPE_IS_TRIVIAL		0
 #define YYENABLE_NLS			0
