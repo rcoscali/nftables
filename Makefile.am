@@ -154,7 +154,7 @@ AM_CFLAGS = \
 	\
 	$(NULL)
 
-AM_YFLAGS = -d -Wno-yacc
+AM_YFLAGS = -d -Wno-yacc -Wno-deprecated
 
 ###############################################################################
 
