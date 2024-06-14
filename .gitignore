@@ -15,6 +15,9 @@ build-aux/
 libnftables.pc
 libtool
 
+# VScode file
+.vscode/*
+
 # cscope files
 /cscope.*
 
