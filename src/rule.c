@@ -1314,6 +1314,28 @@ static void table_print(const struct table *table, struct output_ctx *octx)
 	nft_print(octx, "}\n");
 }
 
+struct cmd *basic_cmd_alloc(enum cmd_ops op, enum cmd_obj obj,
+		      const struct location *loc,
+		      void *data)
+{
+	struct cmd *cmd;
+
+	assert(loc);
+
+	cmd = xzalloc(sizeof(*cmd));
+	init_list_head(&cmd->list);
+	cmd->op       = op;
+	cmd->obj      = obj;
+	cmd->location = *loc;
+	cmd->data     = data;
+	cmd->attr     = xzalloc_array(NFT_NLATTR_LOC_MAX,
+				      sizeof(struct nlerr_loc));
+	cmd->attr_array_len = NFT_NLATTR_LOC_MAX;
+	init_list_head(&cmd->collapse_list);
+
+	return cmd;
+}
+
 struct cmd *cmd_alloc(enum cmd_ops op, enum cmd_obj obj,
 		      const struct handle *h, const struct location *loc,
 		      void *data)
