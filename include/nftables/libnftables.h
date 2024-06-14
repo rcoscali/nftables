@@ -82,8 +82,8 @@ void nft_ctx_output_set_debug(struct nft_ctx *ctx, unsigned int mask);
 
 int nft_ctx_fwtarget_get_host(struct nft_ctx *ctx);
 int nft_ctx_fwtarget_get_app(struct nft_ctx *ctx);
-int nft_ctx_fwtarget_set_host(struct nft_ctx *ctx);
-int nft_ctx_fwtarget_set_app(struct nft_ctx *ctx);
+void nft_ctx_fwtarget_set_host(struct nft_ctx *ctx);
+void nft_ctx_fwtarget_set_app(struct nft_ctx *ctx);
 
 FILE *nft_ctx_set_output(struct nft_ctx *ctx, FILE *fp);
 int nft_ctx_buffer_output(struct nft_ctx *ctx);
