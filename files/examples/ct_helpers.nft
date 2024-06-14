@@ -12,8 +12,8 @@
 # More info at: https://home.regit.org/netfilter-en/secure-use-of-helpers/
 
 
-flush ruleset
 appfw
+flush ruleset
 table inet filter {
 	# declare helpers of this table
 	ct helper ftp-standard {
@@ -42,3 +42,33 @@ table inet filter {
 		                5060 : "sip-5060" }
 	}
 }
+hostfw
+table inet filter {
+	# declare helpers of this table
+	ct helper ftp-standard {
+		type "ftp" protocol tcp;
+		l3proto inet
+	}
+	ct helper sip-5060 {
+		type "sip" protocol udp;
+		l3proto inet
+	}
+	ct helper tftp-69 {
+		type "tftp" protocol udp
+		l3proto inet
+	}
+
+	chain input {
+		type filter hook input priority 0; policy drop;
+		ct state established,related accept
+
+		# assign a single helper in a single rule
+		tcp dport 21 ct helper set "ftp-standard"
+
+		# assign multiple helpers in a single rule
+		ct helper set udp dport map {
+	                        69 : "tftp-69", \
+		                5060 : "sip-5060" }
+	}
+}
+
