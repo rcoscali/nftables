@@ -748,6 +748,8 @@ struct cmd {
 	const void		*arg;
 };
 
+extern struct cmd *basic_cmd_alloc(enum cmd_ops op, enum cmd_obj obj,
+			     const struct location *loc, void *data);
 extern struct cmd *cmd_alloc(enum cmd_ops op, enum cmd_obj obj,
 			     const struct handle *h, const struct location *loc,
 			     void *data);
