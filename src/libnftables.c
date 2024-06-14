@@ -437,6 +437,18 @@ void nft_ctx_output_set_debug(struct nft_ctx *ctx, unsigned int mask)
 	ctx->debug_mask = mask;
 }
 
+EXPORT_SYMBOL(nft_ctx_fwtarget_set_host);
+int nft_ctx_fwtarget_set_host(struct nft_ctx *ctx)
+{
+	ctx->fwtarget = NFT_FWTGT_HOST;
+}
+
+EXPORT_SYMBOL(nft_ctx_fwtarget_set_app);
+int nft_ctx_fwtarget_set_app(struct nft_ctx *ctx)
+{
+	ctx->fwtarget = NFT_FWTGT_APP;
+}
+
 static const struct input_descriptor indesc_cmdline = {
 	.type	= INDESC_BUFFER,
 	.name	= "<cmdline>",
@@ -770,6 +782,8 @@ static int nft_run_optimized_file(struct nft_ctx *nft, const char *filename)
 	bool check;
 	int ret;
 
+	nft_ctx_fwtarget_set_host(nft);
+	
 	check = nft->check;
 	nft->check = true;
 	optimize_flags = nft->optimize_flags;
@@ -790,6 +804,8 @@ EXPORT_SYMBOL(nft_run_cmd_from_filename);
 int nft_run_cmd_from_filename(struct nft_ctx *nft, const char *filename)
 {
 	int ret;
+	
+	nft_ctx_fwtarget_set_host(nft);
 
 	if (!strcmp(filename, "-"))
 		filename = "/dev/stdin";
