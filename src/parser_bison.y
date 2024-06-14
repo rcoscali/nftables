@@ -1827,15 +1827,13 @@ flush_cmd		:	TABLE		table_spec
 
 appfw_cmd		:       
 			{
-			  	const char *appfw = "appfw";
-			  	$$ = cmd_alloc(CMD_APPFW, CMD_OBJ_INVALID, &appfw, &@$, NULL);
+			  	$$ = basic_cmd_alloc(CMD_APPFW, CMD_OBJ_INVALID, &@$, NULL);
 			}
 			;
 
 hostfw_cmd		:	
 			{
-			  	const char *hostfw = "hostfw";
-			  	$$ = cmd_alloc(CMD_HOSTFW, CMD_OBJ_INVALID, &hostfw, &@$, NULL);
+			  	$$ = basic_cmd_alloc(CMD_HOSTFW, CMD_OBJ_INVALID, &@$, NULL);
 			}
 			;
 
