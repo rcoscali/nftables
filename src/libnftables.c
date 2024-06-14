@@ -107,12 +107,25 @@ out:
 	return ret;
 }
 
+static void table_target_init(struct nft_ctx *ctx)
+{
+  	// ctx->fwtarget = NFT_FWTGT_HOST;
+	nft_ctx_fwtarget_set_host(ctx);
+}
+
+static void table_target_exit(struct nft_ctx *ctx)
+{
+  	// ctx->fwtarget = NFT_FWTGT_HOST;
+	nft_ctx_fwtarget_set_host(ctx);
+}
+
 static void nft_init(struct nft_ctx *ctx)
 {
 	mark_table_init(ctx);
 	realm_table_rt_init(ctx);
 	devgroup_table_init(ctx);
 	ct_label_table_init(ctx);
+	table_target_init(ctx);
 }
 
 static void nft_exit(struct nft_ctx *ctx)
@@ -122,6 +135,7 @@ static void nft_exit(struct nft_ctx *ctx)
 	realm_table_rt_exit(ctx);
 	devgroup_table_exit(ctx);
 	mark_table_exit(ctx);
+	table_target_exit(ctx);
 }
 
 EXPORT_SYMBOL(nft_ctx_add_var);
@@ -450,13 +464,13 @@ int nft_ctx_fwtarget_get_app(struct nft_ctx *ctx)
 }
 
 EXPORT_SYMBOL(nft_ctx_fwtarget_set_host);
-int nft_ctx_fwtarget_set_host(struct nft_ctx *ctx)
+void nft_ctx_fwtarget_set_host(struct nft_ctx *ctx)
 {
 	ctx->fwtarget = NFT_FWTGT_HOST;
 }
 
 EXPORT_SYMBOL(nft_ctx_fwtarget_set_app);
-int nft_ctx_fwtarget_set_app(struct nft_ctx *ctx)
+void nft_ctx_fwtarget_set_app(struct nft_ctx *ctx)
 {
 	ctx->fwtarget = NFT_FWTGT_APP;
 }
