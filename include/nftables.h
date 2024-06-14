@@ -120,6 +120,11 @@ struct nft_vars {
 
 #define MAX_INCLUDE_DEPTH	16
 
+enum nftables_fwtarget {
+	NFT_FWTGT_HOST = 0,
+	NFT_FWTGT_APP  = 1,
+};
+
 struct nft_ctx {
 	struct mnl_socket	*nf_sock;
 	char			**include_paths;
@@ -144,6 +149,7 @@ struct nft_ctx {
 	void			*json_root;
 	json_t			*json_echo;
 	const char		*stdin_buf;
+  	enum nftables_fwtarget	fwtarget;
 };
 
 enum nftables_exit_codes {
