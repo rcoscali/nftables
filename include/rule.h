@@ -567,7 +567,8 @@ void flowtable_print(const struct flowtable *n, struct output_ctx *octx);
  * @CMD_LIST:		list container
  * @CMD_RESET:		reset container
  * @CMD_FLUSH:		flush container
- * @CMD_TARGET:		container target (app/host)
+ * @CMD_APPFW:		target container is application
+ * @CMD_HOSTFW:		target container is host
  * @CMD_RENAME:		rename object
  * @CMD_IMPORT:		import a ruleset in a given format
  * @CMD_EXPORT:		export the ruleset in a given format
@@ -608,8 +609,6 @@ enum cmd_ops {
  * @CMD_OBJ_CHAIN:	chain
  * @CMD_OBJ_CHAINS:	multiple chains
  * @CMD_OBJ_TABLE:	table
- * @CMD_OBJ_TARGET_HOST:host target
- * @CMD_OBJ_TARGET_APP:	app target
  * @CMD_OBJ_FLOWTABLE:	flowtable
  * @CMD_OBJ_FLOWTABLES:	flowtables
  * @CMD_OBJ_RULESET:	ruleset
