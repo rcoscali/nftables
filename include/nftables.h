@@ -119,6 +119,7 @@ struct nft_vars {
 };
 
 #define MAX_INCLUDE_DEPTH	16
+#define DEFAULT_APP_CTX_NR	 8
 
 enum nftables_fwtarget {
 	NFT_FWTGT_HOST = 0,
@@ -126,12 +127,12 @@ enum nftables_fwtarget {
 };
 
 struct nft_ctx {
-	struct mnl_socket	*nf_sock;
-	char			**include_paths;
+	struct mnl_socket      *nf_sock;
+	char		      **include_paths;
 	unsigned int		num_include_paths;
-	struct nft_vars		*vars;
+	struct nft_vars	       *vars;
 	struct {
-		const char	*buf;
+		const char     *buf;
 		struct list_head indesc_list;
 	} vars_ctx;
 	unsigned int		num_vars;
@@ -143,13 +144,21 @@ struct nft_ctx {
 	struct nft_cache	cache;
 	uint32_t		flags;
 	uint32_t		optimize_flags;
-	struct parser_state	*state;
-	void			*scanner;
-	struct scope		*top_scope;
-	void			*json_root;
-	json_t			*json_echo;
-	const char		*stdin_buf;
-  	enum nftables_fwtarget	fwtarget;
+	struct parser_state    *state;
+	void		       *scanner;
+	struct scope	       *top_scope;
+	void		       *json_root;
+	json_t		       *json_echo;
+	const char	       *stdin_buf;
+	enum nftables_fwtarget	fwtarget;
+  	unsigned short		outctx_nr;
+  	unsigned short		avail_outctx_nr;
+  	unsigned short		free_outctx_nr;
+	struct apps_ctx {
+		char *			binpath;
+		struct output_ctx	output;
+	} *apps;
+  	struct apps_ctx	       *cur_app_ctx;
 };
 
 enum nftables_exit_codes {

@@ -86,6 +86,7 @@ void nft_ctx_fwtarget_set_host(struct nft_ctx *ctx);
 void nft_ctx_fwtarget_set_app(struct nft_ctx *ctx);
 
 FILE *nft_ctx_set_output(struct nft_ctx *ctx, FILE *fp);
+FILE *nft_ctx_set_app_output(struct nft_ctx *ctx, char *pathname, FILE *fp);
 int nft_ctx_buffer_output(struct nft_ctx *ctx);
 int nft_ctx_unbuffer_output(struct nft_ctx *ctx);
 const char *nft_ctx_get_output_buffer(struct nft_ctx *ctx);
@@ -98,6 +99,7 @@ const char *nft_ctx_get_error_buffer(struct nft_ctx *ctx);
 int nft_ctx_add_include_path(struct nft_ctx *ctx, const char *path);
 void nft_ctx_clear_include_paths(struct nft_ctx *ctx);
 
+void nft_ctx_add_app_output_ctx(struct nft_ctx *ctx);
 int nft_ctx_add_var(struct nft_ctx *ctx, const char *var);
 void nft_ctx_clear_vars(struct nft_ctx *ctx);
 
