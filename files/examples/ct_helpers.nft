@@ -12,7 +12,7 @@
 # More info at: https://home.regit.org/netfilter-en/secure-use-of-helpers/
 
 
-appfw
+appfw "/usr/bin/cat"
 flush ruleset
 table inet filter {
 	# declare helpers of this table
