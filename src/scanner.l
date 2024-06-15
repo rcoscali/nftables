@@ -220,6 +220,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 %s SCANSTATE_TYPE
 %s SCANSTATE_VLAN
 %s SCANSTATE_XT
+%s SCANSTATE_CMD_APPFW
 %s SCANSTATE_CMD_DESTROY
 %s SCANSTATE_CMD_EXPORT
 %s SCANSTATE_CMD_IMPORT
@@ -360,7 +361,7 @@ addrstring	({macaddr}|{ip4addr}|{ip6addr})
 "list"			{ scanner_push_start_cond(yyscanner, SCANSTATE_CMD_LIST); return LIST; }
 "reset"			{ scanner_push_start_cond(yyscanner, SCANSTATE_CMD_RESET); return RESET; }
 "flush"			{ return FLUSH; }
-"appfw"			{ return APPFW; }
+"appfw"			{ scanner_push_start_cond(yyscanner, SCANSTATE_CMD_APPFW); return APPFW; }
 "hostfw"		{ return HOSTFW; }
 "rename"		{ return RENAME; }
 "import"                { scanner_push_start_cond(yyscanner, SCANSTATE_CMD_IMPORT); return IMPORT; }
