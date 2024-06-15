@@ -107,16 +107,76 @@ out:
 	return ret;
 }
 
+static unsigned short ntf_ctx_fwtarget_apps_ctx_init(struct nft_ctx *ctx)
+{
+  	ctx->outctx_nr = 0;
+
+	ctx->apps = (struct apps_ctx *)calloc(DEFAULT_APP_CTX_NR, sizeof(struct apps_ctx));
+	if (!ctx->apps)
+	  	return (unsigned short)-1;
+
+	ctx->cur_app_ctx = &ctx->apps[ctx->outctx_nr];
+
+	return DEFAULT_APP_CTX_NR;
+}
+
+static unsigned short ntf_ctx_fwtarget_apps_ctx_grow(struct nft_ctx *ctx)
+{
+	ctx->apps = (struct apps_ctx *)reallocarray(ctx->apps, ctx->avail_outctx_nr + DEFAULT_APP_CTX_NR, sizeof(struct apps_ctx));
+	if (!ctx->apps)
+	  	return (unsigned short)-1;
+
+	return (ctx->avail_outctx_nr + DEFAULT_APP_CTX_NR);
+}
+
+static struct apps_ctx *ntf_ctx_fwtarget_apps_ctx_get_next(struct nft_ctx *ctx)
+{
+  	struct apps_ctx *current = &ctx->apps[ctx->outctx_nr];
+
+  	if (ctx->free_outctx_nr == 0)
+  	{
+	  	unsigned short ret = ntf_ctx_fwtarget_apps_ctx_grow(ctx);
+    		if (ret != -1)
+      		{
+    			ctx->avail_outctx_nr = ret;
+			ctx->outctx_nr++;
+    			ctx->free_outctx_nr = ctx->avail_outctx_nr - ctx->outctx_nr;
+			current = &ctx->apps[ctx->outctx_nr];
+		}
+		else
+		  current = (struct apps_ctx *)NULL;
+  	}
+	return (current);
+}
+
+static void ntf_ctx_fwtarget_apps_ctx_free(struct nft_ctx *ctx)
+{
+  	ctx->outctx_nr = 0;
+  	ctx->avail_outctx_nr = 0;
+  	ctx->free_outctx_nr = 0;
+	ctx->cur_app_ctx = (struct apps_ctx *)NULL;
+	free((void*)ctx->apps);
+}
+
 static void table_target_init(struct nft_ctx *ctx)
 {
-  	// ctx->fwtarget = NFT_FWTGT_HOST;
+  	unsigned short ret = 0;
+
 	nft_ctx_fwtarget_set_host(ctx);
+	// Init dynamic array for output ctxs
+	ret = ntf_ctx_fwtarget_apps_ctx_init(ctx);
+  	if (ret != (unsigned short)-1)
+	{
+	  	ctx->outctx_nr = 1;
+	  	ctx->free_outctx_nr = ret;
+	  	ctx->avail_outctx_nr = ctx->free_outctx_nr - ctx->outctx_nr;
+	}
 }
 
 static void table_target_exit(struct nft_ctx *ctx)
 {
-  	// ctx->fwtarget = NFT_FWTGT_HOST;
 	nft_ctx_fwtarget_set_host(ctx);
+	ntf_ctx_fwtarget_apps_ctx_free(ctx);
 }
 
 static void nft_init(struct nft_ctx *ctx)
@@ -200,6 +260,12 @@ void nft_ctx_clear_include_paths(struct nft_ctx *ctx)
 
 	free(ctx->include_paths);
 	ctx->include_paths = NULL;
+}
+
+EXPORT_SYMBOL(nft_ctx_add_app_output_ctx);
+void nft_ctx_add_app_output_ctx(struct nft_ctx *ctx)
+{
+  	ctx->cur_app_ctx = ntf_ctx_fwtarget_apps_ctx_get_next(ctx);
 }
 
 EXPORT_SYMBOL(nft_ctx_new);
@@ -371,6 +437,39 @@ FILE *nft_ctx_set_output(struct nft_ctx *ctx, FILE *fp)
 		return NULL;
 
 	ctx->output.output_fp = fp;
+
+	return old;
+}
+
+EXPORT_SYMBOL(nft_ctx_set_app_output);
+FILE *nft_ctx_set_app_output(struct nft_ctx *ctx, char *pathname, FILE *fp)
+{
+  	struct apps_ctx *cur = (struct apps_ctx *)NULL;
+  	char *old_pathname = ctx->cur_app_ctx->binpath;
+	FILE *old = ctx->cur_app_ctx->output.output_fp;
+	int i;
+
+	if (!fp || ferror(fp))
+		return NULL;
+
+	/*
+	 * Do we need to check if binary has already been added ???
+	 */
+	if (!strncmp(old_pathname, pathname, strlen(pathname)))
+	  return old;
+	for (i = 0; i < ctx->outctx_nr; i++)
+	{
+	  if (!strncmp(old_pathname, ctx->apps[i].binpath, strlen(old_pathname)))
+	    {
+	      ctx->cur_app_ctx = cur = &ctx->apps[i];
+	      return old;
+	    }
+	}
+	/* Get a new output context */
+	ctx->cur_app_ctx = cur = ntf_ctx_fwtarget_apps_ctx_get_next(ctx);
+	
+	cur->output.output_fp = fp;
+	cur->binpath = pathname;
 
 	return old;
 }
