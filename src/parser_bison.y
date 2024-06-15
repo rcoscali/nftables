@@ -935,7 +935,7 @@ int nft_lex(void *, void *, void *);
 %type <val>			meta_key	meta_key_qualified	meta_key_unqualified	numgen_type
 
 %type <expr>			socket_expr
-%destructor { expr_free($$); } socket_expr
+%destructor { expr_free($$); }  socket_expr
 %type<val>			socket_key
 
 %type <val>			nf_key_proto
@@ -1030,6 +1030,7 @@ opt_newline		:	NEWLINE
 close_scope_ah		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_AH); };
 close_scope_arp		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_ARP); };
 close_scope_at		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_AT); };
+close_scope_appfw	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CMD_APPFW); };
 close_scope_comp	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_EXPR_COMP); };
 close_scope_ct		: { scanner_pop_start_cond(nft->scanner, PARSER_SC_CT); };
 close_scope_counter	: { scanner_pop_start_cond(nft->scanner, PARSER_SC_COUNTER); };
@@ -1166,7 +1167,7 @@ base_cmd		:	/* empty */	add_cmd		{ $$ = $1; }
 			|	LIST		list_cmd	close_scope_list	{ $$ = $2; }
 			|	RESET		reset_cmd	close_scope_reset	{ $$ = $2; }
 			|	FLUSH		flush_cmd	{ $$ = $2; }
-			|	APPFW		appfw_cmd	{ $$ = $2; }
+			|	APPFW		appfw_cmd	close_scope_appfw	{ $$ = $2; }
 			|	HOSTFW		hostfw_cmd	{ $$ = $2; }
 			|	RENAME		rename_cmd	{ $$ = $2; }
 			|       IMPORT          import_cmd	close_scope_import	{ $$ = $2; }
@@ -1825,9 +1826,9 @@ flush_cmd		:	TABLE		table_spec
 			}
 			;
 
-appfw_cmd		:       
+appfw_cmd		:       string
 			{
-			  	$$ = basic_cmd_alloc(CMD_APPFW, CMD_OBJ_INVALID, &@$, NULL);
+			  	$$ = cmd_alloc(CMD_APPFW, CMD_OBJ_INVALID, &$1, &@$, NULL);
 			}
 			;
 
